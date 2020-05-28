@@ -2,4 +2,4 @@
 doit:
 	vlib work
 	vlog *.sv
-	vsim test
+	vsim -do sim.do test

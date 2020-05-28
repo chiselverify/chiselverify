@@ -14,6 +14,7 @@ module test;
     b = 3;
     fun = 0;
     @(negedge clock)
-    $finish;
+    a = 5;
+    // $finish;
   end
 endmodule
