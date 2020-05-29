@@ -1,4 +1,4 @@
 
 view wave
 do wave.do
-run 10ns
+run 100ns

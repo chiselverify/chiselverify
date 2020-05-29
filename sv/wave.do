@@ -1,12 +1,14 @@
 onerror {resume}
 quietly WaveActivateNextPane {} 0
-add wave -noupdate -radix decimal /test/a
-add wave -noupdate -radix decimal /test/b
-add wave -noupdate -radix decimal /test/res
-add wave -noupdate -radix decimal /test/fun
-add wave -noupdate -radix decimal /test/clock
+
+add wave -noupdate -divider TB
+add wave -noupdate -radix hexadecimal /test/*
+
+add wave -noupdate -divider DUT
+add wave -noupdate -radix hexadecimal /test/dut/*
+
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {0 ps} 0}
+WaveRestoreCursors {{Cursor 1} {0 ns} 0}
 quietly wave cursor active 0
 configure wave -namecolwidth 150
 configure wave -valuecolwidth 100
@@ -22,4 +24,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {0 ps} {1 ns}
+WaveRestoreZoom {0 ns} {105 ns}
