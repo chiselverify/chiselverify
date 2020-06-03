@@ -1,5 +1,6 @@
 
 doit:
 	vlib work
-	vlog *.sv
-	vsim -do sim.do test
+	vlog +acc -incr -lint *.sv
+	vopt test -o test_opt
+	vsim -do sim.do test_opt
