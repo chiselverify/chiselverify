@@ -13,8 +13,12 @@ module test;
     a = 2;
     b = 3;
     fun = 0;
+    @(posedge clock)
+    $display("result: %d %d %d", a, b, res);
     @(negedge clock)
     a = 5;
-    // $finish;
+    @(posedge clock)
+    $display("result: %d %d %d", a, b, res);
+    $finish;
   end
 endmodule
