@@ -7,6 +7,7 @@ module alu
 // The following has en error
 // func is two bits, so it is latching on 2 or 3
 // But ModelSim is NOT giving a warning!
+// Also VCS is NOT giving a warning or error!
 always_comb begin
   case (func)
     2'b0 : result = a + b;
