@@ -4,6 +4,9 @@ module alu
    output logic [31:0] result
   );
 
+// The following has en error
+// func is two bits, so it is latching on 2 or 3
+// But ModelSim is NOT giving a warning!
 always_comb begin
   case (func)
     2'b0 : result = a + b;

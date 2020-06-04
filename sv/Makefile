@@ -1,7 +1,8 @@
 
 doit:
 	vlib work
-	vlog +acc -incr -lint *.sv
+#	vlog +acc -incr -lint *.sv
+	vlog *.sv
 	vsim -do sim.do test
 
 vcs:

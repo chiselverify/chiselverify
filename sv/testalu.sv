@@ -19,6 +19,11 @@ module test;
     a = 5;
     @(posedge clock)
     $display("result: %d %d %d", a, b, res);
+    @(negedge clock)
+    fun = 3;
+    a = 1;
+    @(posedge clock)
+    $display("result: %d %d %d", a, b, res);
     $finish;
   end
 endmodule
