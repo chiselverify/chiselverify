@@ -1,0 +1,289 @@
+%\documentclass[a4paper,twocolumn]{article}
+%\documentclass[10pt, conference, compsocconf]{IEEEtran}
+\documentclass[a4paper, conference]{IEEEtran}
+
+
+\usepackage{pslatex} % -- times instead of computer modern, especially for the plain article class
+\usepackage[colorlinks=false,bookmarks=false]{hyperref}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{multirow}
+%\usepackage{flushend} % even out the last page, but use only at the end when there is a bibliography
+
+\newcommand{\code}[1]{{\small{\texttt{#1}}}}
+
+% fatter TT font
+\renewcommand*\ttdefault{txtt}
+% another TT, suggested by Alex
+% \usepackage{inconsolata}
+% \usepackage[T1]{fontenc} % needed as well?
+
+\usepackage{listings}
+
+%\newcommand{\todo}[1]{{\emph{TODO: #1}}}
+\newcommand{\todo}[1]{{\color{olive} TODO: #1}}
+\newcommand{\martin}[1]{{\color{blue} Martin: #1}}
+\newcommand{\simon}[1]{{\color{green} Simon: #1}}
+\newcommand{\abcdef}[1]{{\color{red} Author2: #1}}
+\newcommand{\rewrite}[1]{{\color{red} rewrite: #1}}
+
+% uncomment following for final submission
+%\renewcommand{\todo}[1]{}
+%\renewcommand{\martin}[1]{}
+%\renewcommand{\author2}[1]{}
+
+
+%%Uncomment the following when you want to add copyright notice and not use any space	 (IEEE only)
+%\usepackage[absolute]{textpos}
+%% Set unit to be pagewidth and height, and increase inner margin of box
+%\setlength{\TPHorizModule}{\paperwidth}\setlength{\TPVertModule}{\paperheight}
+%\TPMargin{5pt}
+%% Define \copyrightstatement command for easier use
+%\newcommand{\copyrightstatement}{
+%	\begin{textblock}{0.85}(0.072,0.93)    % Tweak here: {box width}(leftposition, rightposition)
+%		\noindent
+%		\normalsize
+%		???-?-?-???-?/??/\$31.00~\copyright20?? IEEE % Put here your copyright
+%	\end{textblock}
+%}
+
+\begin{document}
+
+
+\title{Towards Verification of Digital Circuits with\\
+SystemVerilog/UVM and Chisel/Scala}
+
+\author{Martin, Simon, Kasper, Richard, and Jan}
+
+% Most conferences have their own commands for author headings.
+
+%\author{\IEEEauthorblockN{Edgar Lakis, Martin Schoeberl}\\
+%\IEEEauthorblockA{Department of Applied Mathematics and Computer Science\\
+%Technical University of Denmark\\
+%Email: \texttt{edgar.lakis@gmail.com}, \texttt{masca@imm.dtu.dk}}
+%}
+
+
+\maketitle \thispagestyle{empty}
+
+\begin{abstract}
+Production of a chip is very expensive. Therefore, it is important to get the design right
+at the first tape-out. Throughout testing and verification of the design is mandatory.
+Until a few years, the two main design languages Verilog and VHDL dominated the
+design and testing of digital circuits. However, both languages are decades behind
+modern languages for software development.
+
+Resent advances with SystemVerilog and Chisel bring object-oriented programming
+into the digital design and verification process. SystemVerilog, as an extension of Verilog,
+adds object-oriented concepts for the non-synthesizable verification code.
+Chisel is a language, embedded in Scala, to describe and verify digital circuits.
+Scala/Chisel brings object-oriented and functional programming into the world of
+digital design.
+\end{abstract}
+
+\begin{IEEEkeywords}
+digital design, verification, object-oriented programming
+\end{IEEEkeywords}
+
+
+\section{Introduction}
+\label{sec:intro}
+
+\todo{A brief introduction what the paper is about. It shall include briefly the
+main contributions and findings. The contributions can be bullet listed.}
+
+This paper... \todo{purpose statement, latest in 4th paragraph}
+
+\todo{Test the bib with a reference that gives background on time-predictable
+computer architecture~\cite{tpca:jes}.}
+
+A paper is cited \cite{paper:example}.
+
+The contributions of this paper are: (1) ... (2) ...
+
+This paper is organized in N sections: The following section presents related work.
+Section~\ref{sec:background} provides background on ...
+Section X and Y 
+Section~\ref{sec:eval} evaluates...
+Section~\ref{sec:conclusion} concludes.
+
+\section{Related Work}
+\label{sec:related}
+
+\todo{Show that you know the field. All related work shall be put
+into context or contrast to our current work.}
+
+\martin{Does BluseSpec Verilog has something to offer?}
+
+
+\section{The Classic Hardware Description Languages}
+
+\section{SystemVerilog}
+
+\todo{adds some VHDL features to Verilog. Tries to please VHDL developers.}
+
+SystemVerilog is IEEE standard, proprietary tools.
+
+Chisel is research stuff and open-source
+
+\section{Chisel}
+
+Chisel~\cite{chisel:dac2012} 
+
+\section{Combining the Approaches}
+
+Although SystemVerilog/UVM and Chisel/Scala look like competing initiatives
+to solve the verification problem, it should be possible to combine those two methods.
+By using this combination we might be able to enjoy the benefits of both worlds:
+the industrial proven SystemVerilog/UVM tool chain with the available IPs with
+the research and more software oriented approach of Chisel/Scala. 
+
+\todo{Be nice to all and show how we can combine different approach to
+get the best of both worlds}
+
+\subsection{Using UVM with Chisel}
+
+The Chisel toolchain translates Chisel code into plain Verilog for simulation and
+synthesis. Therefore, we can use a UVM based test bench to test Chisel generated code.
+An important issue is that the modules and port names in the generated Verilog
+code are reasonable and do not change when changing the Chisel design.
+
+\subsection{UVM with VHDL}
+
+\subsection{Chisel with Verilog}
+
+\subsection{Chisel with VHDL}
+
+\todo{Simon, this is the place for you}
+Chisel has support for black boxes, which allows to use Verilog code within the Chisel design. However, it does not fully support VHDL. It can support VHDL using VCS, but there is no open source solution available for VHDL. This is due to the use of Treadle and Verilator \simon{Ref} for open source simulation. Treadle only supports Chisel code while Verilator is run on the generated Verilog. Therefore, Verilator can also simulate black boxes written in Verilog. However, VHDL is now a concern to companies that has a lot of source code written in VHDL, which needs to be compatible with any systems written in Chisel. As many simulation and synthesis tools supports mixed-language implementations, this is not an issue for the implementation part. But for open source testing, it proves to be a problem.
+
+A solution for this is based on the principle of using synthesis tools to analyze the VHDL RTL code and synthesize a gate-level netlist for this. These synthesis tools can often output a Verilog-based netlist. A free solution for this would be the Yosys \simon{ref} synthesis suite, which is an open-source digital hardware synthesis suite for Verilog code. It has support for VHDL by using Verific as a front-end, which requires a license. For an alternative solution to this, GHDL \simon{ref} would be used. GHDL is an open source simulator for VHDL which also funcions as a plugin for Yosys. This allows yosys to analyze VHDL files using GHDL and then synthesize a circuit. The gate-level netlist can then be saved as a Verilog file, which can be used for the simulation system. GHDL has full support for IEEE 1076 VHDL 1987, 1993, 2002 and a subset of 2008.\\
+
+\simon{Insert small image that depicts the workflow for this.}
+
+
+\subsection{Chisel with UVM}
+
+\todo{reusing Chisel tests (ScalaTest) within the UVM framework
+with the generated Verilog code}
+
+\section{Co-Simulation}
+
+\todo{with C/C++/Java/Scala/Phyton, ....}
+
+\section{Evaluation}
+
+Although this is a work-in-progress report, we have started with an evaluation.
+We implemented a simple ALU in SystemVerilog, classic Verilog, VHDL, and Chisel.
+We wrote a testbench in SystemVerilog and in Scala. As execution platform we
+used Synopsys VCS, ModelSim, Treadle, and Verilator.
+
+The examples are available in open source from: \url{https://github.com/chisel-uvm}.
+
+
+\subsection{Source Access}
+
+\martin{I love doing papers with available source under an
+open-source license. It gives credit and good karma.}
+
+
+\section{Conclusion and Future Work}
+
+
+This work-in-progress paper is a first sketch of the ideas to combine SystemVerilog/UVM
+with Chisel/Scala for a productive design and verification of future digital circuits.
+We will explore all combinations with a few small examples, provided by our industrial
+partners.
+From that we will bootstrap adding constraint-random verification methods to Chisel
+testers and collecting coverage metrics within FIRRTL.
+
+\subsection*{Acknowledgment}
+
+\todo{Sometimes we received some help. Sometimes external funding.}
+
+%This work was partially funded under the
+%European Union's 7th Framework Programme
+%under grant agreement no. 288008:
+%Time-predictable Multi-Core Architecture for Embedded
+%Systems (\mbox{T-CREST}).
+
+%\newpage
+~
+\newpage
+
+
+\section{Notes}
+
+Here collect of notes and ideas in bullet list for the development and writing process:
+
+\begin{itemize}
+\item Collect related work
+\item Some more notes
+\end{itemize}
+
+\subsection{Comparison}
+
+\begin{itemize}
+\item UVM is directly supported in major tools
+\item UVM is based on SystemVerilog (SV)
+\item OO in SV is only for test benches, not for HW description
+\item SystemVerilog is three languages in one: old Verilog, new SystemVerilog for synthesize
+(what constructs are supported by what tool), and SV for test benches
+\item SV is a specialized language for HW design and testing
+\item Chisel is two languages: Chisel for HW and Scala for tester
+\item Chisel supports OO for HW description
+\item Chisel is based on Scala
+\item Scala is a general purpose languages
+\item Scala/Chisel can use Java libraries (a LOT is available)
+\item Number of Scala programmers are larger than SV programmers (how much?)
+\item UVM is open source
+\item SV implementation is closed source, needs commercial tools
+\item UVM/SV is available on EDAPlayground
+\item Chisel/Scala is open source
+\item Chisel/Scala runs on the JVM, on Windows, Linux, and macOS
+\item Chisel is missing the UVM methodology
+\item SV (tools) supports coverage, Chisel does not
+\item UVM provides functions for random constraint testing, Chisel/Scala not
+\item UVM has a lot of IPs available (e.g., AXI)
+\item Chisel testers need some library for sequencing and interfacing (bachelor/master thesis on parts)
+\item Verdi is a GUI with knowledge of UVM
+\item Verilator with C/C++ emulation is another verification option
+\end{itemize}
+
+\subsection{Research Questions}
+
+\begin{itemize}
+\item Can we use Chisel testers within UVM?
+\item Can we run JVM based code in UVM?
+\item Doing UVM verification on Chisel generated Verilog
+\item UVM testing on Chisel interpreter (like Chisel tester using treadle, or Verilator)
+\end{itemize}
+
+\subsection{Big Research Questions}
+
+These topics are probably good questions for a larger research project.
+Part of this is probably already looked at by PhD students at UCB.
+
+\begin{itemize}
+\item Add coverage to Chisel tester
+\item Provide random constraint functions
+\item Provide UVM functions
+\item 
+\item 
+\end{itemize}
+
+VHDL/SV comparison: \url{http://www.sunburst-design.com/papers/CummingsSNUG2003Boston_SystemVerilog_VHDL.pdf}
+
+Open-source design flow, maybe for the Basys3: \url{https://symbiflow.github.io/}
+
+
+
+
+
+\bibliographystyle{plain}
+% Please do not add any references to msbib.bib.
+% They get lost when I 'generate' is again (see Makefile)
+\bibliography{chisel-uvm,msbib}
+
+\end{document}
