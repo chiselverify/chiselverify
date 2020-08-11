@@ -1,0 +1,13 @@
+test_run_dir/
+project/
+target/
+sv/work
+sv/csrc
+sv/simv.daidir
+*.key
+*.mpf
+*.mti
+simv
+*.log
+*.wlf
+transcript
