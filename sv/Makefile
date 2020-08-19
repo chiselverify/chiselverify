@@ -1,12 +1,13 @@
-
+#Do it with ModelSim
 doit:
 	vlib work
 #	vlog +acc -incr -lint *.sv
 	vlog *.sv
 	vsim -do sim.do test
 
+#Do it with Synopsys VCS
 vcs:
-	vcs -sverilog -full64 -timescale=1ns/1ns *.sv
+	vcs -sverilog -debug_access+all -full64 -timescale=1ns/1ns *.sv
 	./simv
 
 clean:

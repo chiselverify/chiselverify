@@ -33,6 +33,95 @@ package my_pkg;
 	import uvm_pkg::*;
 	import simplealu_pkg::*;
 
+	// The result monitor hooks into the interface and samples our results every time 'done' is asserted
+	class result_monitor extends uvm_monitor;
+
+		`uvm_component_utils(result_monitor);
+
+		virtual alu_if alif_v;
+
+		//Create analysis port that transmits shortints (16 bits)
+		uvm_analysis_port #(shortint) rslt_mon_ap;
+	
+		function new(string name, uvm_component parent);
+			super.new(name, parent);
+		endfunction
+
+		function void build_phase(uvm_phase phase);
+			// Get interface reference from config database
+			if( !uvm_config_db #(virtual alu_if)::get(this, "", "alu_if", alif_v) )
+				`uvm_error("", "uvm_config_db::get failed in result_monitor")
+		
+			//Build the analysis port
+			rslt_mon_ap = new("rslt_mon_ap", this);
+		endfunction
+
+		virtual task run_phase(uvm_phase phase);
+			shortint res;
+			forever begin
+				//On every rising edge of done, we have a valid result
+				@(posedge alif_v.done);
+				#1 //Wait for the value to be updated
+				res = alif_v.result;
+
+				rslt_mon_ap.write(res);
+			end
+		endtask
+	endclass
+
+	//Using this macro to generate an analysis port that can receive the results
+	`uvm_analysis_imp_decl(_1)
+	// The scoreboard tests whether the results obtained from the DUT match with the expected results
+	class my_scoreboard extends uvm_scoreboard;
+		`uvm_component_utils(my_scoreboard);
+
+		uvm_analysis_imp_1#(shortint, my_scoreboard) rslt_imp; //Instantiating the analysis port declared with the macro
+		uvm_tlm_analysis_fifo#(command) cmd_fifo;
+
+		int good = 0;
+		int bad = 0;
+		int total = 0;
+	
+		function new(string name, uvm_component parent);
+			super.new(name, parent);
+			rslt_imp = new("rslt_imp", this);
+			cmd_fifo = new("cmd_fifo", this);
+		endfunction: new
+
+		//Declaring the write() function for the analysis_imp
+		function void write_1(shortint t);
+			//Try to get a command from the fifo
+			command cmd = new;
+			shortint expected_result;
+			if(!cmd_fifo.try_get(cmd)) begin
+				`uvm_error(get_name(), "Could not get CMD from Fifo");
+				return;
+			end
+				
+			case(cmd.op)
+				ADD: expected_result = cmd.a + cmd.b;
+				SUB: expected_result = cmd.a - cmd.b;
+				XOR: expected_result = cmd.a ^ cmd.b;
+				MUL: expected_result = cmd.a * cmd.b;
+			endcase //cmd.op
+
+			if(expected_result != t) begin
+				`uvm_error(get_name(), $sformatf("Result did not match. a=%d, b=%d, op=%s, res=%d. Expected %d", cmd.a, cmd.b, cmd.op.name, t, expected_result));
+				bad++;
+			end else
+				good++;
+				
+			total++;
+		endfunction
+
+		function void report_phase(uvm_phase phase);
+			super.report_phase(phase);
+			`uvm_info(get_name(), $sformatf("Scoreboard finished\nGood: %3d, bad: %3d, total: %3d", good, bad, total), UVM_MEDIUM);
+		endfunction: report_phase
+		
+	endclass: my_scoreboard
+	
+
 	//The command monitor hooks into the ALU interface. Every time "start" is asserted, it samples the values of a, b and op
 	class command_monitor extends uvm_monitor;
 		`uvm_component_utils(command_monitor);
@@ -189,7 +278,7 @@ package my_pkg;
 				starting_phase.raise_objection(this);
 
 			//Here, the sequence generates the transactions of type my_transaction, randomizes them and passes them onto the driver
-			repeat(200)
+			repeat(100)
 			begin
 				req = my_transaction::type_id::create("req");
 				start_item(req);
@@ -225,7 +314,7 @@ package my_pkg;
 		task run_phase(uvm_phase phase);
 			forever
 			begin
-				//Here, the driver gets the next transaction on its seq_item_port
+				//Here, the driver gets the next transaction on its seq_item_port (a buit-in port)
 				seq_item_port.get_next_item(req);
 
 				// Wiggle pins of DUT in correct manner
@@ -238,13 +327,8 @@ package my_pkg;
 				@(negedge alif_v.clock);
 				alif_v.start = '0;
 
-				@(negedge alif_v.done);
-				//The result is ready
-				// @(posedge alif_v.clock);
-				// alif_v.a  = req.a;
-				// alif_v.b = req.b;
-				// alif_v.op = req.op;
-				
+				@(posedge alif_v.done);
+				//The result is ready		
 				//And signals to the sequencer that it is finished driving the transaction
 				seq_item_port.item_done();
 			end
@@ -257,11 +341,12 @@ package my_pkg;
 
 		`uvm_component_utils(my_env)
 		
-		//Now, the sequencer and driver are instantiated in the environment
 		my_sequencer m_seqr;
 		my_driver    m_driv;
 		command_monitor cmd_monitor;
 		coverage_comp cov_comp;
+		result_monitor rslt_monitor;
+		my_scoreboard scoreboard;
 		
 		function new(string name, uvm_component parent);
 			super.new(name, parent);
@@ -272,6 +357,8 @@ package my_pkg;
 			m_driv = my_driver::type_id::create("m_driv", this);
 			cmd_monitor = command_monitor::type_id::create("cmd_monitor", this);
 			cov_comp = coverage_comp::type_id::create("cov_comp", this);
+			rslt_monitor = result_monitor::type_id::create("rslt_monitor", this);
+			scoreboard = my_scoreboard::type_id::create("scoreboard", this);
 		endfunction
 		
 		//During the connect_phase, the drivers seq_item_port is connected to the sequencers seq_item_export
@@ -280,6 +367,10 @@ package my_pkg;
 
 			//And the analysis port of the cmd_monitor is connected to the export of cov_comp
 			cmd_monitor.cmd_mon_ap.connect(cov_comp.analysis_export);
+
+			//And the analysis port and FIFO of the scoreboard are connected as well
+			cmd_monitor.cmd_mon_ap.connect(scoreboard.cmd_fifo.analysis_export);
+			rslt_monitor.rslt_mon_ap.connect(scoreboard.rslt_imp);
 		endfunction
 		
 	endclass: my_env
@@ -337,7 +428,7 @@ module top;
 		end
 
 		always @(negedge alif.done) begin
-			`uvm_info("", $sformatf("a: %d, b: %d, op: %s, res: %d", alif.a, alif.b, alif.op.name, alif.result), UVM_MEDIUM);
+			// `uvm_info("", $sformatf("a: %d, b: %d, op: %s, res: %d, time=%d", alif.a, alif.b, alif.op.name, alif.result, $time), UVM_MEDIUM);
 		end
 
 endmodule: top
