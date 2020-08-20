@@ -13,7 +13,16 @@ package simplealu_pkg;
 	class command;
 		logic[7:0] a,b;
 		op_t op;
-	endclass;
+	endclass
+
+	/*
+	==== CONFIG CLASSES
+	*/
+	class global_config;
+		int no_runs;
+	endclass
+
+
 
 
 	/*

@@ -4,19 +4,27 @@
 `uvm_analysis_imp_decl(_1)
 // The scoreboard tests whether the results obtained from the DUT match with the expected results
 class my_scoreboard extends uvm_scoreboard;
-    `uvm_component_utils(my_scoreboard);
+	`uvm_component_utils(my_scoreboard);
 
-    uvm_analysis_imp_1#(shortint, my_scoreboard) rslt_imp; //Instantiating the analysis port declared with the macro
-    uvm_tlm_analysis_fifo#(command) cmd_fifo;
+	uvm_analysis_imp_1#(shortint, my_scoreboard) rslt_imp; //Instantiating the analysis port declared with the macro
+	uvm_tlm_analysis_fifo#(command) cmd_fifo;
 
-    int good = 0;
-    int bad = 0;
-    int total = 0;
-    
-    function new(string name, uvm_component parent);
-        super.new(name, parent);
-        rslt_imp = new("rslt_imp", this);
-        cmd_fifo = new("cmd_fifo", this);
+	int good = 0;
+	int bad = 0;
+	int total = 0;
+	int max = 1;
+	global_config g_cfg;
+	
+	function new(string name, uvm_component parent);
+		super.new(name, parent);
+		rslt_imp = new("rslt_imp", this);
+		cmd_fifo = new("cmd_fifo", this);
+		
+		if (!uvm_config_db#(global_config)::get(this, "", "g_cfg", g_cfg))
+			`uvm_error(get_name(), "Unable to get g_cfg")
+		else
+			max = g_cfg.no_runs;
+		  
     endfunction: new
 
     // This is some housekeeping functionality
@@ -25,10 +33,10 @@ class my_scoreboard extends uvm_scoreboard;
     // an objection is raised and we step for #1 until the total increases. 
     function void phase_ready_to_end (uvm_phase phase);
         if(phase.is(uvm_run_phase::get)) begin
-        if (total < 100) begin
+        if (total < max) begin
             phase.raise_objection(this);
             fork begin
-                while(total < 100) begin
+                while(total < max) begin
                     #1;
                 end
                 phase.drop_objection(this);

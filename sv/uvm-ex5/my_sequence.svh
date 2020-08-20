@@ -6,14 +6,18 @@ typedef uvm_sequencer #(my_transaction) my_sequencer;
 //These are all randomly generated, but they may be customized based on the current state of the DUT or other parameters
 class my_sequence extends uvm_sequence #(my_transaction);
 
-    `uvm_object_utils(my_sequence)
+	 `uvm_object_utils(my_sequence)
+	global_config g_cfg;
     
     function new (string name = "");
         super.new(name);
     endfunction
 
     //All uvm_sequence implementations must have a 'task body'
-    task body;
+	 task body;
+		if (!uvm_config_db#(global_config)::get(null, "", "g_cfg", g_cfg))
+			`uvm_error(get_name(), "Unable to get g_cfg")
+					
 
         //starting_phase is a variable defined in uvm_sequence. 
         //If the sequence instantiates other child sequences, these children will *not* raise an objection
@@ -21,7 +25,7 @@ class my_sequence extends uvm_sequence #(my_transaction);
             starting_phase.raise_objection(this);
 
         //Here, the sequence generates the transactions of type my_transaction, randomizes them and passes them onto the driver
-        repeat(100)
+        repeat(g_cfg.no_runs)
         begin
             req = my_transaction::type_id::create("req");
             start_item(req);
