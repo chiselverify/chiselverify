@@ -16,5 +16,6 @@ csrc
 *.ini
 *.opt
 *.vcd
+*.xml
 simv
 transcript
