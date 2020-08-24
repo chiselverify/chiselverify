@@ -17,9 +17,14 @@ package leros_pkg;
 		logic reset;
 	endclass
 
+	class sequence_config;
+		int no_repeats;
+	endclass;
+
 
 	//  Group: File includes
 	`include "base_transaction.svh"
+	`include "hilo_transaction.svh"
 
 	typedef uvm_sequencer#(base_transaction) my_sequencer;
 
@@ -30,8 +35,13 @@ package leros_pkg;
 
 
 	`include "driver.svh"
+	`include "command_monitor.svh"
+	`include "result_monitor.svh"
+	`include "coverage.svh"
+	`include "scoreboard.svh"
 
 	`include "env.svh"
-	`include "test1.svh"
+	`include "base_test.svh"
+	`include "hilo_test.svh"
 	
 endpackage: leros_pkg

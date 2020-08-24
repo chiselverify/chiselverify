@@ -3,16 +3,8 @@
 class driver extends uvm_driver #(base_transaction);
 	`uvm_component_utils(driver);
 
-	//  Group: Configuration Object(s)
-
-
-	//  Group: Components
-
-
 	//  Group: Variables
 	virtual dut_if dif_v;
-
-	//  Group: Functions
 
 	//  Function: build_phase
 	extern function void build_phase(uvm_phase phase);
@@ -21,7 +13,6 @@ class driver extends uvm_driver #(base_transaction);
 	extern task run_phase(uvm_phase phase);
 
 	//  Function: drive_item
-	//  Param tx a handle to the transaction item that should be driven
 	extern task drive_item(base_transaction tx);
 
 	//  Constructor: new
@@ -32,24 +23,42 @@ class driver extends uvm_driver #(base_transaction);
 	
 endclass: driver
 
+/*----------------------------------------------------------------------------*/
+/*  Functions                                                                 */
+/*----------------------------------------------------------------------------*/
+/**
+ Converts a transaction tx into pin-level wiggles at the correct times
+*/
 task driver::drive_item(base_transaction tx);
 	@(negedge dif_v.clock)
-
 	dif_v.din = tx.din;
 	dif_v.op = tx.op;
-	dif_v.reset = tx.is_reset;
-	dif_v.ena = '1;
+
+	if(tx.is_reset)
+		dif_v.reset = 1;
+	else begin
+		dif_v.reset = 0;
+		dif_v.ena = 1;
+	end
 
 	@(posedge dif_v.clock)
 	#2
 	dif_v.ena = '0;
+	dif_v.reset = '0;
+	
 endtask: drive_item
 
+/*----------------------------------------------------------------------------*/
+/*  UVM Build Phases                                                          */
+/*----------------------------------------------------------------------------*/
 function void driver::build_phase(uvm_phase phase);
 	if (!uvm_config_db#(virtual dut_if)::get(this, "", "dif_v", dif_v) )
 		`uvm_error(get_name(), "Unable to retrieve dif_v from config_db")
 endfunction: build_phase
 
+/*----------------------------------------------------------------------------*/
+/*  UVM Run Phases                                                            */
+/*----------------------------------------------------------------------------*/
 task driver::run_phase(uvm_phase phase);
 	base_transaction tx;
 	forever begin

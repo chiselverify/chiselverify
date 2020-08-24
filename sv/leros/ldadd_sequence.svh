@@ -15,7 +15,6 @@ class ldadd_sequence extends base_sequence;
 
 
 	//  Task: body
-	//  This is the user-defined task where the main sequence code resides.
 	extern virtual task body();
 
 endclass: ldadd_sequence

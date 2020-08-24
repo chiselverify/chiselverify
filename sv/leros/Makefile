@@ -13,3 +13,4 @@ ms:
 
 	#Command line, with coverage, random seed, top component, load more from sim.do
 	vsim -c -coverage -sv_seed random +UVM_TESTNAME=$(TESTNAME) +UVM_VERBOSITY=$(VERBOSITY) $(PLUSARGS) top -do sim.do
+	grep COVERGROUP coverage.txt

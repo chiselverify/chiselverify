@@ -7,13 +7,15 @@ class base_transaction extends uvm_sequence_item;
 	//  Group: Variables
 	rand bit [15:0] din;
 	rand leros_op_t op;
-	bit is_reset;
+	rand bit is_reset;
 
 
 	//  Group: Constraints
-	constraint c_din {0 < din; din <= 'h000f; }
+	constraint c_din {0 < din; din <= 'hfff; }
 
 	constraint c_op {0 <= op; op <= 'b111; }
+
+	constraint c_reset {is_reset == 0; } //By default, we don't wish to generate resets
 
 
 	//  Group: Functions
@@ -31,14 +33,6 @@ class base_transaction extends uvm_sequence_item;
 	extern function string convert2string();
 	
 endclass: base_transaction
-
-
-/*----------------------------------------------------------------------------*/
-/*  Constraints                                                               */
-/*----------------------------------------------------------------------------*/
-
-
-
 
 /*----------------------------------------------------------------------------*/
 /*  Functions                                                                 */
@@ -58,8 +52,6 @@ function string base_transaction::convert2string();
 
 	return s;
 endfunction: convert2string
-
-
 
 function void base_transaction::do_copy(uvm_object rhs);
 	this_type_t rhs_;

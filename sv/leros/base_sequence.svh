@@ -6,35 +6,26 @@ class base_sequence extends uvm_sequence #(base_transaction);
 	//  Group: Variables
 	base_transaction tx;
 
-
-	//  Group: Constraints
-
-
-	//  Group: Functions
-
 	//  Constructor: new
 	function new(string name = "base_sequence");
 		super.new(name);
 	endfunction: new
 
 	//  Task: pre_body
-	//  This task is a user-definable callback that is called before the execution 
-	//  of <body> ~only~ when the sequence is started with <start>.
-	//  If <start> is called with ~call_pre_post~ set to 0, ~pre_body~ is not called.
 	extern virtual task pre_body();
 
 	//  Task: body
-	//  This is the user-defined task where the main sequence code resides.
 	extern virtual task body();
 
 	//  Task: post_body
-	//  This task is a user-definable callback task that is called after the execution 
-	//  of <body> ~only~ when the sequence is started with <start>.
-	//  If <start> is called with ~call_pre_post~ set to 0, ~post_body~ is not called.
 	extern virtual task post_body();
 	
 endclass: base_sequence
 
+/**
+ Raises an objection if this is the top sequence running on the sequencer
+ Does nothing if this is a child sequence
+*/
 task base_sequence::pre_body();
 	if(starting_phase != null)
 		starting_phase.raise_objection(this);
@@ -48,9 +39,11 @@ task base_sequence::body();
 	finish_item(tx);
 endtask: body
 
-
+/**
+ Drops an objection if this is the top sequence running on the sequencer
+ Does nothing if this is a child sequence
+*/
 task base_sequence::post_body();
 	if(starting_phase != null)
 		starting_phase.drop_objection(this);
 endtask: post_body
-
