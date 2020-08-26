@@ -14,4 +14,9 @@ In the [sv](sv) directory, a number of UVM examples are located.
 * The fifth example replicates the functionality of #4, but each class has been put into its own file.
 * The sixth example includes more sequences and tests that leverage these sequences. Each sequence derives from the basic sequence.
 
+## Vivado UVM Examples
+These examples assume that a copy of Xilinx Vivado is installed and present in the PATH. The examples are currently tested only on Linux.
+* The first example is taken from [Vivado Design Suite Tutorial - Logic Simulation](https://www.xilinx.com/support/documentation/sw_manuals/xilinx2020_1/ug937-vivado-design-suite-simulation-tutorial.pdf)
+
+
 In the directory `leros`, the ALU desribed in `src/main/scala/leros/AluAccu.scala` is tested using UVM, to showcase that Chisel and UVM can work together.
