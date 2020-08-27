@@ -15,7 +15,12 @@ package leros_pkg;
 		leros_op_t op;
 		logic [15:0] din;
 		logic reset;
+		logic [15:0] accu;
 	endclass
+
+	class agent_config extends uvm_object;
+		uvm_active_passive_enum is_active;
+	endclass;
 
 	class sequence_config;
 		int no_repeats;
@@ -37,8 +42,11 @@ package leros_pkg;
 	`include "driver.svh"
 	`include "command_monitor.svh"
 	`include "result_monitor.svh"
+	`include "monitor.svh"
 	`include "coverage.svh"
 	`include "scoreboard.svh"
+
+	`include "agent.svh"
 
 	`include "env.svh"
 	`include "base_test.svh"

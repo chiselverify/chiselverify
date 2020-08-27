@@ -17,5 +17,5 @@ csrc
 *.opt
 *.vcd
 *.xml
-simv
+simv*
 transcript

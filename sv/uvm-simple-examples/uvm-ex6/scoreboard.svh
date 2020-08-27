@@ -32,10 +32,10 @@ class my_scoreboard extends uvm_scoreboard;
     // an objection is raised and we step for #2 until the total increases. 
     function void phase_ready_to_end (uvm_phase phase);
 		if(phase.is(uvm_run_phase::get)) begin
-			if (total < g_cfg.no_runs) begin
+			if (total < max) begin
 				phase.raise_objection(this);
 				fork begin
-						while(total < g_cfg.no_runs) begin
+						while(total < max) begin
 							#2;
 						end
 						phase.drop_objection(this);
@@ -72,7 +72,6 @@ class my_scoreboard extends uvm_scoreboard;
 		  end
             
         total++;
-
     endfunction
 
     function void report_phase(uvm_phase phase);

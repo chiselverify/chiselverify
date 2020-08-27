@@ -5,12 +5,11 @@ class scoreboard extends uvm_scoreboard;
 	`uvm_component_utils(scoreboard);
 
 	//  Group: Components
-	uvm_analysis_imp_1#(shortint, scoreboard) rslt_imp;
-	uvm_tlm_analysis_fifo#(leros_command) cmd_fifo;	
+	uvm_analysis_imp_1#(leros_command, scoreboard) rslt_imp;
 
 	//  Group: Variables
-	shortint unsigned accu = 0;
-	shortint unsigned accu_next = 0;
+	shortint accu = 0;
+	shortint accu_next = 0;
 
 	int good = 0;
 	int bad = 0;
@@ -24,7 +23,7 @@ class scoreboard extends uvm_scoreboard;
 	extern function void report_phase(uvm_phase phase);
 	
 	//  Function: write_1
-	extern function void write_1(shortint t);
+	extern function void write_1(leros_command t);
 	
 
 	//  Constructor: new
@@ -32,41 +31,32 @@ class scoreboard extends uvm_scoreboard;
 		super.new(name, parent);
 	endfunction: new
 
-	
 endclass: scoreboard
 
 function void scoreboard::build_phase(uvm_phase phase);
 	rslt_imp = new("rslt_imp", this);
-	cmd_fifo = new("cmd_fifo", this);
 endfunction: build_phase
 
-function void scoreboard::write_1(shortint t);
+function void scoreboard::write_1(leros_command t);
 	leros_command cmd = new;
-	shortint unsigned predicted_result;
 
-	//Get command from FIFO
-	if (!cmd_fifo.try_get(cmd)) begin
-		`uvm_error(get_name(), "Unable to get cmd from fifo")
-		return;
-	end
-
-	if(cmd.reset) begin
+	if(t.reset) begin
 		accu_next = 0;
 	end
 	else begin
-		case(cmd.op)
-			ADD: accu_next += cmd.din;
-			SUB: accu_next -= cmd.din;
-			AND: accu_next = accu & cmd.din;
-			OR : accu_next = accu | cmd.din;
-			XOR: accu_next = accu ^ cmd.din;
-			LD : accu_next = cmd.din;
+		case(t.op)
+			ADD: accu_next += t.din;
+			SUB: accu_next -= t.din;
+			AND: accu_next = accu & t.din;
+			OR : accu_next = accu | t.din;
+			XOR: accu_next = accu ^ t.din;
+			LD : accu_next = t.din;
 			SHR: accu_next = (accu >> 1);
-		 //NOP: Do nothing
+		 // NOP: Do nothing
 		endcase
 	end
 
-	if(accu_next != t) begin //t=result from ALU
+	if(accu_next != t.accu) begin //t=result from ALU
 		`uvm_error(get_name(), $sformatf("Result did not match. accu=%d, din=%d, op=%s. Got %d, expected %d", accu, cmd.din, cmd.op.name, t, accu_next))
 		bad++;
 	end

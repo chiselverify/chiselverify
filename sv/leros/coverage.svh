@@ -59,6 +59,8 @@ function void coverage::write(leros_command t);
 	cmd.din = t.din;
 	cmd.reset = t.reset;
 
+	`uvm_info(get_name(), $sformatf("Got: op=%s, din=%d, accu=%d, reset=%d", t.op.name, shortint'(t.din), shortint'(t.accu), t.reset), UVM_HIGH)
+	
 	cg_all_zeros_ones.sample();
 	cg_post_rst.sample();
 endfunction;

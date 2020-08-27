@@ -1,5 +1,5 @@
 //  Class: hilo_transaction
-//
+//  Generates transaction with a lot of high and low values, to test interesting cases
 class hilo_transaction extends base_transaction;
 	typedef hilo_transaction this_type_t;
 	`uvm_object_utils(hilo_transaction);
@@ -8,9 +8,12 @@ class hilo_transaction extends base_transaction;
 	//We wish to generate a lot of all-zeros and all-ones transactions
 	constraint c_din {
  		din dist {
-			'0:/1,
-			'1:/1,
-			[16'b1:16'hfffe]:/1
+			0:=1,
+			1:=1,
+			shortint'(-1):=1,
+			shortint'(-32768):=1,
+			32767:=1
+			// [16'b1:16'hfffe]:/1
 		}; 
 	}
 

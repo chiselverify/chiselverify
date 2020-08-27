@@ -37,7 +37,7 @@ function void result_monitor::build_phase(uvm_phase phase);
 endfunction: build_phase
 
 task result_monitor::run_phase(uvm_phase phase);
-	shortint unsigned res;
+	shortint res;
 	forever begin
 		@(posedge dif_v.ena, posedge dif_v.reset) //Wait for command or reset to be asserted
 		@(posedge dif_v.clock) //Wait for clock to tick

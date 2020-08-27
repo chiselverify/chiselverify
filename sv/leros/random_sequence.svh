@@ -35,6 +35,7 @@ task random_sequence::body();
 		start_item(tx);
 		if (!tx.randomize() )
 			`uvm_error(get_name(), "Randomize failed")
+			
 		finish_item(tx);
 		
 	end
