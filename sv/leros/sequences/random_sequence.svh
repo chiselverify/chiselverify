@@ -6,7 +6,12 @@ class random_sequence extends base_sequence;
 	//  Group: Variables
 	sequence_config seq_cfg;
 
-	int no_repeats = 10; //Magic number
+	rand int num_repeats; //Magic number
+
+	constraint c_repeats {
+		num_repeats inside {[100:300]};
+	}
+	
 
 	//  Group: Functions
 
@@ -23,14 +28,8 @@ endclass: random_sequence
 task random_sequence::body();
 	super.body(); //Execute reset
 
-	//Get config for sequence
-	if (!uvm_config_db#(sequence_config)::get(null, "uvm_test_top", "random_seq_cfg", seq_cfg) )
-		`uvm_error(get_name(), "Unable to get random_seq config")
-	else
-		no_repeats = seq_cfg.no_repeats;
-
 	//Perform the sequence
-	repeat(no_repeats) begin
+	repeat(num_repeats) begin
 		tx = base_transaction::type_id::create("tx");
 		start_item(tx);
 		if (!tx.randomize() )

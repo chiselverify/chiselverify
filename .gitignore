@@ -2,7 +2,6 @@ test_run_dir
 project
 target
 work
-simv.daidir
 csrc
 *.key
 *.mpf
@@ -17,5 +16,9 @@ csrc
 *.opt
 *.vcd
 *.xml
+*.db
+*.sdb
 simv*
+AN.DB*
+64*
 transcript

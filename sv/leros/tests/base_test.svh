@@ -15,6 +15,9 @@ class base_test extends uvm_test;
 	
 	//  Function: run_phase
 	extern task run_phase(uvm_phase phase);
+
+	extern task generate_reset(uvm_phase phase);
+	
 	
 	//  Constructor: new
 	function new(string name = "base_test", uvm_component parent);
@@ -28,6 +31,7 @@ endclass: base_test
 /*  UVM Build Phases                                                          */
 /*----------------------------------------------------------------------------*/
 function void base_test::build_phase(uvm_phase phase);
+	//Build env, store agent cfg
 	m_env = env::type_id::create(.name("m_env"), .parent(this));
 
 	agent1_cfg.is_active = UVM_ACTIVE;
@@ -38,10 +42,16 @@ endfunction: build_phase
 /*----------------------------------------------------------------------------*/
 /*  UVM Run Phases                                                            */
 /*----------------------------------------------------------------------------*/
+
+//Just generate a reset, and be done with it
 task base_test::run_phase(uvm_phase phase);
-	base_sequence seq;
-	seq = base_sequence::type_id::create("seq");
+	generate_reset(phase);
+endtask: run_phase
+
+task base_test::generate_reset(uvm_phase phase);
+	reset_sequence seq;
+	seq = reset_sequence::type_id::create("seq");
 	seq.starting_phase = phase;
 	seq.start(m_env.m_agent.m_seqr);
-endtask: run_phase
+endtask;
 

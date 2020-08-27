@@ -29,19 +29,19 @@ package leros_pkg;
 
 	//  Group: File includes
 	`include "base_transaction.svh"
-	`include "hilo_transaction.svh"
+	`include "edge_transaction.svh"
 
 	typedef uvm_sequencer#(base_transaction) my_sequencer;
 
 	`include "base_sequence.svh"
 	`include "reset_sequence.svh"
-	`include "ldadd_sequence.svh"
 	`include "random_sequence.svh"
+	`include "edge_sequence.svh"
 
 
 	`include "driver.svh"
-	`include "command_monitor.svh"
-	`include "result_monitor.svh"
+	// `include "command_monitor.svh"
+	// `include "result_monitor.svh"
 	`include "monitor.svh"
 	`include "coverage.svh"
 	`include "scoreboard.svh"
@@ -50,6 +50,7 @@ package leros_pkg;
 
 	`include "env.svh"
 	`include "base_test.svh"
-	`include "hilo_test.svh"
+	`include "edge_test.svh"
+	`include "random_test.svh"
 	
 endpackage: leros_pkg

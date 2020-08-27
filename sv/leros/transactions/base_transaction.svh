@@ -11,11 +11,16 @@ class base_transaction extends uvm_sequence_item;
 
 
 	//  Group: Constraints
-	constraint c_din {0 < din; din <= 'hfff; }
+	constraint c_din {'0 <= din; din <= '1; }
 
-	constraint c_op {0 <= op; op <= 'b111; }
+	constraint c_op {'0 <= op; op <= '1; }
 
-	constraint c_reset {is_reset == 0; } //By default, we don't wish to generate resets
+	constraint c_reset {
+		is_reset dist {
+			0:=9,
+			1:=1
+		};
+	}
 
 
 	//  Group: Functions
@@ -45,9 +50,6 @@ function string base_transaction::convert2string();
 	s = super.convert2string();
 
 	/*  list of local properties to be printed:  */
-	//  guide             0---4---8--12--16--20--24--28--32--36--40--44--48--
-	// s = {s, $sformatf("property_label      : 0x%0h\n", property_name)};
-	// s = {s, $sformatf("property_label      :   %0d\n", property_name)};
 	   s = {s, $sformatf("op: %s, din: %b, reset: %d", op.name, din, is_reset)};
 
 	return s;

@@ -22,13 +22,16 @@ class coverage extends uvm_subscriber #(leros_command);
 	endgroup: cg_post_rst
 
 	//  Covergroup: cg_all_zeros_ones
-	//  Ensures that all OPs have been attempted with zeros, ones and random values
+	//  Ensures that all OPs have been attempted with all edge-case values, as defined in edge_transaction and random values
 	covergroup cg_all_zeros_ones;
 		OPS: coverpoint cmd.op;
 
 		DIN: coverpoint cmd.din {
-			bins zeros = {'0};
-			bins ones = {'1};
+			bins min_value = {16'h8000};
+			bins neg1 = {'1};
+			bins zero = {0};
+			bins one =  {1};
+			bins max_value = {32767};
 			bins others = default; //All the rest
 		}
 	endgroup: cg_all_zeros_ones

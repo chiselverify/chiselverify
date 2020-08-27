@@ -4,7 +4,7 @@ class base_sequence extends uvm_sequence #(base_transaction);
 	`uvm_object_utils(base_sequence);
 
 	//  Group: Variables
-	base_transaction tx;
+	base_transaction tx; //Transaction object that all extending classes can access
 
 	//  Constructor: new
 	function new(string name = "base_sequence");
@@ -32,11 +32,7 @@ task base_sequence::pre_body();
 endtask: pre_body
 
 task base_sequence::body();
-	//We always wish to start by executing a reset (unless expressly told not to)
-	tx = base_transaction::type_id::create("tx");
-	start_item(tx);
-	tx.is_reset = 1;
-	finish_item(tx);
+	//Empty on purpose
 endtask: body
 
 /**
