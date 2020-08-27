@@ -1,0 +1,69 @@
+`ifndef ADDER_4_BIT_MONITOR 
+`define ADDER_4_BIT_MONITOR
+
+class adder_4_bit_monitor extends uvm_monitor;
+ 
+  ///////////////////////////////////////////////////////////////////////////////
+  // Declaration of Virtual interface
+  ///////////////////////////////////////////////////////////////////////////////
+  virtual adder_4_bit_interface vif;
+  ///////////////////////////////////////////////////////////////////////////////
+  // Declaration of Analysis ports and exports 
+  ///////////////////////////////////////////////////////////////////////////////
+  uvm_analysis_port #(adder_4_bit_transaction) mon2sb_port;
+  ///////////////////////////////////////////////////////////////////////////////
+  // Declaration of transaction item 
+  ///////////////////////////////////////////////////////////////////////////////
+  adder_4_bit_transaction act_trans;
+  ///////////////////////////////////////////////////////////////////////////////
+  // Declaration of component  utils 
+  ///////////////////////////////////////////////////////////////////////////////
+  `uvm_component_utils(adder_4_bit_monitor)
+  ///////////////////////////////////////////////////////////////////////////////
+  // Method name : new 
+  // Description : constructor
+  ///////////////////////////////////////////////////////////////////////////////
+  function new (string name, uvm_component parent);
+    super.new(name, parent);
+    act_trans = new();
+    mon2sb_port = new("mon2sb_port", this);
+  endfunction : new
+  ///////////////////////////////////////////////////////////////////////////////
+  // Method name : build_phase 
+  // Description : construct the components
+  ///////////////////////////////////////////////////////////////////////////////
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+    if(!uvm_config_db#(virtual adder_4_bit_interface)::get(this, "", "intf", vif))
+       `uvm_fatal("NOVIF",{"virtual interface must be set for: ",get_full_name(),".vif"});
+  endfunction: build_phase
+  ///////////////////////////////////////////////////////////////////////////////
+  // Method name : run_phase 
+  // Description : Extract the info from DUT via interface 
+  ///////////////////////////////////////////////////////////////////////////////
+  virtual task run_phase(uvm_phase phase);
+    forever begin
+      collect_trans();
+      mon2sb_port.write(act_trans);
+    end
+  endtask : run_phase
+  ///////////////////////////////////////////////////////////////////////////////
+  // Method name : collect_actual_trans 
+  // Description : run task for collecting adder_4_bit transactions
+  ///////////////////////////////////////////////////////////////////////////////
+  task collect_trans();
+    wait(!vif.reset);
+    @(vif.rc_cb);
+    @(vif.rc_cb);
+      act_trans.x = vif.rc_cb.x;
+      act_trans.y = vif.rc_cb.y;
+      act_trans.cin = vif.rc_cb.cin;
+      act_trans.sum = vif.rc_cb.sum;
+      act_trans.cout = vif.rc_cb.cout;
+    `uvm_info(get_full_name(),$sformatf("TRANSACTION FROM MONITOR"),UVM_LOW);
+      act_trans.print();
+  endtask
+
+endclass : adder_4_bit_monitor
+
+`endif
