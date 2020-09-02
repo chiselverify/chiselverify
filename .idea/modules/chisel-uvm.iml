@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module external.linked.project.id="chisel-uvm [file:/Users/martin/source/chisel-uvm/chisel-uvm/]" external.linked.project.path="$MODULE_DIR$/../.." external.root.project.path="$MODULE_DIR$/../.." external.system.id="SBT" type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8">
+    <output url="file://$MODULE_DIR$/../../target/scala-2.12/classes" />
+    <output-test url="file://$MODULE_DIR$/../../target/scala-2.12/test-classes" />
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/../..">
+      <sourceFolder url="file://$MODULE_DIR$/../../src/main/scala" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../src/test/scala" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/../../target/scala-2.12/src_managed/main" isTestSource="false" generated="true" />
+      <sourceFolder url="file://$MODULE_DIR$/../../target/scala-2.12/src_managed/test" isTestSource="true" generated="true" />
+      <sourceFolder url="file://$MODULE_DIR$/../../src/main/resources" type="java-resource" />
+      <excludeFolder url="file://$MODULE_DIR$/../../target" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="sbt: ch.qos.logback:logback-classic:1.2.3:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.yaml:snakeyaml:1.24:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.slf4j:slf4j-api:1.7.25:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.scalatest:scalatest_2.12:3.0.8:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.scalactic:scalactic_2.12:3.0.8:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.scalacheck:scalacheck_2.12:1.14.0:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.scala-sbt:test-interface:1.0:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.scala-lang.modules:scala-xml_2.12:1.2.0:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.scala-lang.modules:scala-jline:2.12.1:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.scala-lang:scala-reflect:2.12.6:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.scala-lang:scala-library:2.12.6:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.json4s:json4s-scalap_2.12:3.6.7:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.json4s:json4s-native_2.12:3.6.7:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.json4s:json4s-core_2.12:3.6.7:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.json4s:json4s-ast_2.12:3.6.7:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.joda:joda-convert:2.2.0:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.hamcrest:hamcrest-core:1.3:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.fusesource.jansi:jansi:1.11:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.apache.commons:commons-text:1.7:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.apache.commons:commons-lang3:3.9:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.antlr:antlr4-runtime:4.7.1:jar" level="project" />
+    <orderEntry type="library" name="sbt: net.jcazevedo:moultingyaml_2.12:0.4.1:jar" level="project" />
+    <orderEntry type="library" name="sbt: junit:junit:4.12:jar" level="project" />
+    <orderEntry type="library" name="sbt: joda-time:joda-time:2.10.1:jar" level="project" />
+    <orderEntry type="library" name="sbt: edu.berkeley.cs:treadle_2.12:1.1.0:jar" level="project" />
+    <orderEntry type="library" name="sbt: edu.berkeley.cs:firrtl_2.12:1.2.0:jar" level="project" />
+    <orderEntry type="library" name="sbt: edu.berkeley.cs:firrtl-interpreter_2.12:1.2.0:jar" level="project" />
+    <orderEntry type="library" name="sbt: edu.berkeley.cs:chisel3_2.12:3.2.0:jar" level="project" />
+    <orderEntry type="library" name="sbt: edu.berkeley.cs:chisel-iotesters_2.12:1.3.0:jar" level="project" />
+    <orderEntry type="library" name="sbt: com.typesafe.scala-logging:scala-logging_2.12:3.9.0:jar" level="project" />
+    <orderEntry type="library" name="sbt: com.thoughtworks.paranamer:paranamer:2.8:jar" level="project" />
+    <orderEntry type="library" name="sbt: com.google.protobuf:protobuf-java:3.4.0:jar" level="project" />
+    <orderEntry type="library" name="sbt: com.github.scopt:scopt_2.12:3.7.1:jar" level="project" />
+    <orderEntry type="library" name="sbt: com.github.nscala-time:nscala-time_2.12:2.22.0:jar" level="project" />
+    <orderEntry type="library" name="sbt: ch.qos.logback:logback-core:1.2.3:jar" level="project" />
+  </component>
+</module>

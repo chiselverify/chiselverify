@@ -19,14 +19,9 @@ class accualu extends BlackBox with HasBlackBoxResource {
 }
 
 
-class AluAccuGenerated extends Module {
-  val io = IO(new Bundle {
-    val op = Input(UInt(3.W))
-    val din = Input(UInt(32.W))
-    val ena = Input(Bool())
-    val accu = Output(UInt(32.W))
-  })
+class AluAccuGenerated(size: Int) extends AluAccu(size) {
 
+  // TODO: can we parameterize the generated Verilog?
   val AluAccu = Module(new accualu())
 
   //Needs to be done with explicit clock and reset

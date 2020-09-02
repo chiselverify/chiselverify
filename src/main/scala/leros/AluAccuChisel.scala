@@ -14,13 +14,7 @@ object Types {
   *
   * @param size
   */
-class AluAccuChisel(size: Int) extends Module {
-  val io = IO(new Bundle {
-    val op = Input(UInt(3.W))
-    val din = Input(UInt(size.W))
-    val ena = Input(Bool())
-    val accu = Output(UInt(size.W))
-  })
+class AluAccuChisel(size: Int) extends AluAccu(size) {
 
   val accuReg = RegInit(0.U(size.W))
 
