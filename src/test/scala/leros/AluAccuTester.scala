@@ -6,7 +6,7 @@ import org.scalatest._
 
 import leros.Types._
 
-class AluAccuTester(dut: AluAccu) extends PeekPokeTester(dut) {
+class AluAccuTester(dut: AluAccuChisel) extends PeekPokeTester(dut) {
 
   // TODO: this is not the best way look at functions defined as Enum.
   // Workaround would be defining constants
@@ -59,7 +59,7 @@ class AluAccuTester(dut: AluAccu) extends PeekPokeTester(dut) {
 class AluTesterSpec extends FlatSpec with Matchers {
 
   "AluAccu" should "pass" in {
-    iotesters.Driver(() => new AluAccu(32)) {
+    iotesters.Driver(() => new AluAccuChisel(32)) {
       c => new AluAccuTester(c)
     }
   }
