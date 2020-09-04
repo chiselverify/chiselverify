@@ -26,3 +26,14 @@ vcs: #Compiles with VCS, explicitly pointing to UVM files
 	#ntb_opts uvm is necessary for compilation with VHDL DUT, though I don't know why
 	vcs -full64 -ntb_opts uvm -top $(TOP)
 	./simv +UVM_TESTNAME=$(TESTNAME) +UVM_VERBOSITY=$(VERBOSITY) $(PLUSARGS)
+
+
+clean:
+	rm -rf 64
+	rm -rf AN.DB
+	rm -rf csrc
+	rm -rf simv.*
+	rm -rf work
+	rm -rf simv
+	rm -f .vlogansetup.args
+	rm -f .vlogansetup.env

@@ -10,9 +10,9 @@ class edge_transaction extends base_transaction;
  		din dist {
 			0:=1,
 			1:=1,
-			shortint'(-1):=1,
-			shortint'(-32768):=1,
-			32767:=1
+			int'(-1):=1,
+			32'h80000000:=1, //Min value
+			32'h7fffffff:=1  //Max value
 			// [16'b1:16'hfffe]:/1
 		}; 
 	}

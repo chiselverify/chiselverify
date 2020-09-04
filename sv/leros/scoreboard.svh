@@ -8,8 +8,8 @@ class scoreboard extends uvm_scoreboard;
 	uvm_analysis_imp_1#(leros_command, scoreboard) rslt_imp;
 
 	//  Group: Variables
-	shortint accu = 0;
-	shortint accu_next = 0;
+	int accu = 0;
+	int accu_next = 0;
 
 	int good = 0;
 	int bad = 0;
@@ -56,7 +56,7 @@ function void scoreboard::write_1(leros_command t);
 		endcase
 	end
 
-	if(accu_next != t.accu) begin //t=result from ALU
+	if(accu_next != t.accu) begin //t.accu=result from ALU
 		`uvm_error(get_name(), $sformatf("Result did not match. accu=%d, din=%d, op=%s. Got %d, expected %d", accu, cmd.din, cmd.op.name, t, accu_next))
 		bad++;
 	end

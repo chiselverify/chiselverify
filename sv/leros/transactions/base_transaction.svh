@@ -5,15 +5,15 @@ class base_transaction extends uvm_sequence_item;
 	`uvm_object_utils(base_transaction);
 
 	//  Group: Variables
-	rand bit [15:0] din;
+	rand bit [31:0] din;
 	rand leros_op_t op;
 	rand bit is_reset;
 
 
 	//  Group: Constraints
-	constraint c_din {'0 <= din; din <= '1; }
+	constraint c_din {'0 <= din; din <= '1; } //All possible values
 
-	constraint c_op {'0 <= op; op <= '1; }
+	constraint c_op {'0 <= op; op <= '1; } //All possible values
 
 	constraint c_reset {
 		is_reset dist {

@@ -51,7 +51,7 @@ task monitor::run_phase(uvm_phase phase);
         cmd.din = dif_v.din;
         cmd.reset = dif_v.reset;
         @(posedge dif_v.clock) //Sample result
-        #1
+        #1 //Wait for output to appear on register
         cmd.accu = dif_v.accu;
         mon_ap.write(cmd); //Write to listeners
     end

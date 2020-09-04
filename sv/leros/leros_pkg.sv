@@ -13,9 +13,9 @@ package leros_pkg;
 	//  Group: Helper classes
 	class leros_command;
 		leros_op_t op;
-		logic [15:0] din;
+		logic [31:0] din;
 		logic reset;
-		logic [15:0] accu;
+		logic [31:0] accu;
 	endclass
 
 	class agent_config extends uvm_object;
@@ -40,8 +40,6 @@ package leros_pkg;
 
 
 	`include "driver.svh"
-	// `include "command_monitor.svh"
-	// `include "result_monitor.svh"
 	`include "monitor.svh"
 	`include "coverage.svh"
 	`include "scoreboard.svh"

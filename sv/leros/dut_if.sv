@@ -5,9 +5,9 @@ interface dut_if;
 	import leros_pkg::leros_op_t;
 	logic clock, reset;
 	logic ena;
-	logic [15:0] din;
+	logic [31:0] din;
 	leros_op_t op;
-	logic [15:0] accu;
+	logic [31:0] accu;
 endinterface //dut_if
 
 `endif

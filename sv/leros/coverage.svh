@@ -27,11 +27,11 @@ class coverage extends uvm_subscriber #(leros_command);
 		OPS: coverpoint cmd.op;
 
 		DIN: coverpoint cmd.din {
-			bins min_value = {16'h8000};
+			bins min_value = {32'h80000000};
 			bins neg1 = {'1};
 			bins zero = {0};
 			bins one =  {1};
-			bins max_value = {32767};
+			bins max_value = {32'h7fffffff};
 			bins others = default; //All the rest
 		}
 	endgroup: cg_all_zeros_ones
@@ -58,12 +58,14 @@ endclass: coverage
 /*----------------------------------------------------------------------------*/
 
 function void coverage::write(leros_command t);
+	//Save coverage data
 	cmd.op = t.op;
 	cmd.din = t.din;
 	cmd.reset = t.reset;
 
 	`uvm_info(get_name(), $sformatf("Got: op=%s, din=%d, accu=%d, reset=%d", t.op.name, shortint'(t.din), shortint'(t.accu), t.reset), UVM_HIGH)
 	
+	//Sample for coverage
 	cg_all_zeros_ones.sample();
 	cg_post_rst.sample();
 endfunction;
