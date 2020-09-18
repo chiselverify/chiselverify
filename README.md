@@ -18,3 +18,10 @@ These examples assume that a copy of Xilinx Vivado is installed and present in t
 In the directory `sv/leros`, the [Leros ALU](src/main/scala/leros/AluAccuChisel.scala) is tested using UVM, to showcase that Chisel and UVM can work together. This testbench is reused to also test a VHDL implementation of the ALU, to show that UVM is usable on mixed-language designs (when using a mixed-language simulator).
 
 The VHDL implementaion is run by setting the makefile argument `TOP=top_vhd`.
+
+# Resources
+If yu're interested in learning more about the UVM, we recommend that you explore the repository, as well as some of the following links:
+* [First steps with UVM](https://www.youtube.com/watch?v=qLr8ayWM_Ww)
+* [UVM Cookbook (requires an account)](https://verificationacademy.com/cookbook/uvm)
+* [ChipVerify.com UVM Tutorials](https://www.chipverify.com/table/uvm/)
+* [Ray Salemi's UVM Primer videos](https://www.youtube.com/watch?v=eeU2zpgXv1A&list=PLigQ6Cc3qFpI_WTgqtDXi_Msk3yRuKGGJ)
