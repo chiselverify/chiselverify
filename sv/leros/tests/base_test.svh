@@ -34,7 +34,6 @@ function void base_test::build_phase(uvm_phase phase);
 
 	agent1_cfg.is_active = UVM_ACTIVE;
 	uvm_config_db#(agent_config)::set(this, "m_env.m_agent", "agent_cfg", agent1_cfg);
-	
 endfunction: build_phase
 
 /*----------------------------------------------------------------------------*/

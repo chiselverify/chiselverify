@@ -43,6 +43,7 @@ package leros_pkg;
 	`include "monitor.svh"
 	`include "coverage.svh"
 	`include "scoreboard.svh"
+	`include "scoreboard_dpi.svh"
 
 	`include "agent.svh"
 

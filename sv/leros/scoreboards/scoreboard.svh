@@ -9,23 +9,17 @@ class scoreboard extends uvm_scoreboard;
 
 	//  Group: Variables
 	int accu = 0;
-	int accu_next = 0;
-
 	int good = 0;
 	int bad = 0;
 	int total = 0;
 
 	//  Group: Functions
-	//  Function: build_phase
 	extern function void build_phase(uvm_phase phase);
 	
-	//  Function: report_phase
 	extern function void report_phase(uvm_phase phase);
 	
-	//  Function: write_1
 	extern function void write_1(leros_command t);
 	
-
 	//  Constructor: new
 	function new(string name = "scoreboard", uvm_component parent);
 		super.new(name, parent);
@@ -41,30 +35,29 @@ function void scoreboard::write_1(leros_command t);
 	leros_command cmd = new;
 
 	if(t.reset) begin
-		accu_next = 0;
+		accu = 0;
 	end
 	else begin
 		case(t.op)
-			ADD: accu_next += t.din;
-			SUB: accu_next -= t.din;
-			AND: accu_next = accu & t.din;
-			OR : accu_next = accu | t.din;
-			XOR: accu_next = accu ^ t.din;
-			LD : accu_next = t.din;
-			SHR: accu_next = (accu >> 1);
+			ADD: accu += t.din;
+			SUB: accu -= t.din;
+			AND: accu = accu & t.din;
+			OR : accu = accu | t.din;
+			XOR: accu = accu ^ t.din;
+			LD : accu = t.din;
+			SHR: accu = (accu >> 1);
 		 // NOP: Do nothing
 		endcase
 	end
 
-	if(accu_next != t.accu) begin //t.accu=result from ALU
-		`uvm_error(get_name(), $sformatf("Result did not match. accu=%d, din=%d, op=%s. Got %d, expected %d", accu, cmd.din, cmd.op.name, t, accu_next))
+	if(accu != t.accu) begin //t.accu=result from ALU
+		`uvm_error(get_name(), $sformatf("Result did not match. accu=%d, din=%d, op=%s. Got %d, expected %d", accu, cmd.din, cmd.op.name, t.accu, accu))
 		bad++;
 	end
 	else begin
 		good++;
 	end	
 	total++;
-	accu = accu_next;
 endfunction
 
 function void scoreboard::report_phase(uvm_phase phase);
