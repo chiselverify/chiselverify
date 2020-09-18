@@ -9,21 +9,19 @@ class base_test extends uvm_test;
 	//  Group: Components
 	env m_env;
 
-	//  Group: Functions
 	//  Function: build_phase
 	extern function void build_phase(uvm_phase phase);
 	
 	//  Function: run_phase
 	extern task run_phase(uvm_phase phase);
 
+	//  Function: generate_reset
 	extern task generate_reset(uvm_phase phase);
-	
 	
 	//  Constructor: new
 	function new(string name = "base_test", uvm_component parent);
 		super.new(name, parent);
 	endfunction: new
-
 	
 endclass: base_test
 

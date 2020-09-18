@@ -19,5 +19,4 @@ module top;
 		uvm_top.finish_on_completion = 1;		
 		run_test();
 	end
-
 endmodule

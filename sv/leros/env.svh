@@ -7,15 +7,11 @@ class env extends uvm_env;
 	coverage m_cov;
 	scoreboard m_scoreboard;
 
-	//  Group: Functions
-
 	//  Constructor: new
 	function new(string name = "env", uvm_component parent);
 		super.new(name, parent);
 	endfunction: new
 
-	/*---  UVM Build Phases            ---*/
-	/*------------------------------------*/
 	//  Function: build_phase
 	extern function void build_phase(uvm_phase phase);
 	//  Function: connect_phase
@@ -23,10 +19,6 @@ class env extends uvm_env;
 	
 endclass: env
 
-
-/*----------------------------------------------------------------------------*/
-/*  UVM Build Phases                                                          */
-/*----------------------------------------------------------------------------*/
 function void env::build_phase(uvm_phase phase);
 
 	m_agent = agent::type_id::create(.name("m_agent"), .parent(this));

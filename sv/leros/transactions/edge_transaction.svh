@@ -13,13 +13,10 @@ class edge_transaction extends base_transaction;
 			int'(-1):=1,
 			32'h80000000:=1, //Min value
 			32'h7fffffff:=1  //Max value
-			// [16'b1:16'hfffe]:/1
 		}; 
 	}
 
 	//c_op and c_reset are unchanged
-
-	//  Group: Functions
 
 	//  Constructor: new
 	function new(string name = "edge_transaction");

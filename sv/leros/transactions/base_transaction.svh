@@ -1,5 +1,4 @@
 //  Class: base_transaction
-//
 class base_transaction extends uvm_sequence_item;
 	typedef base_transaction this_type_t;
 	`uvm_object_utils(base_transaction);
@@ -9,21 +8,17 @@ class base_transaction extends uvm_sequence_item;
 	rand leros_op_t op;
 	rand bit is_reset;
 
-
 	//  Group: Constraints
 	constraint c_din {'0 <= din; din <= '1; } //All possible values
 
 	constraint c_op {'0 <= op; op <= '1; } //All possible values
 
-	constraint c_reset {
+	constraint c_reset { // Reset every once in a while
 		is_reset dist {
 			0:=9,
 			1:=1
 		};
 	}
-
-
-	//  Group: Functions
 
 	//  Constructor: new
 	function new(string name = "base_transaction");

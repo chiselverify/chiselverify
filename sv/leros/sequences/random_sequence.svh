@@ -4,14 +4,11 @@ class random_sequence extends base_sequence;
 	`uvm_object_utils(random_sequence);
 
 	//  Group: Variables
-	sequence_config seq_cfg;
-
 	rand int num_repeats; //Magic number
 
 	constraint c_repeats {
 		num_repeats inside {[100:300]};
 	}
-	
 
 	//  Group: Functions
 
@@ -26,16 +23,13 @@ class random_sequence extends base_sequence;
 endclass: random_sequence
 
 task random_sequence::body();
-	super.body(); //Execute reset
-
 	//Perform the sequence
 	repeat(num_repeats) begin
 		tx = base_transaction::type_id::create("tx");
 		start_item(tx);
 		if (!tx.randomize() )
 			`uvm_error(get_name(), "Randomize failed")
-			
+
 		finish_item(tx);
-		
 	end
 endtask: body

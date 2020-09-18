@@ -13,18 +13,12 @@ class edge_test extends base_test;
 	//  Function: run_phase
 	extern task run_phase(uvm_phase phase);
 	
-
 	//  Constructor: new
 	function new(string name = "edge_test", uvm_component parent);
-		super.new(name, parent);
-
+		super.new(name, parent);	
 	endfunction: new
 
 endclass: edge_test
-
-/*----------------------------------------------------------------------------*/
-/*  UVM Run Phases                                                            */
-/*----------------------------------------------------------------------------*/
 
 task edge_test::run_phase(uvm_phase phase);
 	phase.raise_objection(this);
@@ -42,10 +36,6 @@ task edge_test::run_phase(uvm_phase phase);
 
 endtask: run_phase
 
-
-/**
-Used to perform factory overrides on the relevant types to generate edge cases
-*/
 function void edge_test::start_of_simulation_phase(uvm_phase phase);
 	base_transaction::type_id::set_type_override(edge_transaction::get_type());
 endfunction: start_of_simulation_phase
