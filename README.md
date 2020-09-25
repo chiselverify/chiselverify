@@ -75,8 +75,38 @@ Collect pointers to relevant documents.
 
 ## Directly Related Work
 
- * *Layering RTL, SAFL, Handel-C and BluespecConstructs on Chisel HCL*, David J Greaves,
+- *Layering RTL, SAFL, Handel-C and BluespecConstructs on Chisel HCL*, David J Greaves,
  see http://koo.corpus.cam.ac.uk/drafts/tndjg-008-transactional-modelling-in-chisel.html
 
- 
+### CRV
+- [Choco-Solver](https://github.com/chocoteam/choco-solver) Java library for solving CSP problems
 
+### Testing Framewrok / Simulation tools
+#### Cocotb -- coroutine based cosimulation python librarylibrary for hardware development in Python
+[Cocotb repository](https://github.com/cocotb/cocotb): cocotb is a coroutine based cosimulation library for writing VHDL and Verilog testbenches in Python.
+
+##### Resources Related to Cocotb
+  - Philipp Wagner (FOSSi Foundation, lowRISC) ["Cocotb: Python-powered hardware verification"](https://www.youtube.com/watch?v=GUcKJ5zXgPA) (WOSH 2019) (video)
+  - Ben Rosser (University of Pennsylvania) ["Cocotb: a Python-based digital logic verification framework"](https://indico.cern.ch/event/776422/attachments/1769690/2874927/cocotb_talk.pdf) (CERN 2018) (pdf)
+  - Torbjørn Viem Ness (NTNU) ["Low Power Floating-Point Unit for RISC-V"](https://brage.bibsys.no/xmlui/bitstream/handle/11250/2564801/19493_FULLTEXT.pdf?sequence=1&isAllowed=y) (2018) [PDF]
+  - Andrey Filippov (Elphel) ["I will not have to learn SystemVerilog"](https://www.elphel.com/blog/2016/07/i-will-not-have-to-learn-systemverilog/) (2016) [Blog]
+  - Chris Higgs (Potential Ventures) "Applying agile techniques to FPGA development" [Video](https://www.youtube.com/watch?v=Wi_1bUgHl8s), [Paper](http://www.testandverification.com/conferences/verification-futures/2015-europe/speaker-chris-higgs-potential-ventures/)
+  - Chris Higgs (Potential Ventures) ["Rapid FPGA Verification"](https://docs.google.com/presentation/d/1U22Y_yyQRAecXXvOKFbHU8p_pGsB-u7iaK57Tw92U_A/embed?start=false&loop=false&delayms=3000) (NMI, February 2014) [Slides]
+  - Smith, Andrew Michael; Mayo, Jackson; Armstrong, Robert C.; Schiek, Richard; Sholander, Peter E.; Mei, Ting (Sandia National Lab): ["Digital/Analog Cosimulation using CocoTB and Xyce"](https://www.osti.gov/biblio/1488489) (paper)
+
+#### Extension of Cocotb
+- [cocotb-coverage](https://github.com/mciepluc/cocotb-coverage): Extension that enables coverage and constrained random verification
+  - Publication in iEEE [Paper](https://ieeexplore.ieee.org/document/7566600)
+- [python-uvm](https://github.com/tpoikela/uvm-python): port of SystemVerilog (SV) Universal Verification Methodology (UVM) 1.2 to Python and cocotb
+### Hwt --  Python library for hardware development
+[hwt](https://github.com/Nic30/hwt):  one of the golas of this library is to implement some simulation feature similar to UVM
+
+
+
+## Not strictly relevant resources
+- [CRAVE: An advanced constrained random verification environment for SystemC](https://ieeexplore.ieee.org/document/6376356)
+- [EnrichingUVM in SystemC with AMS extensions for randomization and functional coverage](https://www.researchgate.net/publication/267437715_Enriching_UVM_in_SystemC_with_AMS_extensions_for_randomization_and_coverage)
+- [Coverage  directed  test  generation  for  functional  verification  using  Bayesian  network](https://www.research.ibm.com/haifa/dept/_svt/papers/simulation/18_2.pdf)
+- [Introducing XCS to Coverage Directed test Generation](https://ieeexplore.ieee.org/document/6114166)
+
+- [LiveHD](https://github.com/masc-ucsc/livehd) LiveHD is an infrastructure designed for Live Hardware Development. By live, we mean that small changes in the design should have the synthesis and simulation results in a few seconds, as the fast interactive systems usually response in sub-second.
