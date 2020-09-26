@@ -42,7 +42,7 @@ If yu're interested in learning more about the UVM, we recommend that you explor
 
 # Meeting Notes
 
-## Friday 2020-9-11
+## Friday 2020-09-11
 
 Discussion at our Friday meeting
 
@@ -65,6 +65,12 @@ Discussion at our Friday meeting
 
 We have on outsider interested to contribute: Kartik Samtani
 
+## Friday 2020-09-26
+
+ * Code review of the priority sorting (Tjark)
+ * Agreed that we will use two repos now: one for the example, one for the framework code
+ * Kasper presented SV/C and Scala/C integration
+
 # Documents
 
 Collect pointers to relevant documents.
@@ -82,7 +88,7 @@ Collect pointers to relevant documents.
 - [Choco-Solver](https://github.com/chocoteam/choco-solver) Java library for solving CSP problems
 
 ### Testing Framewrok / Simulation tools
-#### Cocotb -- coroutine based cosimulation python librarylibrary for hardware development in Python
+#### Cocotb -- coroutine based cosimulation python library library for hardware development in Python
 [Cocotb repository](https://github.com/cocotb/cocotb): cocotb is a coroutine based cosimulation library for writing VHDL and Verilog testbenches in Python.
 
 ##### Resources Related to Cocotb
