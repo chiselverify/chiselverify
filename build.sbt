@@ -11,6 +11,7 @@ resolvers ++= Seq(
 libraryDependencies += "edu.berkeley.cs" %% "chisel-iotesters" % "1.4.2"
 libraryDependencies += "edu.berkeley.cs" %% "chiseltest" % "0.2.2"
 
-
-// libraryDependencies += "edu.berkeley.cs" %% "chisel3" % "latest.release"
-// libraryDependencies += "edu.berkeley.cs" %% "chisel-iotesters" % "latest.release"
+// sbt-jni related settings
+enablePlugins(JniNative)
+target in javah := file("src/native/include")
+target in nativeCompile := file("lib")
