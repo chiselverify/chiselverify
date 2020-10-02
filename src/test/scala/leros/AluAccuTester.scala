@@ -56,7 +56,7 @@ class AluAccuTester extends FlatSpec with ChiselScalatestTester with Matchers {
     val interesting = Array(1, 2, 4, -123, 123, 0, -1, -2, 0x80000000, 0x7fffffff)
     test(interesting)
 
-    val randArgs = Seq.fill(100)(scala.util.Random.nextInt)
+    val randArgs = Seq.fill(20)(scala.util.Random.nextInt)
     test(randArgs)
 
 

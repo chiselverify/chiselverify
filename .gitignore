@@ -22,5 +22,5 @@ simv*
 AN.DB*
 64*
 transcript
-lib/build
+build/
 !NativeScoreboard.h
