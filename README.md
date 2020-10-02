@@ -17,11 +17,17 @@ These examples assume that a copy of Xilinx Vivado is installed and present in t
 * The first example is taken from [Vivado Design Suite Tutorial - Logic Simulation](https://www.xilinx.com/support/documentation/sw_manuals/xilinx2020_1/ug937-vivado-design-suite-simulation-tutorial.pdf)
 
 
-# Leros ALU
+## Leros ALU
 In the directory `sv/leros`, the [Leros ALU](src/main/scala/leros/AluAccuChisel.scala) is tested using UVM, to showcase that Chisel and UVM can work together. This testbench is reused to also test a VHDL implementation of the ALU, to show that UVM is usable on mixed-language designs (when using a mixed-language simulator).
 
 The VHDL implementaion is run by setting the makefile argument `TOP=top_vhd`.
 
+# Using the SV DPI and Javas JNI
+Using the SystemVerilog DPI (Direct Programming Interface) to cosimulate with a golden model described in C is explored in the [scoreboard_dpi.svh file](sv/leros/scoreboards/scoreboard_dpi.svh). The C-model is implemented in `scoreboard.c`, and the checking functionality is called from the SystemVerilog code.
+
+Implementing a similar functionality in Scala/Chisel has been explored via the JNI (Java Native Interface). In the directory `native`, the necessary code for a simple Leros tester using the JNI is implemented. 
+
+To use the JNI functionality, first run `make jni` to generate the correct header files and shared libraries. Then, open sbt and type `project native` to access the native project. Then run `sbt test` to test the Leros ALU using a C model called from within Scala. To switch back, type `project chisel-uvm`. 
 # Example Use Cases
 
 We will explore a handful of use cases to explore verification.
