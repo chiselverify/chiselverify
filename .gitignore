@@ -1,5 +1,6 @@
 test_run_dir
-project
+project*
+!project/plugins.sbt
 target
 work
 csrc
@@ -24,3 +25,4 @@ AN.DB*
 transcript
 build/
 !NativeScoreboard.h
+

@@ -22,8 +22,8 @@ In the directory `sv/leros`, the [Leros ALU](src/main/scala/leros/AluAccuChisel.
 
 The VHDL implementaion is run by setting the makefile argument `TOP=top_vhd`.
 
-# Using the SV DPI and Javas JNI
-Using the SystemVerilog DPI (Direct Programming Interface) to cosimulate with a golden model described in C is explored in the [scoreboard_dpi.svh file](sv/leros/scoreboards/scoreboard_dpi.svh). The C-model is implemented in `scoreboard.c`, and the checking functionality is called from the SystemVerilog code.
+# Using the SV DPI and Java JNI
+Using the SystemVerilog DPI (Direct Programming Interface) to co-simulate with a golden model described in C is explored in the [scoreboard_dpi.svh file](sv/leros/scoreboards/scoreboard_dpi.svh). The C-model is implemented in `scoreboard.c`, and the checking functionality is called from the SystemVerilog code.
 
 Implementing a similar functionality in Scala/Chisel has been explored via the JNI (Java Native Interface). In the directory `native`, the necessary code for a simple Leros tester using the JNI is implemented. 
 
