@@ -3,15 +3,17 @@ package leros
 import chisel3._
 import chiseltest._
 import org.scalatest._
-
 import chiseltest.experimental.TestOptionBuilder._
 import chiseltest.internal.VerilatorBackendAnnotation
-
+import cover.Coverage
 import leros.Types._
 
 class AluAccuTester extends FlatSpec with ChiselScalatestTester with Matchers {
 
   def testFun[T <: AluAccu](dut: T): Unit = {
+
+    val cr = new Coverage
+    cr.register(dut.io.accu)
 
     def alu(a: Int, b: Int, op: Int): Int = {
 
@@ -39,6 +41,8 @@ class AluAccuTester extends FlatSpec with ChiselScalatestTester with Matchers {
       dut.io.din.poke(toUInt(b))
       dut.clock.step()
       dut.io.accu.expect(toUInt(alu(a, b, fun)))
+
+      cr.sample()
     }
 
     def test(values: Seq[Int]) = {
