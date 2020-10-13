@@ -5,15 +5,19 @@ import chiseltest._
 import org.scalatest._
 import chiseltest.experimental.TestOptionBuilder._
 import chiseltest.internal.VerilatorBackendAnnotation
-import cover.Coverage
+import coverage.Coverage.{Bins, CoverPoint}
+import coverage.CoverageReporter
 import leros.Types._
 
 class AluAccuTester extends FlatSpec with ChiselScalatestTester with Matchers {
 
   def testFun[T <: AluAccu](dut: T): Unit = {
 
-    val cr = new Coverage
-    cr.register(dut.io.accu)
+    val cr = new CoverageReporter
+    cr.register(
+        CoverPoint(dut.io.accu , "accu", //CoverPoint 1
+            Bins("lo10", 0 to 10)::Bins("First100", 0 to 100)::Nil)::
+        Nil)  
 
     def alu(a: Int, b: Int, op: Int): Int = {
 
@@ -63,8 +67,8 @@ class AluAccuTester extends FlatSpec with ChiselScalatestTester with Matchers {
     val randArgs = Seq.fill(20)(scala.util.Random.nextInt)
     test(randArgs)
 
-
-    println("Hello tester")
+    //Print coverage report
+    cr.printReport()
   }
 
 
@@ -73,6 +77,6 @@ class AluAccuTester extends FlatSpec with ChiselScalatestTester with Matchers {
   }
 
   "AluAccuGenerated" should "pass" in {
-    test(new AluAccuGenerated(32)).withAnnotations(Seq(VerilatorBackendAnnotation)) { dut => testFun(dut) }
+    //test(new AluAccuGenerated(32)).withAnnotations(Seq(VerilatorBackendAnnotation)) { dut => testFun(dut) }
   }
 }
