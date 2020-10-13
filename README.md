@@ -36,11 +36,11 @@ The idea is to implement functional coverage features from SystemVerilog such as
 The interesting part of the code can be found in `Functional_coverage_test/src/test/scala/coverage` and a test use case can be found in `Functional_coverage_test/src/test/scala/gcd/GcdTesters2.scala`  
 
 #### What is done 
-So far a basic version of `covergroup` has been implemented. The structure of the system can be seen in the below diagram.  
+So far a basic version of a _verification plan_ has been implemented. This allows one to define constructs similar to _SystemVerilog_'s `covergroup`, `coverpoint` and `bins`. The structure of the system can be seen in the below diagram.  
 ![Structure of the Coverage system](CoverageChisel.png)  
   
 ##### Coverage Reporter
-This is the heart of the system. It handles everything from registering the Cover Points to managing the Coverage DataBase. It will also generate the final coverage report. Registering _Cover Points_ together wil group them into a same _Cover Group_.  
+This is the heart of the system. It handles everything from registering the Cover Points to managing the Coverage DataBase. It will also generate the final coverage report. Registering _Cover Points_ together will group them into a same _Cover Group_.  
   
 ##### Coverage DB
 This DataBase handles the maintaining the values that were sampled for each of the Cover Point bins. This allows ud to know how much of the verification plan was tested.  
