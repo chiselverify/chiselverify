@@ -29,7 +29,7 @@ Implementing a similar functionality in Scala/Chisel has been explored via the J
 
 To use the JNI functionality, first run `make jni` to generate the correct header files and shared libraries. Then, open sbt and type `project native` to access the native project. Then run `sbt test` to test the Leros ALU using a C model called from within Scala. To switch back, type `project chisel-uvm`. 
   
-## Functional Coverage in Chisel
+# Functional Coverage in Chisel
 The idea is to implement functional coverage features from SystemVerilog such as `covergroup`, `coverpoint` and `bins` directly in Chisel.  
 
 ### Work
