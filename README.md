@@ -39,7 +39,7 @@ The idea is to implement functional coverage features from SystemVerilog such as
 The interesting part of the code can be found in `Functional_coverage_test/src/test/scala/coverage` and a test use case can be found in `Functional_coverage_test/src/test/scala/gcd/GcdTesters2.scala`  
 
 #### What is done 
-So far a basic version of a _verification plan_ has been implemented. This allows one to define constructs similar to _SystemVerilog_'s `covergroup`, `coverpoint` and `bins`. The structure of the system can be seen in the below diagram.  
+So far a basic version of a _verification plan_ has been implemented. This allows one to define constructs similar to _SystemVerilog_'s `covergroup`, `coverpoint` and `bins`. The structure of the system can be seen in the diagram below.  
 ![Structure of the Coverage system](CoverageChisel.png)  
   
 ##### Coverage Reporter
@@ -69,7 +69,7 @@ We will explore a handful of use cases to explore verification.
  * Decimation filter from WSA (VHDL code plus testbench given)
 
 # Resources
-If yu're interested in learning more about the UVM, we recommend that you explore the repository, as well as some of the following links:
+If you're interested in learning more about the UVM, we recommend that you explore the repository, as well as some of the following links:
 * [First steps with UVM](https://www.youtube.com/watch?v=qLr8ayWM_Ww)
 * [UVM Cookbook (requires an account)](https://verificationacademy.com/cookbook/uvm)
 * [ChipVerify.com UVM Tutorials](https://www.chipverify.com/table/uvm/)
