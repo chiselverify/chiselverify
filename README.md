@@ -46,8 +46,8 @@ So far a basic version of a _verification plan_ has been implemented. This allow
 This is the heart of the system. It handles everything from registering the Cover Points to managing the Coverage DataBase. It will also generate the final coverage report. Registering _Cover Points_ together will group them into a same _Cover Group_.  
   
 ##### Coverage DB
-This DataBase handles the maintaining the values that were sampled for each of the Cover Point bins. This allows ud to know how much of the verification plan was tested.  
-The DB also keeps mappings linking to _Cover Groups_ to their contained _Cover Points_.  
+This DataBase handles the maintenance of the values that were sampled for each of the Cover Point bins. This allows us to know how much of the verification plan was tested.  
+The DB also keeps mappings linking _Cover Groups_ to their contained _Cover Points_.  
 
 ### How to use it  
 The Functional coverage system is compatible with the chisel _testers2_ framework.  
