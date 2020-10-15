@@ -57,7 +57,7 @@ class CoverageDB {
             val oldList = groupPointMap getOrElse(groupId, Nil)
             groupPointMap update (groupId, oldList :+ lastCoverPointId)
 
-            coverIdPortMap update (dutPortName.strip(), dutPort)
+            coverIdPortMap update (dutPortName, dutPort)
             pointIds append lastCoverPointId
 
             //Return the coverPoint's id
