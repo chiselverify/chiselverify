@@ -5,6 +5,11 @@ and UVM. The ultimate goal is a verification framework within Scala for digital
 hardware described in Chisel also supporting legacy components in VHDL, Verilog,
 or SystemVerilog.
 
+Run tests with
+```
+make
+```
+
 
 # UVM Examples
 In the [sv](sv) directory, a number of UVM examples are located. 
