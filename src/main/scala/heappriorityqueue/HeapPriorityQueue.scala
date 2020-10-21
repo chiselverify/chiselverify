@@ -4,8 +4,21 @@ import chisel3._
 import chisel3.util._
 import lib._
 
-//beaware: the all max configuration is reserved
 /**
+ * Component implementing a priority queue, where the minimum value gets to the head of the queue
+ *  - The sorting is based on heap sort
+ *  - inserted priorities are made up of 3 fields:
+ *    - cyclic priority which is most important
+ *    - normal priority which decides in the case of equal cyclic priorities
+ *    - a user generated reference ID given at insertion which is used to remove elements from the queue
+ *  - the component needs to be provided with the following:
+ *    - a synchronous memory of appropriate size
+ *      - the memory has to be initialized to all 1s
+ *      - thus the reference ID with all 1s is reserved for empty cells
+ *    - a component which is able to search through the reference ID fields and return the index where a given reference ID is present
+ *      - the queue waits until the search result is given
+ *  - the head element is kept locally in a FF for symmetry and access speed reasons
+ *  - the head element is furthermore presented at a dedicated port
  *
  * @param size the maximum size of the heap
  * @param chCount the number of children per node in the tree. Must be power of 2
@@ -14,6 +27,7 @@ import lib._
  * @param rWid width of the reference ID tags
  */
 class HeapPriorityQueue(size : Int, chCount : Int, nWid : Int, cWid : Int, rWid : Int) extends Module{
+  /////////////////////////////////////////////////////IO///////////////////////////////////////////////////////////////
   val io = IO(new Bundle{
     // Interface for signaling head element to user.
     // I.e. the element with the lowest priority
@@ -47,17 +61,11 @@ class HeapPriorityQueue(size : Int, chCount : Int, nWid : Int, cWid : Int, rWid 
     // search port to a component with the ability to find the positions of reference ID's in memory
     val srch = new searchPort(size,rWid)
 
-    //TODO: remove debug outputs
-    val debug = new Bundle{
-      val state = Output(UInt())
-      val heapifierState = Output(UInt())
-      val heapifierIndex = Output(UInt(log2Ceil(size).W))
-      val minOut = Output(UInt(log2Ceil(chCount).W))
-      val minInputs = Output(Vec(chCount+1,new PriorityAndID(nWid,cWid,rWid)))
-      val swap = Output(Bool())
-      val heapSize = Output(UInt(log2Ceil(size).W))
-    }
+    // output of the current state for debug purposes
+    val state = Output(UInt())
   })
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
   if(!isPow2(chCount)) throw new Exception("The number of children must be a power of 2!")
 
   // modules
@@ -67,7 +75,7 @@ class HeapPriorityQueue(size : Int, chCount : Int, nWid : Int, cWid : Int, rWid 
   val idle :: headInsertion :: normalInsertion :: initSearch :: waitForSearch :: resetCell :: lastRemoval :: headRemoval :: tailRemoval :: removal :: waitForHeapifyUp :: waitForHeapifyDown :: Nil = Enum(12)
   val stateReg = RegInit(idle)
   val heapSizeReg = RegInit(0.U(log2Ceil(size+1).W))
-  val headReg = RegInit(0.U.asTypeOf(new PriorityAndID(nWid,cWid,rWid)))
+  val headReg = RegInit(VecInit(Seq.fill(nWid+cWid+rWid)(1.U)).asTypeOf(new PriorityAndID(nWid,cWid,rWid)))
   val tempReg = RegInit(VecInit(Seq.fill(chCount)(0.U.asTypeOf(new PriorityAndID(nWid,cWid,rWid)))))
   val removalIndex = RegInit(0.U(log2Ceil(size).W))
   val removedPrio = RegInit(0.U.asTypeOf(new Priority(nWid,cWid)))
@@ -120,17 +128,11 @@ class HeapPriorityQueue(size : Int, chCount : Int, nWid : Int, cWid : Int, rWid 
   io.srch.refID := io.cmd.refID
   io.srch.search := false.B
   io.srch.heapSize := heapSizeReg
+  io.state := stateReg
 
-  //TODO: remove debug outputs
-  io.debug.state := stateReg
-  io.debug.heapSize := heapSizeReg
-  io.debug.heapifierState := heapifier.io.state
-  io.debug.heapifierIndex := heapifier.io.indexOut
-  io.debug.minOut := heapifier.io.out
-  io.debug.minInputs := heapifier.io.minInputs
-  io.debug.swap := heapifier.io.swap
+  //////////////////////////////////////////////////State Machine///////////////////////////////////////////////////////
 
-    switch(stateReg){
+  switch(stateReg){
     is(idle){
       io.cmd.done := true.B
 
@@ -156,7 +158,10 @@ class HeapPriorityQueue(size : Int, chCount : Int, nWid : Int, cWid : Int, rWid 
           }
         }.otherwise{ // removal
           headValid := false.B
-          when(heapSizeReg === 1.U){ // beaware: refID is disregarded when last element is removed
+          when(heapSizeReg === 1.U && headReg.id =/= io.cmd.refID) { //catch non matching reference ID on last removal
+            errorReg := true.B
+            stateReg := idle
+          }.elsewhen(heapSizeReg === 1.U && headReg.id === io.cmd.refID){
             stateReg := lastRemoval
           }.otherwise{
             stateReg := initSearch
@@ -268,7 +273,7 @@ class HeapPriorityQueue(size : Int, chCount : Int, nWid : Int, cWid : Int, rWid 
 
       // initiate heapify down
       heapifier.io.control.heapifyDown := true.B
-      heapifier.io.control.idx := Mux(removalIndex < (chCount+1).U, 0.U, ((removalIndex - 1.U) >> log2Ceil(chCount)).asUInt)
+      heapifier.io.control.idx := 0.U
       stateReg := waitForHeapifyDown
     }
     is(tailRemoval){
@@ -285,7 +290,7 @@ class HeapPriorityQueue(size : Int, chCount : Int, nWid : Int, cWid : Int, rWid 
       wrIndex := removalIndex
       rdIndex := heapSizeReg
       io.wrPort.data(wrIndexOffset) := tempReg(rdIndexOffset)
-      io.wrPort.mask := UIntToOH(wrIndexOffset)
+      io.wrPort.mask := UIntToOH(wrIndexOffset,chCount)
       io.wrPort.write := true.B
 
       // initiate heapify up
@@ -297,8 +302,8 @@ class HeapPriorityQueue(size : Int, chCount : Int, nWid : Int, cWid : Int, rWid 
       stateReg := waitForHeapifyUp
       when(heapifier.io.control.done){
         stateReg := idle
-        when(io.cmd.op === 0.U && !heapifier.io.control.swapped){ // when no swap occurred during removal -> heapify down
-          heapifier.io.control.idx := Mux(removalIndex < (chCount+1).U, 0.U, ((removalIndex - 1.U) >> log2Ceil(chCount)).asUInt)
+        when(io.cmd.op === 0.U && !heapifier.io.control.swapped && ((removalIndex<<log2Ceil(chCount)).asUInt+1.U) < size.U){ // when no swap occurred during removal -> heapify down
+          heapifier.io.control.idx := removalIndex
           heapifier.io.control.heapifyDown := true.B
           stateReg := waitForHeapifyDown
         }

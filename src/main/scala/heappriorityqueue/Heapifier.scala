@@ -42,15 +42,11 @@ class Heapifier(size : Int, chCount : Int, nWid : Int, cWid : Int, rWid : Int)ex
       val write = Output(Bool())
     }
 
-    // TODO: remove debug outputs
-    val out = Output(UInt((log2Ceil(chCount)+1).W))
-    val swap = Output(Bool())
+    // state output for debug purposes
     val state = Output(UInt())
-    val minInputs = Output(Vec(chCount+1,new PriorityAndID(nWid,cWid,rWid)))
-    val parentOff = Output(UInt(log2Ceil(size).W))
-    val nextIndexOut = Output(UInt(log2Ceil(size).W))
-    val indexOut = Output(UInt(log2Ceil(size).W))
   })
+
+  val minFinder = Module(new MinFinder(chCount + 1, nWid, cWid, rWid)) // module to find the minimum priority among the parent and children
 
   // state elements
   val idle :: warmUp1 :: warmDown1 :: warmUp2 :: warmDown2 :: readUp :: readDown :: wbUp1 :: wbDown1 :: wbUp2 :: wbDown2 :: Nil = Enum(11)
@@ -59,9 +55,6 @@ class Heapifier(size : Int, chCount : Int, nWid : Int, cWid : Int, rWid : Int)ex
   val swappedReg = RegInit(false.B) // register holding a flag showing whether a swap has occurred
   val parentReg = RegInit(VecInit(Seq.fill(chCount)(0.U.asTypeOf(new PriorityAndID(nWid,cWid,rWid))))) // register holding the content of the RAM cell containing the parent
   val childrenReg = RegInit(VecInit(Seq.fill(chCount)(0.U.asTypeOf(new PriorityAndID(nWid,cWid,rWid))))) // register holding the content of the RAM cell of the children
-
-
-  val minFinder = Module(new MinFinder(chCount + 1, nWid, cWid, rWid)) // module to find the minimum priority among the parent and children
 
   // ram address generation
   val addressIndex = Wire(UInt(log2Ceil(size).W)) // wire that address generation is based on. Is set to indexReg except of the last write back stage, where the next address needs to be generated
@@ -76,10 +69,8 @@ class Heapifier(size : Int, chCount : Int, nWid : Int, cWid : Int, rWid : Int)ex
 
   // hook up the minFinder
   minFinder.io.values(0) := parent
-  io.minInputs(0) := parent
   for(i <- 0 until chCount){
     minFinder.io.values(i + 1) := childrenReg(i)
-    io.minInputs(i+1) := childrenReg(i) //TODO: remove debug outputs
   }
 
   val nextIndexUp = ((indexReg - 1.U) >> log2Ceil(chCount)).asUInt() // index of next parent is given by (index-1)/childrenCount
@@ -97,14 +88,7 @@ class Heapifier(size : Int, chCount : Int, nWid : Int, cWid : Int, rWid : Int)ex
   io.wrPort.mask := VecInit(Seq.fill(chCount)(true.B)).asUInt
   io.headPort.write := false.B
   io.headPort.wrData := parentReg(0)
-
-  // TODO: remove debug outputs
-  io.out := minFinder.io.idx
-  io.swap := swapRequired
   io.state := stateReg
-  io.parentOff := parentOffset
-  io.nextIndexOut := Mux(io.control.heapifyDown,nextIndexDown,nextIndexUp)
-  io.indexOut := indexReg
 
   // state machine flow
   switch(stateReg){
