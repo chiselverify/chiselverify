@@ -51,7 +51,7 @@ class HeapPriorityQueueWrapper(dut: HeapPriorityQueue, size: Int, chCount: Int, 
       }
       // search port
       if(peek(dut.io.srch.search)==1){
-        if(searchSimDelay > 3){
+        if(searchSimDelay > 0){
           var idx = peek(dut.io.head.refID).toInt
           if(idx != peek(dut.io.srch.refID).toInt){
             idx = mem.flatten.map(_(2)==peek(dut.io.srch.refID).toInt).indexOf(true) + 1

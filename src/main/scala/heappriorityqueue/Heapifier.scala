@@ -7,7 +7,7 @@ import lib._
 /**
  * Component implementing the algorithm to create a min-heap. Works itself either upwards or downwards
  * through the heap in memory from a given start index and swaps elements to
- * satisfy the min-heap condition.
+ * satisfy the min-heap condition. The start index is always the parent index.
  *
  * During operation either of the control signals heapifyUp or heapifyDown need to be held high
  * until done is asserted.
