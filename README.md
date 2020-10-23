@@ -5,6 +5,11 @@ and UVM. The ultimate goal is a verification framework within Scala for digital
 hardware described in Chisel also supporting legacy components in VHDL, Verilog,
 or SystemVerilog.
 
+Run tests with
+```
+make
+```
+
 
 # UVM Examples
 In the [sv](sv) directory, a number of UVM examples are located. 
@@ -106,6 +111,14 @@ We have on outsider interested to contribute: Kartik Samtani
  * Code review of the priority sorting (Tjark)
  * Agreed that we will use two repos now: one for the example, one for the framework code
  * Kasper presented SV/C and Scala/C integration
+ 
+## Friday 2020-10-23
+
+ * Rehearsal of workshop presentations
+ 
+## Friday 2020-10-30
+
+ * [Workshop](Workshop.md)
 
 # Documents
 

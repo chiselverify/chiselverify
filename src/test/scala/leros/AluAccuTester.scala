@@ -84,6 +84,6 @@ class AluAccuTester extends FlatSpec with ChiselScalatestTester with Matchers {
   }
 
   "AluAccuGenerated" should "pass" in {
-    //test(new AluAccuGenerated(32)).withAnnotations(Seq(VerilatorBackendAnnotation)) { dut => testFun(dut) }
+    test(new AluAccuGenerated(32)).withAnnotations(Seq(VerilatorBackendAnnotation)) { dut => testFun(dut) }
   }
 }
