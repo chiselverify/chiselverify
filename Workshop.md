@@ -18,7 +18,7 @@ This workshop will present the results of the InfinIT funded project
  * 15:00 **Break**, bring your own coffee
  * 15:10 **Property Based Testing**, Zhoulai Fu
  * 15:20 **VHDL Code with Chisel Tester**, Simon Thye Andersen
- * 15:30 **Constraint random Verification** Enrico Tolotto
+ * 15:30 **Constraint random Verification**, Enrico Tolotto
  * 15:40 **Sorting Use Case**, Tjark Petersen
  * 15:50 **Teaching Activities on Verification at DTU**, Martin Schoeberl
  * 15:55 **Summarize and Outlook**, Martin Schoeberl

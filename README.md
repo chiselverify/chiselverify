@@ -111,6 +111,14 @@ We have on outsider interested to contribute: Kartik Samtani
  * Code review of the priority sorting (Tjark)
  * Agreed that we will use two repos now: one for the example, one for the framework code
  * Kasper presented SV/C and Scala/C integration
+ 
+## Friday 2020-10-23
+
+ * Rehearsal of workshop presentations
+ 
+## Friday 2020-10-30
+
+ * [Workshop](Workshop.md)
 
 # Documents
 
