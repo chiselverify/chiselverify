@@ -37,7 +37,7 @@ class CoverageReporter {
                 rep append s"CROSS_POINT ${cross.name} FOR POINTS ${cross.pointName1} AND ${cross.pointName2}\n"
                 cross.bins.foreach(cb => {
                     val nHits = coverageDB.getNHits(cb)
-                    rep append s"BIN ${cb.name} COVERING ${cb.range1.toString} CROSS ${cb.range2.toString} has $nHits HIT(S)\n"
+                    rep append s"BIN ${cb.name} COVERING ${cb.range1.toString} CROSS ${cb.range2.toString} HAS $nHits HIT(S)\n"
                 })
                 rep append s"=========================================\n"
             })
