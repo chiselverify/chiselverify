@@ -19,7 +19,7 @@ This workshop will present the results of the InfinIT funded project
  * xx:xx **Property Based Testing**, Zhoulai Fu
  * xx:xx **Code coverage at Scala level**, Hans Jakob Damsgaard
  * xx:xx **Break**, bring your own coffe
- * xx:xx **Constraint random generation?**, Enrico, what topics do you have?
+ * xx:xx **Constraint random Verification?** (Coverage in Verilog, Tester2 Dashboard)
  * xx:xx **Sorting Use Case**, Tjark Petersen
  * xx:xx **Teaching Activities on Verification at DTU**, Martin Schoeberl
  * xx:xx **Summarize and Outlook**, Martin Schoeberl
