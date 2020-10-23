@@ -21,6 +21,6 @@ This workshop will present the results of the InfinIT funded project
  * 15:30 **Constraint random Verification** Enrico Tolotto
  * 15:40 **Sorting Use Case**, Tjark Petersen
  * 15:50 **Teaching Activities on Verification at DTU**, Martin Schoeberl
- * 16:00 **Summarize and Outlook**, Martin Schoeberl
+ * 15:55 **Summarize and Outlook**, Martin Schoeberl
  
 
