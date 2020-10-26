@@ -14,8 +14,5 @@ abstract class AluAccu(size: Int) extends Module {
     val din = Input(UInt(size.W))
     val ena = Input(Bool())
     val accu = Output(UInt(size.W))
-
-    //Dummy output for cross coverage test
-    val test = Output(UInt(size.W))
   })
 }
