@@ -55,4 +55,5 @@ class AluAccuChisel(size: Int) extends AluAccu(size) {
   }
 
   io.accu := accuReg
+  io.test := accuReg
 }
