@@ -13,10 +13,10 @@ This workshop will present the results of the InfinIT funded project
  * 14:10 **UVM - How, why, and is it even necessary?**, Kasper Hesse
  * 14:20 **Code coverage at Scala level**, Hans Jakob Damsgaard
  * 14:30 **Code Coverage at FIRRTL Level**, Andrew Dobis
- * 14:40 **C Integration in SystemVerilog and Scala**, Kasper Hesse
+ * 14:40 **Property Based Testing**, Zhoulai Fu
  * 14:50 **Cover Points**, Andrew Dobis
  * 15:00 **Break**, bring your own coffee
- * 15:10 **Property Based Testing**, Zhoulai Fu
+ * 15:10 **C Integration in SystemVerilog and Scala**, Kasper Hesse
  * 15:20 **VHDL Code with Chisel Tester**, Simon Thye Andersen
  * 15:30 **Constraint random Verification**, Enrico Tolotto
  * 15:40 **Sorting Use Case**, Tjark Petersen
