@@ -18,13 +18,13 @@ class AluAccuTester extends FlatSpec with ChiselScalatestTester with Matchers {
         //Declare CoverPoints
         CoverPoint(dut.io.accu , "accu", //CoverPoint 1
             Bins("lo10", 0 to 10)::Bins("First100", 0 to 100)::Nil)::
-        CoverPoint(dut.io.test, "test", //CoverPoint 2
-            Bins("testLo10", 0 to 10)::Nil)::
-        Nil,
-        //Declare cross points
-        Cross("accuAndTest", "accu", "test",
-            CrossBin("both1", 1 to 1, 1 to 1)::Nil)::
+       // CoverPoint(dut.io.test, "test", //CoverPoint 2
+       //     Bins("testLo10", 0 to 10)::Nil)::
         Nil)
+        //Declare cross points
+        /*Cross("accuAndTest", "accu", "test",
+            CrossBin("both1", 1 to 1, 1 to 1)::Nil)::
+        Nil)*/
 
     def alu(a: Int, b: Int, op: Int): Int = {
 
@@ -56,7 +56,7 @@ class AluAccuTester extends FlatSpec with ChiselScalatestTester with Matchers {
       cr.sample()
     }
 
-    def test(values: Seq[Int]) = {
+    def test(values: Seq[Int]): Unit = {
       // for (fun <- add to shr) {
       for (fun <- 0 until 8) {
         for (a <- values) {
