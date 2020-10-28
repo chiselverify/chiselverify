@@ -12,15 +12,15 @@ import lib._
  * @param cWid width of the cyclic priority field
  * @param rWid width of the reference ID
  */
-class MinFinder(n: Int, nWid : Int, cWid : Int, rWid: Int) extends Module{
+class MinFinder(n: Int, cWid : Int, nWid : Int, rWid: Int) extends Module{
   val io = IO(new Bundle{
-    val values = Input(Vec(n, new PriorityAndID(nWid,cWid,rWid)))
-    val res = Output(new PriorityAndID(nWid,cWid,rWid))
+    val values = Input(Vec(n, new PriorityAndID(cWid,nWid,rWid)))
+    val res = Output(new PriorityAndID(cWid,nWid,rWid))
     val idx = Output(UInt(log2Ceil(n).W))
   })
 
   class Dup extends Bundle {
-    val v = new PriorityAndID(nWid,cWid,rWid)
+    val v = new PriorityAndID(cWid,nWid,rWid)
     val idx = UInt(log2Ceil(n).W)
   }
 

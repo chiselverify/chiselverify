@@ -3,6 +3,7 @@ package heappriorityqueue
 import chisel3.iotesters.PeekPokeTester
 import org.scalatest.{FlatSpec, Matchers}
 import Behavioural._
+import heappriorityqueue.helpers._
 
 
 /**
@@ -18,7 +19,7 @@ class HeapifierTest extends FlatSpec with Matchers {
   val chCount = 4
   val debugLvl = 0
   "Heapifier" should "heapify up" in {
-    chisel3.iotesters.Driver(() => new Heapifier(heapSize,chCount,nWid,cWid,rWid)) {
+    chisel3.iotesters.Driver(() => new Heapifier(heapSize,chCount,cWid,nWid,rWid)) {
       c => {
         val dut = new HeapifierWrapper(c,heapSize,chCount,debugLvl)(cWid,nWid,rWid)
 

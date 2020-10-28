@@ -26,7 +26,7 @@ import lib._
  * @param cWid width of the cyclic priority value
  * @param rWid width of the reference ID tags
  */
-class HeapPriorityQueue(size : Int, chCount : Int, nWid : Int, cWid : Int, rWid : Int) extends Module{
+class HeapPriorityQueue(size : Int, chCount : Int, cWid : Int, nWid : Int, rWid : Int) extends Module{
   /////////////////////////////////////////////////////IO///////////////////////////////////////////////////////////////
   val io = IO(new Bundle{
     // Interface for signaling head element to user.
@@ -34,7 +34,7 @@ class HeapPriorityQueue(size : Int, chCount : Int, nWid : Int, cWid : Int, rWid 
     val head = new Bundle{
       val valid = Output(Bool())
       val none = Output(Bool())
-      val prio = Output(new Priority(nWid,cWid))
+      val prio = Output(new Priority(cWid,nWid))
       val refID = Output(UInt(rWid.W))
     }
     // Interface for element insertion/removal
@@ -46,17 +46,17 @@ class HeapPriorityQueue(size : Int, chCount : Int, nWid : Int, cWid : Int, rWid 
       // inputs
       val valid = Input(Bool())
       val op = Input(Bool()) // 0=Remove, 1=Insert
-      val prio = Input(new Priority(nWid,cWid))
+      val prio = Input(new Priority(cWid,nWid))
       val refID = Input(UInt(rWid.W))
       // outputs
       val done = Output(Bool())
       val result = Output(Bool()) // 0=Success, 1=Failure
-      val rm_prio = Output(new Priority(nWid,cWid))
+      val rm_prio = Output(new Priority(cWid,nWid))
     }
 
     // ram ports to synchronous memory
-    val rdPort = new rdPort(log2Ceil(size/chCount),Vec(chCount,new PriorityAndID(nWid,cWid,rWid)))
-    val wrPort = new wrPort(log2Ceil(size/chCount),chCount,Vec(chCount,new PriorityAndID(nWid,cWid,rWid)))
+    val rdPort = new rdPort(log2Ceil(size/chCount),Vec(chCount,new PriorityAndID(cWid,nWid,rWid)))
+    val wrPort = new wrPort(log2Ceil(size/chCount),chCount,Vec(chCount,new PriorityAndID(cWid,nWid,rWid)))
 
     // search port to a component with the ability to find the positions of reference ID's in memory
     val srch = new searchPort(size,rWid)
@@ -69,16 +69,16 @@ class HeapPriorityQueue(size : Int, chCount : Int, nWid : Int, cWid : Int, rWid 
   if(!isPow2(chCount)) throw new Exception("The number of children must be a power of 2!")
 
   // modules
-  val heapifier = Module(new Heapifier(size, chCount, nWid, cWid, rWid))
+  val heapifier = Module(new Heapifier(size, chCount, cWid, nWid, rWid))
 
   // state elements
   val idle :: headInsertion :: normalInsertion :: initSearch :: waitForSearch :: resetCell :: lastRemoval :: headRemoval :: tailRemoval :: removal :: waitForHeapifyUp :: waitForHeapifyDown :: Nil = Enum(12)
   val stateReg = RegInit(idle)
   val heapSizeReg = RegInit(0.U(log2Ceil(size+1).W))
-  val headReg = RegInit(VecInit(Seq.fill(nWid+cWid+rWid)(1.U)).asTypeOf(new PriorityAndID(nWid,cWid,rWid)))
-  val tempReg = RegInit(VecInit(Seq.fill(chCount)(0.U.asTypeOf(new PriorityAndID(nWid,cWid,rWid)))))
+  val headReg = RegInit(VecInit(Seq.fill(nWid+cWid+rWid)(1.U)).asTypeOf(new PriorityAndID(cWid,nWid,rWid)))
+  val tempReg = RegInit(VecInit(Seq.fill(chCount)(0.U.asTypeOf(new PriorityAndID(cWid,nWid,rWid)))))
   val removalIndex = RegInit(0.U(log2Ceil(size).W))
-  val removedPrio = RegInit(0.U.asTypeOf(new Priority(nWid,cWid)))
+  val removedPrio = RegInit(0.U.asTypeOf(new Priority(cWid,nWid)))
 
   // flags
   val headValid = RegInit(true.B)
@@ -94,7 +94,7 @@ class HeapPriorityQueue(size : Int, chCount : Int, nWid : Int, cWid : Int, rWid 
   val rdIndexToRam = ((rdIndex - 1.U) >> log2Ceil(chCount)).asUInt
   val rdIndexOffset = Mux(rdIndex === 0.U, 0.U, rdIndex(log2Ceil(chCount),0) - 1.U(log2Ceil(size).W))
 
-  val resetVal = VecInit(Seq.fill(nWid+cWid+rWid)(true.B)).asUInt.asTypeOf(new PriorityAndID(nWid,cWid,rWid))
+  val resetVal = VecInit(Seq.fill(nWid+cWid+rWid)(true.B)).asUInt.asTypeOf(new PriorityAndID(cWid,nWid,rWid))
 
   // heapSize controlling
   val incHeapsize = heapSizeReg + 1.U
@@ -134,6 +134,7 @@ class HeapPriorityQueue(size : Int, chCount : Int, nWid : Int, cWid : Int, rWid 
 
   switch(stateReg){
     is(idle){
+
       io.cmd.done := true.B
 
       wrIndex := heapSizeReg // prepare write port for insertion
@@ -158,14 +159,19 @@ class HeapPriorityQueue(size : Int, chCount : Int, nWid : Int, cWid : Int, rWid 
           }
         }.otherwise{ // removal
           headValid := false.B
-          when(heapSizeReg === 1.U && headReg.id =/= io.cmd.refID) { //catch non matching reference ID on last removal
-            errorReg := true.B
-            stateReg := idle
-          }.elsewhen(heapSizeReg === 1.U && headReg.id === io.cmd.refID){
-            stateReg := lastRemoval
+          when(heapSizeReg =/= 0.U) {
+            when(heapSizeReg === 1.U && headReg.id =/= io.cmd.refID) { //catch non matching reference ID on last removal
+              errorReg := true.B
+              stateReg := idle
+            }.elsewhen(heapSizeReg === 1.U && headReg.id === io.cmd.refID) {
+              stateReg := lastRemoval
+            }.otherwise {
+              stateReg := initSearch
+              io.srch.search := true.B
+            }
           }.otherwise{
-            stateReg := initSearch
-            io.srch.search := true.B
+            stateReg := idle
+            errorReg := true.B
           }
         }
       }
@@ -216,6 +222,11 @@ class HeapPriorityQueue(size : Int, chCount : Int, nWid : Int, cWid : Int, rWid 
       }.elsewhen(io.rdPort.data(rdIndexOffset).id === io.cmd.refID){
         stateReg := tailRemoval
         removedPrio := io.rdPort.data(rdIndexOffset).prio
+      }.elsewhen(io.srch.error){
+        io.srch.search := false.B
+        heapSizeReg := heapSizeReg
+        errorReg := true.B
+        stateReg := idle
       }
     }
     is(waitForSearch){ // wait for memory to look up the index corresponding to the reference ID
@@ -235,9 +246,11 @@ class HeapPriorityQueue(size : Int, chCount : Int, nWid : Int, cWid : Int, rWid 
         errorReg := true.B
         stateReg := idle
         heapSizeReg := incHeapsize // reset heapsize
+        io.srch.search := false.B
       }.elsewhen(io.srch.done){
         removalIndex := io.srch.res // save index of removal
         stateReg := resetCell
+        io.srch.search := false.B
       }
     }
     is(resetCell){

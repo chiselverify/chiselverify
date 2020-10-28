@@ -4,6 +4,7 @@ import org.scalatest._
 import chiseltest._
 import coverage.Coverage.{Bins, CoverPoint, Cross, CrossBin}
 import coverage.CoverageReporter
+import heappriorityqueue.helpers._
 
 class PriorityQueueCoverageTest extends FreeSpec with ChiselScalatestTester {
 
@@ -22,6 +23,7 @@ class PriorityQueueCoverageTest extends FreeSpec with ChiselScalatestTester {
     val rand = scala.util.Random
 
     val dut = new HeapPriorityQueueWrapper(c, heapSize, chCount, debugLvl)(cWid, nWid, rWid)
+    c.clock.setTimeout(0)
     val model = new Behavioural(heapSize, chCount)(cWid, nWid, rWid)
 
     ////////////////////////////////////////////////////Coverage////////////////////////////////////////////////////////
@@ -88,10 +90,10 @@ class PriorityQueueCoverageTest extends FreeSpec with ChiselScalatestTester {
         }
         // cross check dut and model; kill test and print debug if not matching
         cr.sample()
-        if (!dut.compareWithModel(model.mem)) {
-          println(debug)
-          sys.exit(0)
-        }
+        assert(c.io.head.prio.cycl.peek.litValue == model.mem(0)(0),debug)
+        assert(c.io.head.prio.norm.peek.litValue == model.mem(0)(1),debug)
+        assert(c.io.head.refID.peek.litValue == model.mem(0)(2),debug)
+        assert(model.mem.slice(1,model.mem.length).deep == dut.mem.flatten.deep,debug)
       }
     }
 
@@ -123,14 +125,14 @@ class PriorityQueueCoverageTest extends FreeSpec with ChiselScalatestTester {
   "HeapPriorityQueue pass a single random poke test run" in {
     val heapSize = 17
     val chCount = 4
-    test(new HeapPriorityQueue(heapSize,chCount,nWid,cWid,rWid)) { c => tester(c,heapSize,chCount,0,100)}
+    test(new HeapPriorityQueue(heapSize,chCount,cWid,nWid,rWid)) { c => tester(c,heapSize,chCount,0,100)}
   }
 
   "HeapPriorityQueue should pass random poke test runs with different memory sizes and children count" in {
     val sizes = Array(33,65,129,257)
     val chCounts = Array(2,4,8,16)
     sizes.foreach(heapSize => chCounts.foreach(chCount => {
-      test(new HeapPriorityQueue(heapSize,chCount,nWid,cWid,rWid)) { c => tester(c,heapSize,chCount,0,100)}
+      test(new HeapPriorityQueue(heapSize,chCount,cWid,nWid,rWid)) { c => tester(c,heapSize,chCount,0,100)}
     }))
   }
 

@@ -1,7 +1,58 @@
 package heappriorityqueue
 
 import chiseltest._
+import org.scalatest._
 import chisel3._
+import lib._
+import heappriorityqueue.helpers._
+
+import scala.annotation.tailrec
+
+object helpers {
+  var cWid = 2
+  var nWid = 8
+  var rWid = 3
+
+  def setWidths(c: Int, n: Int, r: Int) : Unit = {
+    cWid = c
+    nWid = n
+    rWid = r
+  }
+
+  def pokePrioAndID(port: PriorityAndID, poke: Seq[Int] = null) : Seq[Int] = {
+    if(poke != null){
+      port.prio.cycl.poke(poke(0).U)
+      port.prio.norm.poke(poke(1).U)
+      port.id.poke(poke(2).U)
+      return poke
+    }else{
+      val rand = scala.util.Random
+      val poke = Seq(rand.nextInt(math.pow(2,cWid).toInt),rand.nextInt(math.pow(2,nWid).toInt),rand.nextInt(math.pow(2,rWid).toInt))
+      pokePrioAndID(port, poke)
+    }
+  }
+
+  def pokePrioAndIDVec(port: Vec[PriorityAndID], poke: Seq[Seq[Int]] = null) : Seq[Seq[Int]] = {
+    if(poke != null) Seq.tabulate(port.length)(i => pokePrioAndID(port(i),poke(i)))
+    else Seq.tabulate(port.length)(i => pokePrioAndID(port(i)))
+  }
+
+  def peekPrioAndId(port: PriorityAndID) : Seq[Int] = {
+    Seq(port.prio.cycl, port.prio.norm, port.id).map(_.peek.litValue.toInt)
+  }
+
+  def peekPrioAndIdVec(port: Vec[PriorityAndID]) : Seq[Seq[Int]] = {
+    Seq.tabulate(port.length)(i => peekPrioAndId(port(i)))
+  }
+
+  def prioAndIdToString(data: Seq[Int]) : String = {
+    data.mkString(":")
+  }
+
+  def prioAndIdVecToString(data: Seq[Seq[Int]]) : String = {
+    data.map(_.mkString(":")).mkString(", ")
+  }
+}
 
 /**
  * Wrapper class to abstract interaction with the heap-based priority queue
@@ -23,6 +74,7 @@ class HeapPriorityQueueWrapper(dut: HeapPriorityQueue, size: Int, chCount: Int, 
   val states = Array("idle" ,"headInsertion", "normalInsertion", "initSearch", "waitForSearch", "resetCell", "lastRemoval", "headRemoval", "tailRemoval" ,"removal", "waitForHeapifyUp", "waitForHeapifyDown")
 
   var mem = Array.fill(size-1)(Array(Math.pow(2,cWid).toInt-1,Math.pow(2,nWid).toInt-1,Math.pow(2,rWid).toInt-1)).sliding(chCount,chCount).toArray
+  dut.io.srch.done.poke(true.B)
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   def stepDut(n: Int) : String = {
@@ -71,12 +123,13 @@ class HeapPriorityQueueWrapper(dut: HeapPriorityQueue, size: Int, chCount: Int, 
           searchSimDelay += 1
         }
       }else{
+        dut.io.srch.done.poke(true.B)
         searchSimDelay = 0
       }
       str.append(
-        s"${states(dut.io.state.peek.litValue.toInt)}\n"+
+        s"${states(dut.io.state.peek.litValue.toInt)} : ${dut.io.cmd.done.peek.litValue} : ${dut.io.cmd.result.peek.litValue}\n"+
           s"ReadPort: ${dut.io.rdPort.address.peek.litValue} | ${if(pipedRdAddr<size/chCount)mem(pipedRdAddr).map(_.mkString(":")).mkString(",") else ""}\n"+
-          s"WritePort: ${dut.io.wrPort.address.peek.litValue} | ${dut.io.wrPort.data.mkString/*peek.map(_.getElements).map(_.map(_.litValue.toInt)).map(_.mkString(":")).mkString(",")*/} | ${dut.io.wrPort.write.peek.litToBoolean} | ${dut.io.wrPort.mask.peek.litValue.toString(2).reverse}\n"+
+          s"WritePort: ${dut.io.wrPort.address.peek.litValue} | ${prioAndIdVecToString(peekPrioAndIdVec(dut.io.wrPort.data))} | ${dut.io.wrPort.write.peek.litToBoolean} | ${dut.io.wrPort.mask.peek.litValue.toString(2).reverse}\n"+
           getMem()+s"\n${"-"*40}\n"
       )
 
@@ -92,12 +145,12 @@ class HeapPriorityQueueWrapper(dut: HeapPriorityQueue, size: Int, chCount: Int, 
     return str.toString
   }
 
-  def stepUntilDone(max: Int = Int.MaxValue) : String = {
+  def stepUntilDone() : String = {
     var iterations = 0
     val str = new StringBuilder
-    while(iterations < max && (!dut.io.cmd.done.peek.litToBoolean || iterations < 1)){
+    str.append(stepDut(1))
+    while(!dut.io.cmd.done.peek.litToBoolean){
       str.append(stepDut(1))
-      iterations += 1
     }
     return str.toString
   }
@@ -112,13 +165,13 @@ class HeapPriorityQueueWrapper(dut: HeapPriorityQueue, size: Int, chCount: Int, 
   }
 
   def pokePrioAndID(c: Int, n: Int, id: Int) : Unit = {
-    pokePriority(n,c)
+    pokePriority(c,n)
     pokeID(id)
   }
 
   def insert(c: Int, n: Int, id: Int) : (Int, Boolean, String) = {
     if(debugLvl >= 2) println(s"Inserting $c:$n:$id${"-"*20}")
-    pokePrioAndID(n,c,id)
+    pokePrioAndID(c,n,id)
     dut.io.cmd.op.poke(true.B)
     dut.io.cmd.valid.poke(true.B)
     stepCounter = 0
@@ -157,11 +210,11 @@ class HeapPriorityQueueWrapper(dut: HeapPriorityQueue, size: Int, chCount: Int, 
   }
 
   def getMem() : String = {
-    return s"${dut.io.head.prio.peek.getElements.map(_.litValue()).mkString(":")}:${dut.io.head.refID.peek.litValue} | ${mem.map(_.map(_.mkString(":")).mkString(", ")).mkString(" | ")}"
+    return s"${dut.io.head.prio.cycl.peek.litValue}:${dut.io.head.prio.norm.peek.litValue}:${dut.io.head.refID.peek.litValue} | ${mem.map(_.map(_.mkString(":")).mkString(", ")).mkString(" | ")}"
   }
 
   def getRmPrio() : Array[Int] = {
-    return dut.io.cmd.rm_prio.peek.getElements.map(_.litValue.toInt).toArray
+    return Seq(dut.io.cmd.rm_prio.cycl,dut.io.cmd.rm_prio.norm).map(_.peek.litValue.toInt).toArray
   }
 
   def getSuccess() : Boolean = {

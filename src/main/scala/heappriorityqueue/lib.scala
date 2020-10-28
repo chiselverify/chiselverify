@@ -8,15 +8,15 @@ import chisel3.util._
  */
 
 object lib {
-  class Priority(val nWid: Int, val cWid: Int) extends Bundle{
+  class Priority(val cWid: Int, val nWid: Int) extends Bundle{
     val norm = UInt(nWid.W)
     val cycl = UInt(cWid.W)
-    override def cloneType = new Priority(nWid, cWid).asInstanceOf[this.type]
+    override def cloneType = new Priority(cWid, nWid).asInstanceOf[this.type]
   }
-  class PriorityAndID(nWid: Int, cWid: Int, rWid: Int) extends Bundle{
-    val prio = new Priority(nWid, cWid)
+  class PriorityAndID(cWid: Int, nWid: Int, rWid: Int) extends Bundle{
+    val prio = new Priority(cWid, nWid)
     val id = UInt(rWid.W)
-    override def cloneType = (new PriorityAndID(nWid, cWid, rWid)).asInstanceOf[this.type]
+    override def cloneType = (new PriorityAndID(cWid, nWid, rWid)).asInstanceOf[this.type]
   }
   class rdPort[T <: Data](addrWid: Int, dType: T) extends Bundle{ // as seen from reader side
     val address = Output(UInt(addrWid.W))

@@ -19,7 +19,7 @@ import lib._
  * @param cWid the width of the cyclic priority
  * @param rWid the width of the reference ID
  */
-class Heapifier(size : Int, chCount : Int, nWid : Int, cWid : Int, rWid : Int)extends Module{
+class Heapifier(size : Int, chCount : Int, cWid : Int, nWid : Int, rWid : Int)extends Module{
   val io = IO(new Bundle{
     // control port
     val control = new Bundle {
@@ -32,13 +32,13 @@ class Heapifier(size : Int, chCount : Int, nWid : Int, cWid : Int, rWid : Int)ex
     }
 
     // ram ports
-    val rdPort = new rdPort(log2Ceil(size/chCount),Vec(chCount,new PriorityAndID(nWid,cWid,rWid)))
-    val wrPort = new wrPort(log2Ceil(size/chCount),chCount,Vec(chCount,new PriorityAndID(nWid,cWid,rWid)))
+    val rdPort = new rdPort(log2Ceil(size/chCount),Vec(chCount,new PriorityAndID(cWid,nWid,rWid)))
+    val wrPort = new wrPort(log2Ceil(size/chCount),chCount,Vec(chCount,new PriorityAndID(cWid,nWid,rWid)))
 
     // port to the cached head element stored in a register
     val headPort = new Bundle{
-      val rdData = Input(new PriorityAndID(nWid,cWid,rWid))
-      val wrData = Output(new PriorityAndID(nWid,cWid,rWid))
+      val rdData = Input(new PriorityAndID(cWid,nWid,rWid))
+      val wrData = Output(new PriorityAndID(cWid,nWid,rWid))
       val write = Output(Bool())
     }
 
@@ -46,15 +46,15 @@ class Heapifier(size : Int, chCount : Int, nWid : Int, cWid : Int, rWid : Int)ex
     val state = Output(UInt())
   })
 
-  val minFinder = Module(new MinFinder(chCount + 1, nWid, cWid, rWid)) // module to find the minimum priority among the parent and children
+  val minFinder = Module(new MinFinder(chCount + 1, cWid, nWid, rWid)) // module to find the minimum priority among the parent and children
 
   // state elements
   val idle :: warmUp1 :: warmDown1 :: warmUp2 :: warmDown2 :: readUp :: readDown :: wbUp1 :: wbDown1 :: wbUp2 :: wbDown2 :: Nil = Enum(11)
   val stateReg = RegInit(idle) // state register
   val indexReg = RegInit(0.U(log2Ceil(size).W)) // register holding the index of the current parent
   val swappedReg = RegInit(false.B) // register holding a flag showing whether a swap has occurred
-  val parentReg = RegInit(VecInit(Seq.fill(chCount)(0.U.asTypeOf(new PriorityAndID(nWid,cWid,rWid))))) // register holding the content of the RAM cell containing the parent
-  val childrenReg = RegInit(VecInit(Seq.fill(chCount)(0.U.asTypeOf(new PriorityAndID(nWid,cWid,rWid))))) // register holding the content of the RAM cell of the children
+  val parentReg = RegInit(VecInit(Seq.fill(chCount)(0.U.asTypeOf(new PriorityAndID(cWid,nWid,rWid))))) // register holding the content of the RAM cell containing the parent
+  val childrenReg = RegInit(VecInit(Seq.fill(chCount)(0.U.asTypeOf(new PriorityAndID(cWid,nWid,rWid))))) // register holding the content of the RAM cell of the children
 
   // ram address generation
   val addressIndex = Wire(UInt(log2Ceil(size).W)) // wire that address generation is based on. Is set to indexReg except of the last write back stage, where the next address needs to be generated

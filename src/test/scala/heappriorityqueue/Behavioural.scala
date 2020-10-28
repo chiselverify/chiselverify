@@ -112,8 +112,11 @@ class Behavioural(size: Int, chCount: Int)(cWid : Int,nWid : Int,rWid : Int){
       insert(i(0),i(1),i(2))
     }
   }
+  def insert(poke: Seq[Int]) : Boolean = {
+    insert(poke(1),poke(2),poke(3))
+  }
 
-  def remove(id: Int, print: Boolean = false) : (Boolean,Array[Int]) = {
+  def remove(id: Int, print: Boolean = false) : (Boolean,Seq[Int]) = {
     var idx = mem.map(_(2)==id).indexOf(true)
     if(mem(0)(2)==id){
       idx = 0
@@ -122,12 +125,12 @@ class Behavioural(size: Int, chCount: Int)(cWid : Int,nWid : Int,rWid : Int){
     }
     if(idx == -1 || idx > heapSize){
       if(print) println("Error removing")
-      return (false,Array(0,0,0))
+      return (false,Seq(0,0))
     }
     else{
-      var removed = Array.fill(3)(0)
+      var removed = Seq.fill(2)(0)
       if(idx < heapSize-1){
-        removed = mem(idx).clone()
+        removed = mem(idx).toSeq.slice(0,2)
         mem(idx) = mem(heapSize-1)
         if(heapSize-1>0) mem(heapSize-1) = Array(Math.pow(2,cWid).toInt-1,Math.pow(2,nWid).toInt-1,Math.pow(2,rWid).toInt-1)
         heapSize -= 1
@@ -137,7 +140,7 @@ class Behavioural(size: Int, chCount: Int)(cWid : Int,nWid : Int,rWid : Int){
           if(!heapifyUp((idx-1)/chCount) && ((idx*chCount)+1) < size) heapifyDown(idx)
         }
       }else{
-        removed = mem(heapSize-1).clone()
+        removed = mem(heapSize-1).toSeq.slice(0,2)
         if(heapSize-1>0) mem(heapSize-1) = Array(Math.pow(2,cWid).toInt-1,Math.pow(2,nWid).toInt-1,Math.pow(2,rWid).toInt-1)
         heapSize -= 1
       }
@@ -151,6 +154,14 @@ class Behavioural(size: Int, chCount: Int)(cWid : Int,nWid : Int,rWid : Int){
 
   def incHeapSize(n: Int) : Unit = {
     heapSize += n
+  }
+
+  def getHead: Seq[Int] = {
+    Seq.tabulate(3)(i => mem(0)(i))
+  }
+
+  def getMem() : Seq[Seq[Int]] = {
+    mem.map(_.toSeq).toSeq
   }
 
   def printMem(style: Int = 1) : Unit = {
