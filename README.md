@@ -118,7 +118,7 @@ We have on outsider interested to contribute: Kartik Samtani
  
 ## Friday 2020-10-30
 
- * [Workshop](Workshop.md)
+ * [Workshop](Workshop.md) with 32 participants
 
 # Documents
 
