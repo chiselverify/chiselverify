@@ -5,7 +5,6 @@ This workshop will present the results of the InfinIT funded project
 
  * Date: 2020-10-30
  * Time: 14:00-16:00 CEST
- * Location: online at Zoom at: https://dtudk.zoom.us/j/68132077416
 
 ## Program
 
@@ -22,5 +21,7 @@ This workshop will present the results of the InfinIT funded project
  * 15:40 **Sorting Use Case**, Tjark Petersen
  * 15:50 **Teaching Activities on Verification at DTU**, Martin Schoeberl
  * 15:55 **Summarize and Outlook**, Martin Schoeberl
+
+Slides are available in [presentations](presentations)
  
 
