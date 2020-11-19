@@ -22,7 +22,7 @@ import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 /**
-  * Stores all of the data relevant to the functional verify.coverage elements
+  * Stores all of the data relevant to the functional coverage elements
   */
 class CoverageDB {
     //Contains all a mapping from coverPoint id to the DUT's port name
@@ -36,7 +36,7 @@ class CoverageDB {
     private val crossBinHitValuesMap: mutable.HashMap[CrossBin, List[(BigInt, BigInt)]] = new mutable.HashMap[CrossBin, List[(BigInt, BigInt)]]()
     private val crossBinNumHitsMap: mutable.HashMap[CrossBin, BigInt] = new mutable.HashMap[CrossBin, BigInt]()
 
-    //Mappings for cross verify.coverage
+    //Mappings for cross coverage
     private val pointNameToPoint: mutable.HashMap[String, CoverPoint] = new mutable.HashMap[String, CoverPoint]()
     private val crossToPoints: mutable.HashMap[Cross, (CoverPoint, CoverPoint)] = new  mutable.HashMap[Cross, (CoverPoint, CoverPoint)]()
     private val pointToCross: mutable.HashMap[CoverPoint, Cross] = new mutable.HashMap[CoverPoint, Cross]()
