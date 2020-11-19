@@ -74,7 +74,7 @@ class AluAccuTester extends FlatSpec with ChiselScalatestTester with Matchers {
     val randArgs = Seq.fill(20)(scala.util.Random.nextInt)
     test(randArgs)
 
-    //Print verify.coverage report
+    //Print coverage report
     cr.printReport()
   }
 

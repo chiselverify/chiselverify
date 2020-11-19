@@ -8,7 +8,7 @@ class adder_4_bit_environment extends uvm_env;
   //////////////////////////////////////////////////////////////////////////////
   adder_4_bit_agent adder_4_bit_agnt;
   adder_4_bit_ref_model ref_model;
-  adder_4_bit_coverage#(adder_4_bit_transaction) verify.coverage;
+  adder_4_bit_coverage#(adder_4_bit_transaction) coverage;
   adder_4_bit_scoreboard  sb;
    
   //////////////////////////////////////////////////////////////////////////////
@@ -31,7 +31,7 @@ class adder_4_bit_environment extends uvm_env;
     super.build_phase(phase);
     adder_4_bit_agnt = adder_4_bit_agent::type_id::create("adder_4_bit_agent", this);
     ref_model = adder_4_bit_ref_model::type_id::create("ref_model", this);
-    verify.coverage = adder_4_bit_coverage#(adder_4_bit_transaction)::type_id::create("verify.coverage", this);
+    coverage = adder_4_bit_coverage#(adder_4_bit_transaction)::type_id::create("coverage", this);
     sb = adder_4_bit_scoreboard::type_id::create("sb", this);
   endfunction : build_phase
   //////////////////////////////////////////////////////////////////////////////
@@ -42,7 +42,7 @@ class adder_4_bit_environment extends uvm_env;
     super.connect_phase(phase);
     adder_4_bit_agnt.driver.drv2rm_port.connect(ref_model.rm_export);
     adder_4_bit_agnt.monitor.mon2sb_port.connect(sb.mon2sb_export);
-    ref_model.rm2sb_port.connect(verify.coverage.analysis_export);
+    ref_model.rm2sb_port.connect(coverage.analysis_export);
     ref_model.rm2sb_port.connect(sb.rm2sb_export);
   endfunction : connect_phase
 

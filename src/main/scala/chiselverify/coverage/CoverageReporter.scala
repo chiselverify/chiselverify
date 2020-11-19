@@ -43,7 +43,7 @@ class CoverageReporter {
     )
 
     /**
-      * Prints out a human readable verify.coverage report
+      * Prints out a human readable coverage report
       */
     def printReport(): Unit = println(report.serialize)
 
