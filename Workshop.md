@@ -10,7 +10,7 @@ This workshop will present the results of the InfinIT funded project
 
  * 14:00 **Introduction**, Martin Schoeberl
  * 14:10 **UVM - How, why, and is it even necessary?**, Kasper Hesse
- * 14:20 **Code coverage at Scala level**, Hans Jakob Damsgaard
+ * 14:20 **Code verify.coverage at Scala level**, Hans Jakob Damsgaard
  * 14:30 **Code Coverage at FIRRTL Level**, Andrew Dobis
  * 14:40 **Property Based Testing**, Zhoulai Fu
  * 14:50 **Functional Coverage in Scala**, Andrew Dobis

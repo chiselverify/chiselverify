@@ -12,7 +12,7 @@ class agent extends uvm_agent;
     driver m_driver;
 
 	 //  Group: Variables
-	 //Analysis port to forwarding items to scoreboard and coverage collector
+	 //Analysis port to forwarding items to scoreboard and verify.coverage collector
     uvm_analysis_port #(leros_command) agent_ap;
 
     //  Function: build_phase

@@ -9,7 +9,7 @@ class adder_4_bit_coverage#(type T=adder_4_bit_transaction) extends uvm_subscrib
 adder_4_bit_transaction cov_trans;
 `uvm_component_utils(adder_4_bit_coverage)
 ///////////////////////////////////////////////////////////////////////////////
-// functional coverage: covergroup for adder_4_bit
+// functional verify.coverage: covergroup for adder_4_bit
 ///////////////////////////////////////////////////////////////////////////////
 covergroup adder_4_bit_cg;
    option.per_instance=1;
@@ -48,7 +48,7 @@ function new(string name="adder_4_bit_ref_model", uvm_component parent);
 endfunction
 ///////////////////////////////////////////////////////////////////////////////
 // Method name : sample
-// Description : sampling adder_4_bit coverage
+// Description : sampling adder_4_bit verify.coverage
 ///////////////////////////////////////////////////////////////////////////////
 function void write(T t);
   this.cov_trans = t;

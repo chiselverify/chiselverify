@@ -161,13 +161,13 @@ package my_pkg;
 
 	endclass;
 
-	//Creating a coverage component which takes objects of type 'command' and processes them
+	//Creating a verify.coverage component which takes objects of type 'command' and processes them
 	//By extending uvm_subscriber, we automatically gain an analysis_export
 	class coverage_comp extends uvm_subscriber #(command);
 		`uvm_component_utils(coverage_comp)
 		command cmd = new;
 
-		//Set up coverage and covergroups
+		//Set up verify.coverage and covergroups
 		//We want to try all operations with all zeros and all ones and random data
 		covergroup zeros_and_ones;
 			as: coverpoint cmd.a {

@@ -1,5 +1,5 @@
 # UVM Testbench for the Leros ALU
-This is a UVM testbench for the Leros ALU. The original ALU is described in [this Scala file](../../src/main/scala/leros/AluAccuChisel.scala). Two versions of the ALU are used. One is the generated Verilog version in `AluAccu.v`, the other is the VHDL version in `AccuAlu.vhd`. Both have the same functionality.
+This is a UVM testbench for the Leros ALU. The original ALU is described in [this Scala file](../../src/main/scala/examples.leros/AluAccuChisel.scala). Two versions of the ALU are used. One is the generated Verilog version in `AluAccu.v`, the other is the VHDL version in `AccuAlu.vhd`. Both have the same functionality.
 
 # Structure
 The files are separated into the files located in the main directory, and files in subdirectories. Any class which has a factory override has been moved into a directory with all extending classes. 

@@ -1,8 +1,8 @@
-# Compile with coverage for b=branch, c=condition, c=statement and t=toggle
+# Compile with verify.coverage for b=branch, c=condition, c=statement and t=toggle
 vlog -cover bcst *.sv
 
-# Simulate with coverage
-vsim -coverage -sv_seed random top
+# Simulate with verify.coverage
+vsim -verify.coverage -sv_seed random top
 
 #Enable VCD output and add all signals
 vcd file output.vcd
@@ -13,6 +13,6 @@ onfinish stop
 run -all
 
 
-# Generate coverage report and export to coverage.txt
+# Generate verify.coverage report and export to verify.coverage.txt
 #For some reason, this requires another "run" command. But if we remove "onfinish stop" it won't execute
-coverage report -detail -cvg -directive -comments -file coverage.txt -noa /my_pkg/coverage_comp/zeros_and_ones
+verify.coverage report -detail -cvg -directive -comments -file verify.coverage.txt -noa /my_pkg/coverage_comp/zeros_and_ones

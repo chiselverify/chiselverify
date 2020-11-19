@@ -8,7 +8,7 @@ class base_transaction extends uvm_sequence_item;
     rand int a;
 	 rand int b;
 
-	 //These constraints are the most basic, good for coverage checking
+	 //These constraints are the most basic, good for verify.coverage checking
     constraint c_op { 
 		 op >= 0; 
 		 op <= 3; 

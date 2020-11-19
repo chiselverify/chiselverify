@@ -7,6 +7,6 @@ onfinish stop
 run -all
 
 
-# Generate coverage report and export to coverage.txt
+# Generate verify.coverage report and export to verify.coverage.txt
 #For some reason, this requires another "run" command. But if we remove "onfinish stop" it won't execute
-coverage report -detail -cvg -directive -comments -file coverage.txt -noa /simplealu_pkg/coverage_comp/zeros_and_ones
+verify.coverage report -detail -cvg -directive -comments -file verify.coverage.txt -noa /simplealu_pkg/coverage_comp/zeros_and_ones

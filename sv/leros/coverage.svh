@@ -1,7 +1,7 @@
-//  Class: coverage
+//  Class: verify.coverage
 //
-class coverage extends uvm_subscriber #(leros_command);
-	`uvm_component_utils(coverage);
+class verify.coverage extends uvm_subscriber #(leros_command);
+	`uvm_component_utils(verify.coverage);
 
 	//  Group: Variables
 	leros_command cmd  = new;
@@ -43,7 +43,7 @@ class coverage extends uvm_subscriber #(leros_command);
 	extern function void write(leros_command t);
 	
 	//  Constructor: new
-	function new(string name = "coverage", uvm_component parent);
+	function new(string name = "verify.coverage", uvm_component parent);
 		super.new(name, parent);
 
 		//Instantiate covergroups
@@ -51,21 +51,21 @@ class coverage extends uvm_subscriber #(leros_command);
 		cg_all_zeros_ones = new;
 	endfunction: new
 	
-endclass: coverage
+endclass: verify.coverage
 
 /*----------------------------------------------------------------------------*/
 /*  Functions                                                                 */
 /*----------------------------------------------------------------------------*/
 
-function void coverage::write(leros_command t);
-	//Save coverage data
+function void verify.coverage::write(leros_command t);
+	//Save verify.coverage data
 	cmd.op = t.op;
 	cmd.din = t.din;
 	cmd.reset = t.reset;
 
 	`uvm_info(get_name(), $sformatf("Got: op=%s, din=%d, accu=%d, reset=%d", t.op.name, t.din, t.accu, t.reset), UVM_HIGH)
 	
-	//Sample for coverage
+	//Sample for verify.coverage
 	cg_all_zeros_ones.sample();
 	cg_post_rst.sample();
 endfunction;
@@ -73,7 +73,7 @@ endfunction;
 /*----------------------------------------------------------------------------*/
 /*  UVM Build Phases                                                          */
 /*----------------------------------------------------------------------------*/
-function void coverage::build_phase(uvm_phase phase);
+function void verify.coverage::build_phase(uvm_phase phase);
 	/*  note: Do not call super.build_phase() from any class that is extended from an UVM base class!  */
 	/*  For more information see UVM Cookbook v1800.2 p.503  */
 	super.build_phase(phase);
