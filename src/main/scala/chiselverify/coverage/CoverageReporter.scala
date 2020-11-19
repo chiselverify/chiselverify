@@ -1,54 +1,51 @@
-// See README.md for license details.
+/*
+* Copyright 2020 DTU Compute - Section for Embedded Systems Engineering
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+* or implied. See the License for the specific language governing
+* permissions and limitations under the License.
+*/
 
-package coverage
+package chiselverify.coverage
 
 import chisel3.tester.testableData
-import coverage.Coverage._
 
-import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 /**
   * Handles everything related to functional coverage
-  * @param dut the DUT currently being tested
-  * @tparam T the type of the DUT
   */
 class CoverageReporter {
     private val coverGroups: ArrayBuffer[CoverGroup] = new ArrayBuffer[CoverGroup]()
     private val coverageDB: CoverageDB = new CoverageDB
 
     /**
-      * Makes a readable fucntional coverage report
+      * Makes a readable functional coverage report
       * @return the report in string form
       */
-    def report: String = {
-        val rep: StringBuilder = new StringBuilder(s"\n============ COVERAGE REPORT ============\n")
-        coverGroups foreach(group => {
-            rep append s"============== GROUP ID: ${group.id} ==============\n"
-            group.points.foreach(point => {
-                rep append s"COVER_POINT PORT NAME: ${point.portName}\n"
-                point.bins.foreach(bin => {
-                    val nHits = coverageDB.getNHits(bin)
-                    rep append s"BIN ${bin.name} COVERING ${bin.range.toString} HAS $nHits HIT(S)\n"
-                })
-                rep append s"=========================================\n"
-            })
-            group.crosses.foreach(cross => {
-                rep append s"CROSS_POINT ${cross.name} FOR POINTS ${cross.pointName1} AND ${cross.pointName2}\n"
-                cross.bins.foreach(cb => {
-                    val nHits = coverageDB.getNHits(cb)
-                    rep append s"BIN ${cb.name} COVERING ${cb.range1.toString} CROSS ${cb.range2.toString} HAS $nHits HIT(S)\n"
-                })
-                rep append s"=========================================\n"
-            })
-        })
-        rep.mkString
-    }
+    def report: CoverageReport = CoverageReport(
+        coverGroups.map(g =>
+            GroupReport(
+                g.id,
+                g.points.map(p =>
+                    PointReport(p.portName, p.bins.map(b => BinReport(b, coverageDB.getNHits(p.portName, b.name))))),
+                g.crosses.map(c =>
+                    CrossReport(c, c.bins.map(cb => CrossBinReport(cb, coverageDB.getNHits(cb))))))
+        ).toList
+    )
 
     /**
       * Prints out a human readable coverage report
       */
-    def printReport(): Unit = println(report)
+    def printReport(): Unit = println(report.serialize)
 
     /**
       * Samples all of the coverpoints defined in the various covergroups
@@ -56,10 +53,10 @@ class CoverageReporter {
       */
     def sample(): Unit = {
 
-        def sampleBins(point: CoverPoint, value: BigInt) : Unit =
+        def sampleBins(point: CoverPoint, value: Int) : Unit =
             point.bins.foreach(bin => {
                 if(bin.range contains value) {
-                    coverageDB.addBinHit(bin, value)
+                    coverageDB.addBinHit(point.portName, bin.name, value)
                 }
             })
 
@@ -69,16 +66,16 @@ class CoverageReporter {
             //Sample cross points
             group.crosses.foreach(cross => {
                 val (point1, point2) = coverageDB.getPointsFromCross(cross)
-                val pointVal1 = point1.port.peek().litValue()
-                val pointVal2 = point2.port.peek().litValue()
+                val pointVal1 = point1.port.peek().asUInt().litValue()
+                val pointVal2 = point2.port.peek().asUInt().litValue()
 
                 //Add the points to the list
                 sampledPoints = sampledPoints :+ point1
                 sampledPoints = sampledPoints :+ point2
 
                 //Sample the points individually first
-                sampleBins(point1, pointVal1)
-                sampleBins(point2, pointVal2)
+                sampleBins(point1, pointVal1.toInt)
+                sampleBins(point2, pointVal2.toInt)
 
                 //Sample the cross bins
                 cross.bins.foreach(cb => {
@@ -95,8 +92,8 @@ class CoverageReporter {
                     sampledPoints = sampledPoints :+ point
 
                     //Check for the ports
-                    val pointVal = point.port.peek().litValue()
-                    sampleBins(point, pointVal)
+                    val pointVal = point.port.peek().asUInt().litValue()
+                    sampleBins(point, pointVal.toInt)
                 }
             })
         })

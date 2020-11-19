@@ -1,9 +1,22 @@
-// See README.md for license details.
+/*
+* Copyright 2020 DTU Compute - Section for Embedded Systems Engineering
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+* or implied. See the License for the specific language governing
+* permissions and limitations under the License.
+*/
 
-package coverage
+package chiselverify.coverage
 
 import chisel3.Data
-import coverage.Coverage.{Bins, CoverPoint, Cross, CrossBin}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -15,9 +28,9 @@ class CoverageDB {
     //Contains all a mapping from coverPoint id to the DUT's port name
     private val coverIdPortMap: mutable.HashMap[String, Data] = new mutable.HashMap[String, Data]()
     //Contains the current sampled values of the different bins
-    private val binIdHitValuesMap: mutable.HashMap[Bins, List[BigInt]] = new mutable.HashMap[Bins, List[BigInt]]()
+    private val binIdHitValuesMap: mutable.HashMap[(String, String), List[BigInt]] = new mutable.HashMap[(String, String), List[BigInt]]()
     //Contains a mapping for the bin ID pair (coverPointID, binID) to the current number of hits it has
-    private val binIdNumHitsMap: mutable.HashMap[Bins, BigInt] = new mutable.HashMap[Bins, BigInt]()
+    private val binIdNumHitsMap: mutable.HashMap[(String, String), BigInt] = new mutable.HashMap[(String, String), BigInt]()
 
     //CrossBins
     private val crossBinHitValuesMap: mutable.HashMap[CrossBin, List[(BigInt, BigInt)]] = new mutable.HashMap[CrossBin, List[(BigInt, BigInt)]]()
@@ -66,11 +79,11 @@ class CoverageDB {
     /**
       * Updates the number of hits done in a given bin
       */
-    def addBinHit(bin: Bins, value: BigInt): Unit = {
-        val newValues = (binIdHitValuesMap.getOrElse(bin, Nil) :+ value).distinct
+    def addBinHit(pointName: String, binName: String, value: BigInt): Unit = {
+        val newValues = (binIdHitValuesMap.getOrElse((pointName, binName), Nil) :+ value).distinct
 
-        binIdHitValuesMap update (bin, newValues)
-        binIdNumHitsMap update (bin, newValues.length)
+        binIdHitValuesMap update ((pointName, binName), newValues)
+        binIdNumHitsMap update ((pointName, binName), newValues.length)
     }
 
     /**
@@ -91,7 +104,7 @@ class CoverageDB {
       * Gets the number of hits form the DB for a given bin id
       * @return the number of hits for the given bin
       */
-    def getNHits(bin: Bins): BigInt = binIdNumHitsMap getOrElse (bin, 0)
+    def getNHits(pointName: String, binName: String): BigInt = binIdNumHitsMap getOrElse ((pointName, binName), 0)
     def getNHits(cross: CrossBin): BigInt = crossBinNumHitsMap getOrElse (cross, 0)
 
     /**

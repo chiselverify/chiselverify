@@ -1,8 +1,8 @@
-package heappriorityqueue.modules
+package examples.heappriorityqueue.modules
 
 import chisel3._
 import chisel3.util._
-import heappriorityqueue.Interfaces._
+import examples.heappriorityqueue.Interfaces._
 
 /**
   * Component implementing the control for the priority queue

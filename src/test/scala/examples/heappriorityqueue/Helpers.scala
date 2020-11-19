@@ -1,8 +1,8 @@
-package heappriorityqueue
+package examples.heappriorityqueue
 
 import chisel3._
 import chiseltest._
-import heappriorityqueue.Interfaces.{Priority, PriorityAndID}
+import examples.heappriorityqueue.Interfaces.{Priority, PriorityAndID}
 
 /**
   * contains useful conversion as well as poke and peek methods for user defined bundles

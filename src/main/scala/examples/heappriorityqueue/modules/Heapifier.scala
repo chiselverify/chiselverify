@@ -1,8 +1,8 @@
-package heappriorityqueue.modules
+package examples.heappriorityqueue.modules
 
 import chisel3._
 import chisel3.util._
-import heappriorityqueue.Interfaces.{PriorityAndID, rdPort, wrPort}
+import examples.heappriorityqueue.Interfaces.{PriorityAndID, rdPort, wrPort}
 
 /**
   * Component implementing the algorithm to create a min-heap. Works itself either upwards or downwards

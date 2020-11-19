@@ -1,8 +1,8 @@
-package heappriorityqueue.modules
+package examples.heappriorityqueue.modules
 
 import chisel3._
 import chisel3.util._
-import heappriorityqueue.Interfaces.{PriorityAndID, rdPort, searchPort, wrPort}
+import examples.heappriorityqueue.Interfaces.{PriorityAndID, rdPort, searchPort, wrPort}
 
 /**
   * Abstract interface for a sequential memory

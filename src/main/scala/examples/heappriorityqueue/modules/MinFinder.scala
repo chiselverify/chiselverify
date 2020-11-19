@@ -1,8 +1,8 @@
-package heappriorityqueue.modules
+package examples.heappriorityqueue.modules
 
 import chisel3._
 import chisel3.util._
-import heappriorityqueue.Interfaces.PriorityAndID
+import examples.heappriorityqueue.Interfaces.PriorityAndID
 
 /**
   * Determines the highest priority (smallest number) with the lowest index among the input values.

@@ -58,7 +58,7 @@ endclass: coverage
 /*----------------------------------------------------------------------------*/
 
 function void coverage::write(leros_command t);
-	//Save coverage data
+	//Save verify.coverage data
 	cmd.op = t.op;
 	cmd.din = t.din;
 	cmd.reset = t.reset;

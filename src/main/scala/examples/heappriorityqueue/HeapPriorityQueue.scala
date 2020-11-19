@@ -1,9 +1,9 @@
-package heappriorityqueue
+package examples.heappriorityqueue
 
 import chisel3._
 import chisel3.util._
-import heappriorityqueue.Interfaces._
-import heappriorityqueue.modules.{QueueControl, linearSearchMem}
+import examples.heappriorityqueue.Interfaces._
+import examples.heappriorityqueue.modules.{QueueControl, linearSearchMem}
 
 /**
   * Component implementing a priority queue, where the minimum value gets to the head of the queue

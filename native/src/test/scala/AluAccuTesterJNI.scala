@@ -5,9 +5,9 @@ import org.scalatest._
 import chiseltest.experimental.TestOptionBuilder._
 import chiseltest.internal.VerilatorBackendAnnotation
 
-import leros._
+import examples.leros._
 
-// Creating an enumerated type since the "Types" Enum in leros package is a
+// Creating an enumerated type since the "Types" Enum in examples.leros package is a
 // Chisel enum, so it return UInts, but we need Ints. Enum to int conversion is done
 // with <EnumVariable>.id
 object LerosTypes extends Enumeration {

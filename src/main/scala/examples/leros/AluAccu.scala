@@ -1,4 +1,4 @@
-package leros
+package examples.leros
 
 import chisel3._
 

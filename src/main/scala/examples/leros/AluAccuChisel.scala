@@ -1,9 +1,9 @@
-package leros
+package examples.leros
 
 import chisel3._
 import chisel3.util._
 
-import leros.Types._
+import examples.leros.Types._
 
 object Types {
   val nop :: add :: sub :: and :: or :: xor :: ld :: shr :: Nil = Enum(8)
