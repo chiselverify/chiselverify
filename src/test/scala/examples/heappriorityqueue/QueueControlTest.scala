@@ -49,23 +49,23 @@ class QueueControlTest extends FreeSpec with ChiselScalatestTester {
 
         val cr = new CoverageReporter
         cr.register(
-            CoverPoint(c.io.cmd.op, "operation",
+            CoverPoint(c.io.cmd.op, "operation")(
                 Bins("insertion", 0 to 0) :: Bins("removal", 1 to 1) :: Nil) ::
-                CoverPoint(c.io.cmd.prio.cycl, "cmd.prio.cycl",
+                CoverPoint(c.io.cmd.prio.cycl, "cmd.prio.cycl")(
                     Bins("cyclic", 0 to 3) :: Nil) ::
-                CoverPoint(c.io.cmd.prio.norm, "cmd.prio.norm",
+                CoverPoint(c.io.cmd.prio.norm, "cmd.prio.norm")(
                     Bins("lower half", 0 to (Math.pow(2, nWid) / 2 - 1).toInt) :: Bins("upper half", (Math.pow(2, nWid) / 2 - 1).toInt to (Math.pow(2, nWid) - 1).toInt) :: Nil) ::
-                CoverPoint(c.io.head.prio.cycl, "head.prio.cycl",
+                CoverPoint(c.io.head.prio.cycl, "head.prio.cycl")(
                     Bins("cyclic", 0 to 3) :: Nil) ::
-                CoverPoint(c.io.head.prio.norm, "head.prio.norm",
+                CoverPoint(c.io.head.prio.norm, "head.prio.norm")(
                     Bins("lower half", 0 to (Math.pow(2, nWid) / 2 - 1).toInt) :: Bins("upper half", (Math.pow(2, nWid) / 2 - 1).toInt to (Math.pow(2, nWid) - 1).toInt) :: Nil) ::
                 Nil,
             //Declare cross points
-            Cross("cyclics at ops", "operation", "cmd.prio.cycl",
+            Cross("cyclics at ops", "operation", "cmd.prio.cycl")(
                 CrossBin("insertion", 0 to 0, 0 to 3) :: CrossBin("removal", 1 to 1, 0 to 3) :: Nil) ::
-                Cross("normals at ops", "operation", "cmd.prio.norm",
+                Cross("normals at ops", "operation", "cmd.prio.norm")(
                     CrossBin("insertion lower half", 0 to 0, 0 to (Math.pow(2, nWid) / 2 - 1).toInt) :: CrossBin("insertion upper half", 0 to 0, (Math.pow(2, nWid) / 2 - 1).toInt to (Math.pow(2, nWid) - 1).toInt) ::
-                        CrossBin("removal lower half", 1 to 1, 0 to (Math.pow(2, nWid) / 2 - 1).toInt) :: CrossBin("removal upper half", 1 to 1, (Math.pow(2, nWid) / 2 - 1).toInt to (Math.pow(2, nWid) - 1).toInt) :: Nil) ::
+                    CrossBin("removal lower half", 1 to 1, 0 to (Math.pow(2, nWid) / 2 - 1).toInt) :: CrossBin("removal upper half", 1 to 1, (Math.pow(2, nWid) / 2 - 1).toInt to (Math.pow(2, nWid) - 1).toInt) :: Nil) ::
                 Nil)
 
         ////////////////////////////////////////////////helper functions////////////////////////////////////////////////////

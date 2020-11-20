@@ -24,3 +24,4 @@ AN.DB*
 transcript
 build/
 !NativeScoreboard.h
+.idea/**
