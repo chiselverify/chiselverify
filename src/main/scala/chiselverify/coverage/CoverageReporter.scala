@@ -16,6 +16,7 @@
 
 package chiselverify.coverage
 
+import chisel3.Data
 import chisel3.tester.testableData
 
 import scala.collection.mutable.ArrayBuffer
@@ -23,9 +24,9 @@ import scala.collection.mutable.ArrayBuffer
 /**
   * Handles everything related to functional coverage
   */
-class CoverageReporter {
+class CoverageReporter(clock: Data) {
     private val coverGroups: ArrayBuffer[CoverGroup] = new ArrayBuffer[CoverGroup]()
-    private val coverageDB: CoverageDB = new CoverageDB
+    private val coverageDB: CoverageDB = new CoverageDB(clock)
 
     /**
       * Makes a readable functional coverage report
@@ -38,6 +39,7 @@ class CoverageReporter {
                 g.points.map(p =>
                     PointReport(p.portName, p.bins.map(b => BinReport(b, coverageDB.getNHits(p.portName, b.name))))),
                 g.crosses.map(c =>
+                    //TODO: Check for the presence of a delay in the db and compute the number of delayed hits that occurred
                     CrossReport(c, c.bins.map(cb => CrossBinReport(cb, coverageDB.getNHits(cb))))))
         ).toList
     )
@@ -65,24 +67,10 @@ class CoverageReporter {
 
             //Sample cross points
             group.crosses.foreach(cross => {
-                val (point1, point2) = coverageDB.getPointsFromCross(cross)
-                val pointVal1 = point1.port.peek().asUInt().litValue()
-                val pointVal2 = point2.port.peek().asUInt().litValue()
+                val (point1, point2) = cross.sample(coverageDB)
 
-                //Add the points to the list
                 sampledPoints = sampledPoints :+ point1
                 sampledPoints = sampledPoints :+ point2
-
-                //Sample the points individually first
-                sampleBins(point1, pointVal1.toInt)
-                sampleBins(point2, pointVal2.toInt)
-
-                //Sample the cross bins
-                cross.bins.foreach(cb => {
-                    if((cb.range1 contains pointVal1) && (cb.range2 contains pointVal2)) {
-                        coverageDB.addCrossBinHit(cb, (pointVal1, pointVal2))
-                    }
-                })
             })
 
             //Sample individual points
@@ -111,7 +99,7 @@ class CoverageReporter {
 
         //Register coverpoints
         points foreach (p => coverageDB.registerCoverPoint(p.portName, p))
-        crosses foreach coverageDB.registerCross
+        crosses foreach (c => c.register(coverageDB))
 
         //Create final coverGroup
         val group = CoverGroup(gid, points, crosses)
