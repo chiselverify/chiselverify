@@ -1,14 +1,10 @@
 package verifyTests.coverage
 
-import java.lang.Class
-
 import chisel3._
 import chiseltest._
 import chiselverify.coverage._
 import verifyTests.coverage.ToyDUT._
 import org.scalatest._
-
-import scala.reflect.ClassTag
 
 class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Matchers {
 
@@ -143,7 +139,7 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
                 Nil)
 
         /**
-          * Basic test to see if we get the right amount of hits
+          * Basic test to see if we get the right exception
           */
         def testFail(): Unit = {
             dut.io.a.poke(3.U)

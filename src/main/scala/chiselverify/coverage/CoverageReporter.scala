@@ -66,7 +66,7 @@ class CoverageReporter[T <: Module](private val dut: T) {
 
             //Step the dut then the database
             dut.clock.step(1)
-            coverageDB.step(1)
+            coverageDB.step()
         }
     }
 

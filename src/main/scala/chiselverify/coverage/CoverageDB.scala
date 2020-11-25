@@ -42,9 +42,6 @@ class CoverageDB {
     private val crossToPoints: mutable.HashMap[Cross, (CoverPoint, CoverPoint)] = new  mutable.HashMap[Cross, (CoverPoint, CoverPoint)]()
     private val pointToCross: mutable.HashMap[CoverPoint, Cross] = new mutable.HashMap[CoverPoint, Cross]()
 
-    //(pointname -> expectedEndCycle) mapping for timed cross coverage
-    private val pointSampleDelays: mutable.HashMap[String, BigInt] = new mutable.HashMap[String, BigInt]()
-
     //((port1name, port2name) -> delay) timed relation delays mapping
     private val timedCrossDelays: mutable.HashMap[(String, String), Int] = new mutable.HashMap[(String, String), Int]()
 
@@ -69,15 +66,10 @@ class CoverageDB {
     }
 
     def getCurCycle: BigInt = curCycle
-    def step(cycles: Int): Unit = curCycle += cycles
 
-    def registerTimedCross(point1: String, point2: String, delay: Int): Unit = timedCrossDelays.update((point1, point2), delay)
+    def step(cycles: Int = 1): Unit = curCycle += cycles
 
     def getTimedHits(pointName: String, binName: String): List[(BigInt, BigInt)] = timedCrossBinHits.getOrElse((pointName, binName), Nil)
-    def getDelay(pointName1: String, pointName2: String): Int = timedCrossDelays.get(pointName1, pointName2) match {
-        case None => throw new IllegalArgumentException("No registered delay for that key!")
-        case Some(d) => d
-    }
 
     /**
       * Retrieves a coverpoint registered in the database

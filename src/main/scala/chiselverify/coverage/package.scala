@@ -266,9 +266,6 @@ package object coverage {
 
             //Initialize current cycle
             initCycle = Some(db.getCurCycle)
-
-            //Register the delay
-            db.registerTimedCross(pointName1, pointName2, delay)
         }
     }
 
