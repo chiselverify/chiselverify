@@ -2,11 +2,11 @@ package examples.heappriorityqueue
 
 import chisel3._
 import chiseltest._
+import chiselverify.coverage.{Bins, CoverPoint, CoverageReporter, Cross, CrossBin}
 import examples.heappriorityqueue.Helpers._
 import examples.heappriorityqueue.LocalHelpers._
 import org.scalatest._
 
-//TODO: create corner test cases for head.none and others
 
 /**
   * contains test for the whole priority queue
@@ -22,6 +22,27 @@ class HeapPriorityQueueTest extends FreeSpec with ChiselScalatestTester {
         test(new HeapPriorityQueue(size, chCount, cWid, nWid, rWid, true)) { dut =>
 
             val model = new Behavioural(size, chCount)(cWid, nWid, rWid)
+
+            val cr = new CoverageReporter
+            cr.register(
+                CoverPoint(dut.io.cmd.op, "operation")(
+                    Bins("insertion", 0 to 0) :: Bins("removal", 1 to 1) :: Nil) ::
+                  CoverPoint(dut.io.cmd.prio.cycl, "cmd.prio.cycl")(
+                      Bins("cyclic", 0 to 3) :: Nil) ::
+                  CoverPoint(dut.io.cmd.prio.norm, "cmd.prio.norm")(
+                      Bins("lower half", 0 to (Math.pow(2, nWid) / 2 - 1).toInt) :: Bins("upper half", (Math.pow(2, nWid) / 2 - 1).toInt to (Math.pow(2, nWid) - 1).toInt) :: Nil) ::
+                  CoverPoint(dut.io.head.prio.cycl, "head.prio.cycl")(
+                      Bins("cyclic", 0 to 3) :: Nil) ::
+                  CoverPoint(dut.io.head.prio.norm, "head.prio.norm")(
+                      Bins("lower half", 0 to (Math.pow(2, nWid) / 2 - 1).toInt) :: Bins("upper half", (Math.pow(2, nWid) / 2 - 1).toInt to (Math.pow(2, nWid) - 1).toInt) :: Nil) ::
+                  Nil,
+                //Declare cross points
+                Cross("cyclics at ops", "operation", "cmd.prio.cycl")(
+                    CrossBin("insertion", 0 to 0, 0 to 3) :: CrossBin("removal", 1 to 1, 0 to 3) :: Nil) ::
+                  Cross("normals at ops", "operation", "cmd.prio.norm")(
+                      CrossBin("insertion lower half", 0 to 0, 0 to (Math.pow(2, nWid) / 2 - 1).toInt) :: CrossBin("insertion upper half", 0 to 0, (Math.pow(2, nWid) / 2 - 1).toInt to (Math.pow(2, nWid) - 1).toInt) ::
+                        CrossBin("removal lower half", 1 to 1, 0 to (Math.pow(2, nWid) / 2 - 1).toInt) :: CrossBin("removal upper half", 1 to 1, (Math.pow(2, nWid) / 2 - 1).toInt to (Math.pow(2, nWid) - 1).toInt) :: Nil) ::
+                  Nil)
 
             dut.clock.setTimeout(0)
 
@@ -43,10 +64,15 @@ class HeapPriorityQueueTest extends FreeSpec with ChiselScalatestTester {
                         s"removing ${poke(3)}"
                     )
                 }
+                cr.sample()
                 // compare head of the queue
+                assert(dut.io.head.none.peek.litToBoolean == (model.heapSize==0),
+                    s"\n${prioAndIdVecToString(model.getMem())}"
+                )
                 assert(model.getHead == getHead(dut),
                     s"\n${prioAndIdVecToString(model.getMem())}")
             }
+          cr.printReport()
         }
     }
 }
