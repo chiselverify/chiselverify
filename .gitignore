@@ -25,3 +25,4 @@ transcript
 build/
 !NativeScoreboard.h
 .idea/**
+*.iml
