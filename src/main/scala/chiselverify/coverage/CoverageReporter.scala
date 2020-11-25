@@ -16,17 +16,17 @@
 
 package chiselverify.coverage
 
-import chisel3.Data
-import chisel3.tester.testableData
+import chisel3._
+import chisel3.tester.{testableClock, testableData}
 
 import scala.collection.mutable.ArrayBuffer
 
 /**
   * Handles everything related to functional coverage
   */
-class CoverageReporter(clock: Data) {
+class CoverageReporter[T <: Module](private val dut: T) {
     private val coverGroups: ArrayBuffer[CoverGroup] = new ArrayBuffer[CoverGroup]()
-    private val coverageDB: CoverageDB = new CoverageDB(clock)
+    private val coverageDB: CoverageDB = new CoverageDB
 
     /**
       * Makes a readable functional coverage report
@@ -38,16 +38,59 @@ class CoverageReporter(clock: Data) {
                 g.id,
                 g.points.map(p =>
                     PointReport(p.portName, p.bins.map(b => BinReport(b, coverageDB.getNHits(p.portName, b.name))))),
-                g.crosses.map(c =>
-                    //TODO: Check for the presence of a delay in the db and compute the number of delayed hits that occurred
-                    CrossReport(c, c.bins.map(cb => CrossBinReport(cb, coverageDB.getNHits(cb))))))
-        ).toList
-    )
+                g.crosses.map {
+                    case t: TimedCross =>
+                        //Sanity check
+                        if(currentCycle == 0)
+                            throw new IllegalStateException("Stepping needs to be done with the coverage reporter in order to enable timed coverage!")
+
+                        CrossReport(t, compileTimedHits(t).map(e => CrossBinReport(e._1, e._2)), t.delay)
+
+                    case c: CrossPoint => CrossReport(c, c.bins.map(cb => CrossBinReport(cb, coverageDB.getNHits(cb))))
+                }
+    )).toList)
 
     /**
       * Prints out a human readable coverage report
       */
     def printReport(): Unit = println(report.serialize)
+
+    /**
+      * Advances the clock by one cycle
+      * @note Needs to be used in order to enable timed coverage
+      * @param cycles the number of cycles by which we want to advance the clock
+      */
+    def step(cycles: Int = 1): Unit = {
+        for(_ <- 0 until cycles) {
+            sample()
+
+            //Step the dut then the database
+            dut.clock.step(1)
+            coverageDB.step(1)
+        }
+    }
+
+    /**
+      * Retrieves the current cycle
+      */
+    def currentCycle: BigInt = coverageDB.getCurCycle
+
+    /**
+      * Go through the database and compile the number of timed hits into a number of delayed hits
+      * @param t the timed cross point in question
+      * @return a list of Cross bin => numHits mappings
+      */
+    private def compileTimedHits(t: TimedCross): List[(CrossBin, BigInt)] =
+        t.bins.map(cb => {
+            //Retrieve the timed hit samples for both ranges
+            val bin1cycles = coverageDB.getTimedHits(t.pointName1, cb.bin1Name)
+            val bin2cycles = coverageDB.getTimedHits(t.pointName2, cb.bin2Name)
+
+            //Compute the number of delay-synchronized hits
+            val groups = bin1cycles.zip(bin2cycles)
+            val nHits = BigInt(groups.filter(g => (g._1._2 + t.delay) == g._2._2).map(g => g._1._1).length)
+            (cb, nHits)
+        })
 
     /**
       * Samples all of the coverpoints defined in the various covergroups
@@ -67,10 +110,12 @@ class CoverageReporter(clock: Data) {
 
             //Sample cross points
             group.crosses.foreach(cross => {
-                val (point1, point2) = cross.sample(coverageDB)
+                val points = cross.sample(coverageDB)
 
-                sampledPoints = sampledPoints :+ point1
-                sampledPoints = sampledPoints :+ point2
+                if(points.isDefined) {
+                    sampledPoints = sampledPoints :+ points.get._1
+                    sampledPoints = sampledPoints :+ points.get._2
+                }
             })
 
             //Sample individual points

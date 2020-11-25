@@ -13,7 +13,7 @@ class AluAccuTester extends FlatSpec with ChiselScalatestTester with Matchers {
 
   def testFun[T <: AluAccu](dut: T): Unit = {
 
-    val cr = new CoverageReporter
+    val cr = new CoverageReporter(dut)
     cr.register(
         //Declare CoverPoints
         CoverPoint(dut.io.accu , "accu")( //CoverPoint 1

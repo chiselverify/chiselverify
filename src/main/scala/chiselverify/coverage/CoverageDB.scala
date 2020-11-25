@@ -16,7 +16,7 @@
 
 package chiselverify.coverage
 
-import chisel3.Data
+import chisel3._
 import chiseltest.testableData
 
 import scala.collection.mutable
@@ -24,9 +24,8 @@ import scala.collection.mutable.ArrayBuffer
 
 /**
   * Stores all of the data relevant to the functional coverage elements
-  * @param clock the clock on which the data base will be based for point sample scheduling
   */
-class CoverageDB(private val clock: Data) {
+class CoverageDB {
     //Contains all a mapping from coverPoint id to the DUT's port name
     private val coverIdPortMap: mutable.HashMap[String, Data] = new mutable.HashMap[String, Data]()
     //Contains the current sampled values of the different bins
@@ -57,6 +56,8 @@ class CoverageDB(private val clock: Data) {
 
     private var lastCoverGroupId: BigInt = 0
 
+    private var curCycle : BigInt = 0
+
     /**
       * Adds a coverGroup to the list of valid coverGroups
       * @return the newly generated group id
@@ -67,29 +68,8 @@ class CoverageDB(private val clock: Data) {
         lastCoverGroupId
     }
 
-    def getCurCycle: BigInt = clock.peek().asUInt().litValue()
-
-    /**
-      * Checks the schedule to see how many cycles are left before a point should be sampled
-      * @param coverPoint the point that should be scheduled
-      * @return the number of cycles left in the schedule
-      */
-    def checkSchedule(coverPoint: CoverPoint): Int = pointSampleDelays.get(coverPoint.portName) match {
-        case None => throw new IllegalArgumentException(s"Given coverpoint $coverPoint isn't scheduled for sampling!")
-        case Some(ec) =>
-            val cyclesBeforeSample = ec - clock.peek().asUInt().litValue()
-            if(cyclesBeforeSample < 0)
-                throw new IllegalStateException(s"Scheduled sampling for point $coverPoint was missed! (schedule: $cyclesBeforeSample cycles)")
-            else ec.toInt
-    }
-
-    /**
-      * Schedules a point to be sampled
-      * @param coverPoint the point that we are sampling
-      * @param delay the clock cycle we are scheduling our point for
-      */
-    def schedule(coverPoint: String, delay: Int): Unit =
-        pointSampleDelays.update(coverPoint, delay + clock.peek().asUInt().litValue())
+    def getCurCycle: BigInt = curCycle
+    def step(cycles: Int): Unit = curCycle += cycles
 
     def registerTimedCross(point1: String, point2: String, delay: Int): Unit = timedCrossDelays.update((point1, point2), delay)
 
@@ -148,7 +128,7 @@ class CoverageDB(private val clock: Data) {
 
     /**
       * Keeps track of the cycles at which a bin hit occurred
-      * @param pointName the name of the point we want to initialize
+      * @param pointName the name of the point we want to record a hit for
       * @param cycle the cycle at which a hit occurred
       */
     def addTimedBinHit(pointName: String, binName: String, value: BigInt, cycle: BigInt): Unit = {

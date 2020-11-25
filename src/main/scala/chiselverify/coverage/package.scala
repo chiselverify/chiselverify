@@ -17,6 +17,7 @@ package chiselverify
 
 import chisel3.Data
 import chiseltest.testableData
+import sun.security.x509.DistributionPointName
 
 package object coverage {
 
@@ -116,7 +117,7 @@ package object coverage {
     case class CrossReport(cross: Cross, bins: List[CrossBinReport], delay: Int = 0) extends Report {
         override def report: String = {
             val rep = new StringBuilder(s"CROSS_POINT ${cross.name} FOR POINTS ${cross.pointName1} AND ${cross.pointName2}")
-            if(delay != 0) rep append s"WITH A DELAY OF $delay CYCLES"
+            if(delay != 0) rep append s" WITH A DELAY OF $delay CYCLES"
             bins foreach (bin => rep append s"\n${bin.report}")
             rep.mkString
         }
@@ -155,7 +156,25 @@ package object coverage {
       * @param portName the name that will be used to represent the point in the report
       * @param bins the list of value ranges that will be checked for for the given port
       */
-    case class CoverPoint(port: Data, portName: String)(val bins: List[Bins] = List(DefaultBin(port)))
+    case class CoverPoint(port: Data, portName: String)(val bins: List[Bins] = List(DefaultBin(port))) {
+        override def toString: String = s"CoverPoint($port, $portName)($bins)"
+    }
+
+    abstract class Cross(val name: String, val pointName1: String, val pointName2: String, val bins: List[CrossBin]) {
+
+        /**
+          * Samples the current cross relation using a given database
+          * @param db the current database used throughout the test suits
+          * @return the two points that were sampled during this cross sampling
+          */
+        def sample(db: CoverageDB): Option[(CoverPoint, CoverPoint)]
+
+        /**
+          * Registers the current cross point with the given coverage DB
+          * @param db the database used for the current test suite
+          */
+        def register(db: CoverageDB): Unit
+    }
 
     /**
       * Represents a coverage relation between two different DUT ports
@@ -164,13 +183,10 @@ package object coverage {
       * @param pointName2 the other point in the relation
       * @param bins the list of value ranges that will be checked for for the given relation
       */
-    case class Cross(name: String, pointName1: String, pointName2: String)(val bins: List[CrossBin]) {
-        /**
-          * Samples the current cross relation using a given database
-          * @param db the current database used throughout the test suits
-          * @return the two points that were sampled during this cross sampling
-          */
-        def sample(db: CoverageDB) : (CoverPoint, CoverPoint) = {
+    case class CrossPoint(override val name: String, override val pointName1: String, override val pointName2: String)(override val bins: List[CrossBin])
+        extends Cross(name, pointName1, pointName2, bins) {
+
+        override def sample(db: CoverageDB) : Option[(CoverPoint, CoverPoint)] = {
 
             def sampleBins(point: CoverPoint, value: Int) : Unit =
                 point.bins.foreach(bin => {
@@ -194,14 +210,11 @@ package object coverage {
                 }
             })
 
-            (point1, point2)
+            Some(point1, point2)
         }
 
-        /**
-          * Registers the current cross point with the given coverage DB
-          * @param db the database used for the current test suite
-          */
-        def register(db: CoverageDB): Unit = db.registerCross(this)
+
+        override def register(db: CoverageDB): Unit = db.registerCross(this)
     }
 
     /**
@@ -214,18 +227,21 @@ package object coverage {
       * @param bins the list of value ranges that will be checked for for the given relation
       */
     case class TimedCross(override val name: String, override val pointName1: String, override val pointName2: String,
-            delay: Int)(override val bins: List[CrossBin]) extends Cross(name, pointName1, pointName2)(bins) {
+            delay: Int)(override val bins: List[CrossBin]) extends Cross(name, pointName1, pointName2, bins) {
         private var initCycle : Option[BigInt] = None
 
-        override def sample(db: CoverageDB): (CoverPoint, CoverPoint) = {
+        override def sample(db: CoverageDB): Option[(CoverPoint, CoverPoint)] = {
             //Sanity check
             if(initCycle.isEmpty) throw new IllegalStateException("Timed relation hasn't been registered!")
 
-            def sampleBins(point: CoverPoint, value: BigInt, cycle: BigInt) : Unit =
-                point.bins.foreach(bin => {
-                    if(bin.range contains value) {
-                        db.addTimedBinHit(point.portName, bin.name, value, cycle)
-                        db.addBinHit(point.portName, bin.name, value)
+            def sampleBins(portNames: (String, String), tBins: List[CrossBin], values: (BigInt, BigInt), cycle: BigInt) : Unit =
+                tBins.foreach(tBin => {
+                    if(tBin.range1 contains values._1) {
+                        db.addTimedBinHit(portNames._1, tBin.bin1Name, values._1, cycle)
+                    }
+
+                    if(tBin.range2 contains values._2) {
+                        db.addTimedBinHit(portNames._2, tBin.bin2Name, values._2, cycle)
                     }
                 })
 
@@ -233,12 +249,11 @@ package object coverage {
             val pointVal1 = point1.port.peek().asUInt().litValue()
             val pointVal2 = point2.port.peek().asUInt().litValue()
 
-            //Sample the points individually first
+            //Sample the points at the current cycle
             val curCycle = db.getCurCycle
-            sampleBins(point1, pointVal1, curCycle)
-            sampleBins(point2, pointVal2, curCycle)
+            sampleBins((point1.portName, point2.portName), bins, (pointVal1, pointVal2), curCycle)
 
-            (point1, point2)
+            None
         }
 
         /**
@@ -247,16 +262,13 @@ package object coverage {
           */
         override def register(db: CoverageDB): Unit = {
             //Register our point as a regular cross point
-            super.register(db)
+            db.registerCross(this)
 
             //Initialize current cycle
             initCycle = Some(db.getCurCycle)
 
             //Register the delay
             db.registerTimedCross(pointName1, pointName2, delay)
-
-            //schedule the delayed point
-            db.schedule(pointName2, delay)
         }
     }
 
@@ -276,6 +288,9 @@ package object coverage {
       * @param range2 the range that will be sampled for point2 of the relation
       */
     case class CrossBin(name: String, range1: Range, range2: Range) {
+        val bin1Name : String = s"${name}_1"
+        val bin2Name : String = s"${name}_2"
+
          def ==(that: CrossBin): Boolean = (name == that.name) &&
             (range1.start == that.range1.start) && (range1.end == that.range2.`end`) &&
             (range2.start == that.range1.start) && (range2.end == that.range2.`end`)
