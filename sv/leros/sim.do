@@ -8,8 +8,8 @@ onfinish stop
 run -all
 
 
-# Generate verify.coverage report and export to verify.coverage.txt
+# Generate coverage report and export to coverage.txt
 #For some reason, this requires another "run" command. But if we remove "onfinish stop" it won't execute
-verify.coverage report -detail -cvg -file verify.coverage.txt
+coverage report -detail -cvg -file coverage.txt
 
 exit

@@ -41,7 +41,7 @@ package leros_pkg;
 
 	`include "driver.svh"
 	`include "monitor.svh"
-	`include "verify.coverage.svh"
+	`include "coverage.svh"
 	`include "scoreboard.svh"
 	`include "scoreboard_dpi.svh"
 

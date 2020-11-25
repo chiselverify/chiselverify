@@ -16,13 +16,14 @@
 
 package chiselverify.coverage
 
-import chisel3.Data
+import chisel3._
+import chiseltest.testableData
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 /**
-  * Stores all of the data relevant to the functional verify.coverage elements
+  * Stores all of the data relevant to the functional coverage elements
   */
 class CoverageDB {
     //Contains all a mapping from coverPoint id to the DUT's port name
@@ -36,16 +37,23 @@ class CoverageDB {
     private val crossBinHitValuesMap: mutable.HashMap[CrossBin, List[(BigInt, BigInt)]] = new mutable.HashMap[CrossBin, List[(BigInt, BigInt)]]()
     private val crossBinNumHitsMap: mutable.HashMap[CrossBin, BigInt] = new mutable.HashMap[CrossBin, BigInt]()
 
-    //Mappings for cross verify.coverage
+    //Mappings for cross coverage
     private val pointNameToPoint: mutable.HashMap[String, CoverPoint] = new mutable.HashMap[String, CoverPoint]()
     private val crossToPoints: mutable.HashMap[Cross, (CoverPoint, CoverPoint)] = new  mutable.HashMap[Cross, (CoverPoint, CoverPoint)]()
     private val pointToCross: mutable.HashMap[CoverPoint, Cross] = new mutable.HashMap[CoverPoint, Cross]()
 
+    //((port1name, port2name) -> delay) timed relation delays mapping
+    private val timedCrossDelays: mutable.HashMap[(String, String), Int] = new mutable.HashMap[(String, String), Int]()
+
+    //(pointname, binname) -> List[(value, bin hit cycle)] mapping for timed cross coverage
+    private val timedCrossBinHits: mutable.HashMap[(String, String), List[(BigInt, BigInt)]] = new mutable.HashMap[(String, String), List[(BigInt, BigInt)]]()
+
     //Keep track of the different valid IDs
     private val groupIds: ArrayBuffer[BigInt] = new ArrayBuffer[BigInt]()
-    private val pointIds: ArrayBuffer[BigInt] = new ArrayBuffer[BigInt]()
 
     private var lastCoverGroupId: BigInt = 0
+
+    private var curCycle : BigInt = 0
 
     /**
       * Adds a coverGroup to the list of valid coverGroups
@@ -57,15 +65,29 @@ class CoverageDB {
         lastCoverGroupId
     }
 
+    def getCurCycle: BigInt = curCycle
+
+    def step(cycles: Int = 1): Unit = curCycle += cycles
+
+    def getTimedHits(pointName: String, binName: String): List[(BigInt, BigInt)] = timedCrossBinHits.getOrElse((pointName, binName), Nil)
+
+    /**
+      * Retrieves a coverpoint registered in the database
+      * @param name the name of the point we want to retrieve
+      * @return the coverpoint with the given name
+      */
+    def getPoint(name: String): CoverPoint = pointNameToPoint get name match {
+        case None => throw new IllegalArgumentException(s"$name is not a registered coverpoint!")
+        case Some(p) => p
+    }
+
+    /**
+      * Registers a cross relation in the database
+      * @param cross the relation which we want to register
+      */
     def registerCross(cross: Cross) : Unit = {
-        val point1 = pointNameToPoint get cross.pointName1 match {
-            case None => throw new IllegalArgumentException(s"${cross.pointName1} is not a registered coverpoint!")
-            case Some(p) => p
-        }
-        val point2 = pointNameToPoint get cross.pointName2 match {
-            case None => throw new IllegalArgumentException(s"${cross.pointName2} is not a registered coverpoint!")
-            case Some(p) => p
-        }
+        val point1 = getPoint(cross.pointName1)
+        val point2 = getPoint(cross.pointName2)
 
         //Register the cross
         crossToPoints update (cross, (point1, point2))
@@ -96,6 +118,21 @@ class CoverageDB {
         crossBinNumHitsMap update (crossBin, newValues.length)
     }
 
+    /**
+      * Keeps track of the cycles at which a bin hit occurred
+      * @param pointName the name of the point we want to record a hit for
+      * @param cycle the cycle at which a hit occurred
+      */
+    def addTimedBinHit(pointName: String, binName: String, value: BigInt, cycle: BigInt): Unit = {
+        val newCycles = (timedCrossBinHits.getOrElse((pointName, binName), Nil) :+ (value, cycle)).distinct
+        timedCrossBinHits.update((pointName, binName), newCycles)
+    }
+
+    /**
+      * Registers a given coverpoint in the databas
+      * @param name the name of the point we want to register (will be used as it's primary key)
+      * @param coverPoint the point which we want to register
+      */
     def registerCoverPoint(name: String, coverPoint: CoverPoint) : Unit =
         if(pointNameToPoint contains name) throw new IllegalArgumentException("CoverPoint Name already taken!")
         else pointNameToPoint update (name, coverPoint)

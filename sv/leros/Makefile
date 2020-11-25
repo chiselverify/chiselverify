@@ -11,14 +11,14 @@ TOP?=top
 
 ms:
 	vlib work
-# Compile with verify.coverage for b=branch, c=condition, c=statement and t=toggle
+# Compile with coverage for b=branch, c=condition, c=statement and t=toggle
 #By storing the files in files.f, the compilation order is guaranteed to be correct
 	vlog -cover bcst -f files.f 
 # Compile our single VHDL file as well
 	vcom -2008 accualu.vhd
 
-#Command line, with verify.coverage, random seed, UVM args, load more from sim.do
-	vsim -c -verify.coverage -sv_seed random +UVM_TESTNAME=$(TESTNAME) +UVM_VERBOSITY=$(VERBOSITY) $(PLUSARGS) $(TOP) -do sim.do
+#Command line, with coverage, random seed, UVM args, load more from sim.do
+	vsim -c -coverage -sv_seed random +UVM_TESTNAME=$(TESTNAME) +UVM_VERBOSITY=$(VERBOSITY) $(PLUSARGS) $(TOP) -do sim.do
 
 #Compiles with VCS, explicitly pointing to UVM files
 vcs: 

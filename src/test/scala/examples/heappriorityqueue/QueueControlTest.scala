@@ -2,8 +2,7 @@ package examples.heappriorityqueue
 
 import chisel3._
 import chiseltest._
-import chiselverify.coverage.CoverageReporter
-import chiselverify.coverage.{Bins, CoverPoint, Cross, CrossBin}
+import chiselverify.coverage.{Bins, CoverPoint, CoverageReporter, Cross, CrossBin, CrossPoint}
 import examples.heappriorityqueue.Helpers._
 import examples.heappriorityqueue.modules.QueueControl
 import org.scalatest._
@@ -47,7 +46,7 @@ class QueueControlTest extends FreeSpec with ChiselScalatestTester {
 
         ////////////////////////////////////////////////////Coverage////////////////////////////////////////////////////////
 
-        val cr = new CoverageReporter
+        val cr = new CoverageReporter(c)
         cr.register(
             CoverPoint(c.io.cmd.op, "operation")(
                 Bins("insertion", 0 to 0) :: Bins("removal", 1 to 1) :: Nil) ::
@@ -61,12 +60,12 @@ class QueueControlTest extends FreeSpec with ChiselScalatestTester {
                     Bins("lower half", 0 to (Math.pow(2, nWid) / 2 - 1).toInt) :: Bins("upper half", (Math.pow(2, nWid) / 2 - 1).toInt to (Math.pow(2, nWid) - 1).toInt) :: Nil) ::
                 Nil,
             //Declare cross points
-            Cross("cyclics at ops", "operation", "cmd.prio.cycl")(
+            CrossPoint("cyclics at ops", "operation", "cmd.prio.cycl")(
                 CrossBin("insertion", 0 to 0, 0 to 3) :: CrossBin("removal", 1 to 1, 0 to 3) :: Nil) ::
-                Cross("normals at ops", "operation", "cmd.prio.norm")(
-                    CrossBin("insertion lower half", 0 to 0, 0 to (Math.pow(2, nWid) / 2 - 1).toInt) :: CrossBin("insertion upper half", 0 to 0, (Math.pow(2, nWid) / 2 - 1).toInt to (Math.pow(2, nWid) - 1).toInt) ::
-                    CrossBin("removal lower half", 1 to 1, 0 to (Math.pow(2, nWid) / 2 - 1).toInt) :: CrossBin("removal upper half", 1 to 1, (Math.pow(2, nWid) / 2 - 1).toInt to (Math.pow(2, nWid) - 1).toInt) :: Nil) ::
-                Nil)
+            CrossPoint("normals at ops", "operation", "cmd.prio.norm")(
+                CrossBin("insertion lower half", 0 to 0, 0 to (Math.pow(2, nWid) / 2 - 1).toInt) :: CrossBin("insertion upper half", 0 to 0, (Math.pow(2, nWid) / 2 - 1).toInt to (Math.pow(2, nWid) - 1).toInt) ::
+                CrossBin("removal lower half", 1 to 1, 0 to (Math.pow(2, nWid) / 2 - 1).toInt) :: CrossBin("removal upper half", 1 to 1, (Math.pow(2, nWid) / 2 - 1).toInt to (Math.pow(2, nWid) - 1).toInt) :: Nil) ::
+            Nil)
 
         ////////////////////////////////////////////////helper functions////////////////////////////////////////////////////
 
