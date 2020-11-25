@@ -1,10 +1,14 @@
 package verifyTests.coverage
 
+import java.lang.Class
+
 import chisel3._
 import chiseltest._
 import chiselverify.coverage._
 import verifyTests.coverage.ToyDUT._
 import org.scalatest._
+
+import scala.reflect.ClassTag
 
 class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Matchers {
 
@@ -88,7 +92,7 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
     }
 
     /**
-      * Tests the default bins in functional coverage points
+      * Tests the timed functional coverage relations
       */
     def testTimed[T <: TimedToyDUT](dut: T): Unit = {
         val cr = new CoverageReporter(dut)
@@ -121,6 +125,38 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
         report.binNHits(1, "timedAB", "both1") should be (1)
     }
 
+    /**
+      * Tests that the timed coverage only works when stepping with the reporter
+      */
+    def testTimedFail[T <: TimedToyDUT](dut: T): Unit = {
+        val cr = new CoverageReporter(dut)
+        cr.register(
+            //Declare CoverPoints
+            CoverPoint(dut.io.outA , "a")( //CoverPoint 1
+                Bins("lo10", 0 until 10)::Nil)::
+                CoverPoint(dut.io.outB, "b")( //CoverPoint 2
+                    Bins("testLo10", 0 until 10)::Nil)::
+                Nil,
+            //Declare timed cross points
+            TimedCross("timedAB", "a", "b", 3)(
+                CrossBin("both1", 3 to 3, 3 to 3)::Nil)::
+                Nil)
+
+        /**
+          * Basic test to see if we get the right amount of hits
+          */
+        def testFail(): Unit = {
+            dut.io.a.poke(3.U)
+            dut.clock.step(3)
+            cr.sample()
+        }
+
+        testFail()
+
+        //Generate report
+        assertThrows[IllegalStateException](cr.report)
+    }
+
     "Coverage" should "get the right amount of hits" in {
         test(new BasicToyDUT(32)){ dut => testGeneric(dut) }
     }
@@ -131,5 +167,9 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
 
     "CoverageWithDelays" should "pass" in {
         test(new TimedToyDUT(32)) { dut => testTimed(dut) }
+    }
+
+    "CoverageWithDelays" should "throw an exception" in {
+        test(new TimedToyDUT(32)) { dut => testTimedFail(dut) }
     }
 }
