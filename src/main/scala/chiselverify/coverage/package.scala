@@ -33,6 +33,45 @@ package object coverage {
     }
 
     /**
+      * Defines a type of delay that can be applied to timed constructs
+      * @param delay the number of cycles by which we want a delay
+      */
+    abstract class DelayType(val delay: Int) {
+        def toInt: Int = delay
+        def get: Int = delay
+        override def toString: String = s""
+    }
+
+    /**
+      * Specifies a timed relation with no delay (used for generics)
+      */
+    case object NoDelay extends DelayType(0)
+
+    /**
+      * This considers EVERY cycle between the starting point and a given number of cycles later
+      * @param delay the number of cycles by which we want a delay
+      */
+    case class Always(override val delay: Int) extends DelayType(delay) {
+        override def toString: String = s" WITH AN ALWAYS DELAY OF $delay CYCLES"
+    }
+
+    /**
+      * This considers ANY cycle between the starting point and a given number of cycles later
+      * @param delay the number of cycles by which we want a delay
+      */
+    case class Eventually(override val delay: Int) extends DelayType(delay) {
+        override def toString: String =s" WITH AN EVENTUAL DELAY OF $delay CYCLES"
+    }
+
+    /**
+      * This ONLY considers the cycle that comes a given number of cycles later than the starting point
+      * @param delay the number of cycles by which we want a delay
+      */
+    case class Exactly(override val delay: Int) extends DelayType(delay) {
+        override def toString: String = s" WITH AN EXACT DELAY OF $delay CYCLES"
+    }
+
+    /**
       * General data class containing the coverage report
       * @param groups the list of group reports
       */
@@ -114,10 +153,10 @@ package object coverage {
       * @param cross a reference to the cross point for which we are generating a report
       * @param bins the list of reports related to the bins of the current cross point
       */
-    case class CrossReport(cross: Cross, bins: List[CrossBinReport], delay: Int = 0) extends Report {
+    case class CrossReport(cross: Cross, bins: List[CrossBinReport], delay: DelayType = NoDelay) extends Report {
         override def report: String = {
             val rep = new StringBuilder(s"CROSS_POINT ${cross.name} FOR POINTS ${cross.pointName1} AND ${cross.pointName2}")
-            if(delay != 0) rep append s" WITH A DELAY OF $delay CYCLES"
+            rep append delay.toString
             bins foreach (bin => rep append s"\n${bin.report}")
             rep.mkString
         }
@@ -227,7 +266,7 @@ package object coverage {
       * @param bins the list of value ranges that will be checked for for the given relation
       */
     case class TimedCross(override val name: String, override val pointName1: String, override val pointName2: String,
-            delay: Int)(override val bins: List[CrossBin]) extends Cross(name, pointName1, pointName2, bins) {
+          delay: DelayType)(override val bins: List[CrossBin]) extends Cross(name, pointName1, pointName2, bins) {
         private var initCycle : Option[BigInt] = None
 
         override def sample(db: CoverageDB): Option[(CoverPoint, CoverPoint)] = {
