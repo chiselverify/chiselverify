@@ -96,20 +96,33 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
             //Declare CoverPoints
             CoverPoint(dut.io.outA , "a")( //CoverPoint 1
                 Bins("lo10", 0 until 10)::Nil)::
-            CoverPoint(dut.io.outB, "b")( //CoverPoint 2
+            CoverPoint(dut.io.count, "count")( //CoverPoint 2
                 Bins("testLo10", 0 until 10)::Nil)::
-            Nil,
+            CoverPoint(dut.io.outB, "b")(
+                Bins("test10", 0 until 10)::Nil
+            )::
+            CoverPoint(dut.io.outC, "c")(
+                Bins("test5", 0 until 5)::Nil
+            )::Nil,
             //Declare timed cross points
-            TimedCross("timedAB", "a", "b", 3)(
-                CrossBin("both1", 3 to 3, 3 to 3)::Nil)::
-            Nil)
+            TimedCross("timedAB", "a", "count", Exactly(3))(
+                CrossBin("both3", 3 to 3, 3 to 3)::Nil)::
+            TimedCross("EventuallyTimedAB", "b", "count", Eventually(3))(
+                CrossBin("both1", 1 to 1, 1 to 1)::Nil)::
+            TimedCross("AlwaysTimedAB", "c", "a", Always(3))(
+                CrossBin("both3", 3 to 3, 3 to 3)::Nil
+            )::Nil)
+
 
         /**
           * Basic test to see if we get the right amount of hits
           */
         def testTime(): Unit = {
             dut.io.a.poke(3.U)
+            dut.io.b.poke(1.U)
+            dut.io.c.poke(3.U)
             cr.step(3)
+            dut.io.c.poke(0.U)
             cr.sample()
         }
 
@@ -117,8 +130,11 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
 
         //Generate report
         val report = cr.report
+        cr.printReport()
 
-        report.binNHits(1, "timedAB", "both1") should be (1)
+        report.binNHits(1, "timedAB", "both3") should be (1)
+        report.binNHits(1, "EventuallyTimedAB", "both1") should be (1)
+        report.binNHits(1, "AlwaysTimedAB", "both3") should be (1)
     }
 
     /**
@@ -130,13 +146,13 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
             //Declare CoverPoints
             CoverPoint(dut.io.outA , "a")( //CoverPoint 1
                 Bins("lo10", 0 until 10)::Nil)::
-                CoverPoint(dut.io.outB, "b")( //CoverPoint 2
-                    Bins("testLo10", 0 until 10)::Nil)::
-                Nil,
+            CoverPoint(dut.io.outB, "b")( //CoverPoint 2
+                Bins("testLo10", 0 until 10)::Nil)::
+            Nil,
             //Declare timed cross points
-            TimedCross("timedAB", "a", "b", 3)(
+            TimedCross("timedAB", "a", "b", Exactly(3))(
                 CrossBin("both1", 3 to 3, 3 to 3)::Nil)::
-                Nil)
+            Nil)
 
         /**
           * Basic test to see if we get the right exception

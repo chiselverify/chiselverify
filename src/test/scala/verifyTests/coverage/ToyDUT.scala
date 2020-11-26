@@ -9,15 +9,21 @@ object ToyDUT {
     class TimedToyDUT(size: Int) extends Module {
         val io = IO(new Bundle {
             val a = Input(UInt(size.W))
+            val b = Input(UInt(size.W))
+            val c = Input(UInt(size.W))
             val outA = Output(UInt(size.W))
+            val count = Output(UInt(size.W))
             val outB = Output(UInt(size.W))
+            val outC = Output(UInt(size.W))
         })
         val regA = Counter(5)
 
         regA.inc()
 
         io.outA := io.a
-        io.outB := regA.value
+        io.count := regA.value
+        io.outB := io.b
+        io.outC := io.c
     }
 
     class BasicToyDUT(size: Int) extends Module {
