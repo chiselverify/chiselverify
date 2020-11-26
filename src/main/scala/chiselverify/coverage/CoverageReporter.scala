@@ -93,8 +93,11 @@ class CoverageReporter[T <: Module](private val dut: T) {
                     (cb, BigInt(groups.filter(g => (g._1._2 + delay) == g._2._2).map(g => g._1._1).length))
                 case Eventually(delay) =>
                     (cb, BigInt(groups.filter(g => (g._2._2 - g._1._2) <= delay).map(g => g._1._1).length))
-                case Always(delay) =>
-                    (cb, if((0 until delay).forall(bin2cycles.map(_._2).contains)) BigInt(1) else BigInt(0))
+                case Always(delay) => (cb,
+                      if((0 until delay).forall(i => bin2cycles.map(_._2).contains(i) && bin1cycles.map(_._2).contains(i)))
+                          BigInt(1)
+                      else
+                          BigInt(0))
                 case _ => (cb, BigInt(0))
             }
         })
