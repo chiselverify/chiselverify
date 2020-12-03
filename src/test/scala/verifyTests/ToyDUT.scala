@@ -1,10 +1,11 @@
-package verifyTests.coverage
-
+package verifyTests
 
 import chisel3._
 import chisel3.util.Counter
+import chisel3.{Bundle, Input, Module, Output, UInt}
 
 object ToyDUT {
+
     //Used for functional coverage testing
     class TimedToyDUT(size: Int) extends Module {
         val io = IO(new Bundle {
@@ -39,5 +40,5 @@ object ToyDUT {
         io.outB := io.b
         io.outAB := io.a + io.b
     }
-}
 
+}

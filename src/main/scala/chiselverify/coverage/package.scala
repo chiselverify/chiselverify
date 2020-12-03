@@ -17,7 +17,7 @@ package chiselverify
 
 import chisel3.Data
 import chiseltest.testableData
-import sun.security.x509.DistributionPointName
+import chiselverify.timing.Delay._
 
 package object coverage {
 
@@ -30,45 +30,6 @@ package object coverage {
           * @return a string containing the coverage report
           */
         def report: String
-    }
-
-    /**
-      * Defines a type of delay that can be applied to timed constructs
-      * @param delay the number of cycles by which we want a delay
-      */
-    abstract class DelayType(val delay: Int) {
-        def toInt: Int = delay
-        def get: Int = delay
-        override def toString: String = s""
-    }
-
-    /**
-      * Specifies a timed relation with no delay (used for generics)
-      */
-    case object NoDelay extends DelayType(0)
-
-    /**
-      * This considers EVERY cycle between the starting point and a given number of cycles later
-      * @param delay the number of cycles by which we want a delay
-      */
-    case class Always(override val delay: Int) extends DelayType(delay) {
-        override def toString: String = s" WITH AN ALWAYS DELAY OF $delay CYCLES"
-    }
-
-    /**
-      * This considers ANY cycle between the starting point and a given number of cycles later
-      * @param delay the number of cycles by which we want a delay
-      */
-    case class Eventually(override val delay: Int) extends DelayType(delay) {
-        override def toString: String =s" WITH AN EVENTUAL DELAY OF $delay CYCLES"
-    }
-
-    /**
-      * This ONLY considers the cycle that comes a given number of cycles later than the starting point
-      * @param delay the number of cycles by which we want a delay
-      */
-    case class Exactly(override val delay: Int) extends DelayType(delay) {
-        override def toString: String = s" WITH AN EXACT DELAY OF $delay CYCLES"
     }
 
     /**

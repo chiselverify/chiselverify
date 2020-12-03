@@ -18,6 +18,7 @@ package chiselverify.coverage
 
 import chisel3._
 import chisel3.tester.{testableClock, testableData}
+import chiselverify.timing.Delay._
 
 import scala.collection.mutable.ArrayBuffer
 

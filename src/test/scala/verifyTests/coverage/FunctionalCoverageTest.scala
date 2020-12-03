@@ -3,7 +3,7 @@ package verifyTests.coverage
 import chisel3._
 import chiseltest._
 import chiselverify.coverage._
-import verifyTests.coverage.ToyDUT._
+import verifyTests.ToyDUT._
 import org.scalatest._
 
 class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Matchers {
