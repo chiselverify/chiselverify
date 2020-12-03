@@ -93,9 +93,9 @@ This is done in order ensure that the coverage database will always remain synch
   
 #### Delay Types
 The current implementation allows for the following special types of timing:  
-- `Eventually`: This would see if a cross hit was detected at any point in the next given amount of cycles.  
-- `Always`: This would only consider a hit if the it was detected every cycle in the next given amount of cycles.  
-- `Exactly`: This is what the current implementation supports.  
+- `Eventually`: This sees if a cross hit was detected at any point in the next given amount of cycles.  
+- `Always`: This only considers a hit if the it was detected every cycle in the next given amount of cycles.  
+- `Exactly`: This only considers a hit if it was detected exactly after a given amount of cycles.
 
 # Example Use Cases
 
