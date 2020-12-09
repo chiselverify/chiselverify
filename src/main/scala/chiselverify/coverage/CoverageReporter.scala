@@ -21,6 +21,7 @@ import chisel3.tester.{testableClock, testableData}
 import chiselverify.timing.Delay._
 
 import scala.collection.mutable.ArrayBuffer
+import scala.xml.Elem
 
 /**
   * Handles everything related to functional coverage
@@ -28,6 +29,14 @@ import scala.collection.mutable.ArrayBuffer
 class CoverageReporter[T <: Module](private val dut: T) {
     private val coverGroups: ArrayBuffer[CoverGroup] = new ArrayBuffer[CoverGroup]()
     private val coverageDB: CoverageDB = new CoverageDB
+
+    def writeHtmlReport(path: String): Unit = {
+        val file = new java.io.File(path + java.io.File.separator + "CoverpointReport.html")
+        val bw = new java.io.BufferedWriter(new java.io.FileWriter(file))
+        bw.write(HtmlUtils.reportHtml(coverGroups, coverageDB))
+        bw.close()
+    }
+
 
     /**
       * Makes a readable functional coverage report
