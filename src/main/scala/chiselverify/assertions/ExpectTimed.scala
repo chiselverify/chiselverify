@@ -3,7 +3,7 @@ package chiselverify.assertions
 import chisel3._
 import chiseltest._
 import chiseltest.internal.TesterThreadList
-import chiselverify.timing.Delay._
+import chiselverify.timing._
 
 object ExpectTimed {
     def apply[T <: Module](dut: T, port: Data, expectedVal: UInt, message: String = "Assertion Error")
@@ -17,8 +17,8 @@ object ExpectTimed {
         case Always(delay) =>
             // Assertion for single thread clock cycle 0
             port.expect(expectedVal)
-            dut.clock.step(1)
             fork {
+                dut.clock.step(1)
                 (1 until delay) foreach (_ => {
                     port.expect(expectedVal, message)
                     dut.clock.step(1)
@@ -31,8 +31,8 @@ object ExpectTimed {
          */
         case Eventually(delay) =>
             port.expect(expectedVal, message)
-            dut.clock.step(1)
             fork {
+                dut.clock.step(1)
                 for {
                     i <- 0 until delay
                     if (port.peek().asUInt() =/= expectedVal).litToBoolean
@@ -53,9 +53,9 @@ object ExpectTimed {
         case Never(delay) =>
             // Assertion for single thread clock cycle 0
             if((port.peek().asUInt() === expectedVal).litToBoolean) sys error message
-            dut.clock.step(1)
             fork {
-                (1 until delay) foreach (_ =>{
+                dut.clock.step(1)
+                (1 until delay) foreach (_ => {
                     if((port.peek().asUInt() === expectedVal).litToBoolean) sys error message
                     dut.clock.step(1)
                 })

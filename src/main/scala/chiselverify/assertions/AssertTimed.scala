@@ -18,7 +18,7 @@ package chiselverify.assertions
 import chisel3._
 import chiseltest._
 import chiseltest.internal.TesterThreadList
-import chiselverify.timing.Delay._
+import chiselverify.timing._
 
 /* Checks for a condition to be valid in the circuit at all times, or within the specified amount of clock cycles.
   * If the condition evaluates to false, the circuit simulation stops with an error.

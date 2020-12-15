@@ -51,13 +51,20 @@ object ToyDUT {
         })
 
         //Create a counter that should eventually reach a
-        val c = Counter(io.a.litValue().toInt + 1)
+        val c = Counter(io.a.litValue().toInt * 2)
+        val aWire = Wire(io.a)
 
         c.inc()
 
+        when(c.value > io.a) {
+            aWire := c.value
+        }.otherwise {
+            aWire := io.a
+        }
+
         //Set outputs
-        io.aEqb := io.a === io.b
-        io.aNevEqb := io.a =/= io.b
-        io.aEvEqC := io.a === c.value
+        io.aEqb := aWire === io.b
+        io.aNevEqb := aWire =/= io.b
+        io.aEvEqC := aWire === c.value
     }
 }
