@@ -41,4 +41,23 @@ object ToyDUT {
         io.outAB := io.a + io.b
     }
 
+    class AssertionsToyDUT(size: Int) extends Module {
+        val io = IO(new Bundle {
+            val a = Input(UInt(size.W))
+            val b = Input(UInt(size.W))
+            val aEqb = Output(UInt(1.W))
+            val aNevEqb = Output(UInt(1.W))
+            val aEvEqC = Output(UInt(1.W))
+        })
+
+        //Create a counter that should eventually reach a
+        val c = Counter(io.a.litValue().toInt + 1)
+
+        c.inc()
+
+        //Set outputs
+        io.aEqb := io.a === io.b
+        io.aNevEqb := io.a =/= io.b
+        io.aEvEqC := io.a === c.value
+    }
 }
