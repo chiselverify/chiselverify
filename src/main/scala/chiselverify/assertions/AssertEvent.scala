@@ -29,7 +29,7 @@ import chiselverify.timing._
   * @author Niels Frederik Flemming Holm Frandsen, s194053@student.dtu.dk
   */
 object AssertEvent {
-    def apply[T <: Module](dut: T, cond: () => Boolean = () => true, event: Boolean = false, message: String = "Assertion Error")
+    def apply[T <: Module](dut: T, cond: () => Boolean = () => true, event: () => Boolean = () => false, message: String = "Assertion Error")
                           (eventType: EventType): TesterThreadList = eventType match {
 
         //Checks for the argument condition to be true in the number of cycles passed
@@ -38,7 +38,7 @@ object AssertEvent {
             assert(cond(), message)
             dut.clock.step(1)
             fork {
-                while (!event) {
+                while (!event()) {
                     assert(cond(), message)
                     dut.clock.step(1)
                 }
@@ -48,7 +48,7 @@ object AssertEvent {
         case Eventually =>
             fork {
                 while (!cond()) {
-                    if (event) {
+                    if (event()) {
                         assert(cond = false, message)
                     }
                     dut.clock.step(1)
@@ -61,7 +61,7 @@ object AssertEvent {
             assert(!cond(), message)
             dut.clock.step(1)
             fork {
-                while (!event) {
+                while (!event()) {
                     assert(!cond(), message)
                     dut.clock.step(1)
                 }
@@ -70,13 +70,13 @@ object AssertEvent {
         case EventuallyAlways =>
             fork {
                 while (!cond()) {
-                    if (event) {
+                    if (event()) {
                         assert(cond = false, message)
                     }
                     dut.clock.step(1)
                 }
 
-                while (!event) {
+                while (!event()) {
                     assert(cond(), message)
                     dut.clock.step(1)
                 }
