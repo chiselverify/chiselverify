@@ -27,6 +27,8 @@ import chiselverify.timing._
   *
   * @author Victor Alexander Hansen, s194027@student.dtu.dk
   * @author Niels Frederik Flemming Holm Frandsen, s194053@student.dtu.dk
+  *
+  * @experimental
   */
 object AssertEvent {
     def apply[T <: Module](dut: T, cond: () => Boolean = () => true, event: () => Boolean = () => false, message: String = "Assertion Error")
@@ -36,8 +38,8 @@ object AssertEvent {
         case Always =>
             // Assertion for single thread clock cycle 0
             assert(cond(), message)
-            dut.clock.step(1)
             fork {
+                dut.clock.step(1)
                 while (!event()) {
                     assert(cond(), message)
                     dut.clock.step(1)
@@ -59,8 +61,8 @@ object AssertEvent {
         case Never =>
             // Assertion for single thread clock cycle 0
             assert(!cond(), message)
-            dut.clock.step(1)
             fork {
+                dut.clock.step(1)
                 while (!event()) {
                     assert(!cond(), message)
                     dut.clock.step(1)
