@@ -1,3 +1,6 @@
+scalafmtCheck:
+	sbt scalafmtCheckAll
+
 doit:
 	sbt test
 
