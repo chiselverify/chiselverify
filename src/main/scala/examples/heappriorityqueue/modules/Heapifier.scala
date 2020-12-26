@@ -2,10 +2,9 @@ package examples.heappriorityqueue.modules
 
 import chisel3._
 import chisel3.util._
-import examples.heappriorityqueue.Interfaces.{PriorityAndID, rdPort, wrPort}
+import examples.heappriorityqueue.Interfaces.{rdPort, wrPort, PriorityAndID}
 
-/**
-  * Component implementing the algorithm to create a min-heap. Works itself either upwards or downwards
+/** Component implementing the algorithm to create a min-heap. Works itself either upwards or downwards
   * through the heap in memory from a given start index and swaps elements to
   * satisfy the min-heap condition. The start index is always the parent index.
   *
@@ -28,7 +27,9 @@ class Heapifier(size: Int, chCount: Int, cWid: Int, nWid: Int, rWid: Int) extend
       val heapifyDown = Input(Bool()) // initialize heapify down
       val done = Output(Bool()) // component has reached terminal conditions
       val swapped = Output(Bool()) // at least one swap has taken place
-      val idx = Input(UInt(log2Ceil(size).W)) // the starting index in the heap (is sampled and thus only needs to be valid when starting)
+      val idx = Input(
+        UInt(log2Ceil(size).W)
+      ) // the starting index in the heap (is sampled and thus only needs to be valid when starting)
       val heapSize = Input(UInt(log2Ceil(size + 1).W)) // the current size of the heap
     }
 
@@ -47,25 +48,40 @@ class Heapifier(size: Int, chCount: Int, cWid: Int, nWid: Int, rWid: Int) extend
     val state = Output(UInt())
   })
 
-  val minFinder = Module(new MinFinder(chCount + 1, cWid, nWid, rWid)) // module to find the minimum priority among the parent and children
+  val minFinder = Module(
+    new MinFinder(chCount + 1, cWid, nWid, rWid)
+  ) // module to find the minimum priority among the parent and children
 
   // state elements
-  val idle :: warmUp1 :: warmDown1 :: warmUp2 :: warmDown2 :: readUp :: readDown :: wbUp1 :: wbDown1 :: wbUp2 :: wbDown2 :: Nil = Enum(11)
+  val idle :: warmUp1 :: warmDown1 :: warmUp2 :: warmDown2 :: readUp :: readDown :: wbUp1 :: wbDown1 :: wbUp2 :: wbDown2 :: Nil =
+    Enum(11)
   val stateReg = RegInit(idle) // state register
   val indexReg = RegInit(0.U(log2Ceil(size).W)) // register holding the index of the current parent
   val swappedReg = RegInit(false.B) // register holding a flag showing whether a swap has occurred
-  val parentReg = RegInit(VecInit(Seq.fill(chCount)(0.U.asTypeOf(new PriorityAndID(cWid, nWid, rWid))))) // register holding the content of the RAM cell containing the parent
-  val childrenReg = RegInit(VecInit(Seq.fill(chCount)(0.U.asTypeOf(new PriorityAndID(cWid, nWid, rWid))))) // register holding the content of the RAM cell of the children
+  val parentReg = RegInit(
+    VecInit(Seq.fill(chCount)(0.U.asTypeOf(new PriorityAndID(cWid, nWid, rWid))))
+  ) // register holding the content of the RAM cell containing the parent
+  val childrenReg = RegInit(
+    VecInit(Seq.fill(chCount)(0.U.asTypeOf(new PriorityAndID(cWid, nWid, rWid))))
+  ) // register holding the content of the RAM cell of the children
 
   // ram address generation
-  val addressIndex = Wire(UInt(log2Ceil(size).W)) // wire that address generation is based on. Is set to indexReg except of the last write back stage, where the next address needs to be generated
+  val addressIndex = Wire(
+    UInt(log2Ceil(size).W)
+  ) // wire that address generation is based on. Is set to indexReg except of the last write back stage, where the next address needs to be generated
   addressIndex := indexReg
   val indexParent = addressIndex
   val ramAddressChildren = addressIndex // the RAM addres of the children equals the index of the parent
-  val ramAddressParent = ((addressIndex - 1.U) >> log2Ceil(chCount)).asUInt() // the RAM address of the parent is calculated by (index-1)/childrenCount
+  val ramAddressParent =
+    ((addressIndex - 1.U) >> log2Ceil(chCount))
+      .asUInt() // the RAM address of the parent is calculated by (index-1)/childrenCount
 
   // parent selection
-  val parentOffset = Mux(indexReg === 0.U, 0.U, indexReg(log2Ceil(chCount), 0) - 1.U(log2Ceil(size).W)) // the offset of the parent within its RAM cell
+  val parentOffset = Mux(
+    indexReg === 0.U,
+    0.U,
+    indexReg(log2Ceil(chCount), 0) - 1.U(log2Ceil(size).W)
+  ) // the offset of the parent within its RAM cell
   val parent = parentReg(parentOffset) // the actual parent selected from the parent register
 
   // hook up the minFinder
@@ -74,10 +90,14 @@ class Heapifier(size: Int, chCount: Int, cWid: Int, nWid: Int, rWid: Int) extend
     minFinder.io.values(i + 1) := childrenReg(i)
   }
 
-  val nextIndexUp = ((indexReg - 1.U) >> log2Ceil(chCount)).asUInt() // index of next parent is given by (index-1)/childrenCount
-  val nextIndexDown = (indexReg << log2Ceil(chCount)).asUInt() + RegNext(minFinder.io.idx) // index of next parent is given by (index * childrenCount) + selected child
-  val swapRequired = minFinder.io.idx =/= 0.U // a swap is only required when the parent does not have the highest priority
-
+  val nextIndexUp =
+    ((indexReg - 1.U) >> log2Ceil(chCount)).asUInt() // index of next parent is given by (index-1)/childrenCount
+  val nextIndexDown =
+    (indexReg << log2Ceil(chCount)).asUInt() + RegNext(
+      minFinder.io.idx
+    ) // index of next parent is given by (index * childrenCount) + selected child
+  val swapRequired =
+    minFinder.io.idx =/= 0.U // a swap is only required when the parent does not have the highest priority
 
   // default assignments
   io.control.done := false.B

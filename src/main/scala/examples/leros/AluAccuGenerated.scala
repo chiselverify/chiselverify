@@ -18,7 +18,6 @@ class accualu extends BlackBox with HasBlackBoxResource {
   setResource("/accualu_converted.v")
 }
 
-
 class AluAccuGenerated(size: Int) extends AluAccu(size) {
 
   // TODO: can we parameterize the generated Verilog?

@@ -3,10 +3,9 @@ package examples.heappriorityqueue
 import chisel3._
 import chisel3.util._
 import examples.heappriorityqueue.Interfaces._
-import examples.heappriorityqueue.modules.{QueueControl, linearSearchMem}
+import examples.heappriorityqueue.modules.{linearSearchMem, QueueControl}
 
-/**
-  * Component implementing a priority queue, where the minimum value gets to the head of the queue
+/** Component implementing a priority queue, where the minimum value gets to the head of the queue
   *  - The sorting is based on heap sort
   *  - inserted priorities are made up of 3 fields:
   *    - cyclic priority which is most important
@@ -27,7 +26,8 @@ import examples.heappriorityqueue.modules.{QueueControl, linearSearchMem}
   * @param cWid    width of the cyclic priority value
   * @param rWid    width of the reference ID tags
   */
-class HeapPriorityQueue(size: Int, chCount: Int, cWid: Int, nWid: Int, rWid: Int, exposeState: Boolean = false) extends Module {
+class HeapPriorityQueue(size: Int, chCount: Int, cWid: Int, nWid: Int, rWid: Int, exposeState: Boolean = false)
+    extends Module {
   val io = IO(new Bundle {
 
     // Interface for signaling head element to user.

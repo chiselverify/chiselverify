@@ -6,7 +6,7 @@ import org.scalatest._
 import chiseltest.experimental.TestOptionBuilder._
 import chiseltest.internal.VerilatorBackendAnnotation
 import chiselverify.coverage.CoverageReporter
-import chiselverify.coverage.{CoverPoint, Bins}
+import chiselverify.coverage.{Bins, CoverPoint}
 import examples.leros.Types._
 
 class AluAccuTester extends FlatSpec with ChiselScalatestTester with Matchers {
@@ -15,14 +15,16 @@ class AluAccuTester extends FlatSpec with ChiselScalatestTester with Matchers {
 
     val cr = new CoverageReporter(dut)
     cr.register(
-        //Declare CoverPoints
-        CoverPoint(dut.io.accu , "accu")( //CoverPoint 1
-            Bins("lo10", 0 to 10)::Bins("First100", 0 to 100)::Nil)::
-       // CoverPoint(dut.io.test, "test", //CoverPoint 2
-       //     Bins("testLo10", 0 to 10)::Nil)::
-        Nil)
-        //Declare cross points
-        /*Cross("accuAndTest", "accu", "test",
+      //Declare CoverPoints
+      CoverPoint(dut.io.accu, "accu")( //CoverPoint 1
+        Bins("lo10", 0 to 10) :: Bins("First100", 0 to 100) :: Nil
+      ) ::
+        // CoverPoint(dut.io.test, "test", //CoverPoint 2
+        //     Bins("testLo10", 0 to 10)::Nil)::
+        Nil
+    )
+    //Declare cross points
+    /*Cross("accuAndTest", "accu", "test",
             CrossBin("both1", 1 to 1, 1 to 1)::Nil)::
         Nil)*/
 
@@ -78,9 +80,8 @@ class AluAccuTester extends FlatSpec with ChiselScalatestTester with Matchers {
     cr.printReport()
   }
 
-
   "AluAccuChisel" should "pass" in {
-    test(new AluAccuChisel(32)){ dut => testFun(dut) }
+    test(new AluAccuChisel(32)) { dut => testFun(dut) }
   }
 
   "AluAccuGenerated" should "pass" in {

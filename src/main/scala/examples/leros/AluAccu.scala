@@ -2,9 +2,7 @@ package examples.leros
 
 import chisel3._
 
-
-/**
-  * Base class for Leros ALU including the accumulator register.
+/** Base class for Leros ALU including the accumulator register.
   *
   * @param size
   */

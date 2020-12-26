@@ -4,8 +4,7 @@ import chisel3._
 import chiseltest._
 import examples.heappriorityqueue.Interfaces.{Priority, PriorityAndID}
 
-/**
-  * contains useful conversion as well as poke and peek methods for user defined bundles
+/** contains useful conversion as well as poke and peek methods for user defined bundles
   */
 object Helpers {
   var cWid = 2
@@ -26,7 +25,11 @@ object Helpers {
       return poke
     } else {
       val rand = scala.util.Random
-      val poke = Seq(rand.nextInt(math.pow(2, cWid).toInt), rand.nextInt(math.pow(2, nWid).toInt), rand.nextInt(math.pow(2, rWid).toInt))
+      val poke = Seq(
+        rand.nextInt(math.pow(2, cWid).toInt),
+        rand.nextInt(math.pow(2, nWid).toInt),
+        rand.nextInt(math.pow(2, rWid).toInt)
+      )
       pokePrioAndID(port, poke)
     }
   }

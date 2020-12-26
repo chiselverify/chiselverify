@@ -4,8 +4,7 @@ import chisel3._
 import chisel3.util._
 import examples.heappriorityqueue.Interfaces._
 
-/**
-  * Component implementing the control for the priority queue
+/** Component implementing the control for the priority queue
   *
   * @param size    the maximum size of the heap
   * @param chCount the number of children per node in the tree. Must be power of 2
@@ -54,7 +53,8 @@ class QueueControl(size: Int, chCount: Int, cWid: Int, nWid: Int, rWid: Int) ext
   val heapifier = Module(new Heapifier(size, chCount, cWid, nWid, rWid))
 
   // state elements
-  val idle :: headInsertion :: normalInsertion :: initSearch :: waitForSearch :: resetCell :: lastRemoval :: headRemoval :: tailRemoval :: removal :: waitForHeapifyUp :: waitForHeapifyDown :: Nil = Enum(12)
+  val idle :: headInsertion :: normalInsertion :: initSearch :: waitForSearch :: resetCell :: lastRemoval :: headRemoval :: tailRemoval :: removal :: waitForHeapifyUp :: waitForHeapifyDown :: Nil =
+    Enum(12)
   val stateReg = RegInit(idle)
   val heapSizeReg = RegInit(0.U(log2Ceil(size + 1).W))
   val headReg = RegInit(VecInit(Seq.fill(nWid + cWid + rWid)(1.U)).asTypeOf(new PriorityAndID(cWid, nWid, rWid)))
@@ -178,7 +178,11 @@ class QueueControl(size: Int, chCount: Int, cWid: Int, nWid: Int, rWid: Int) ext
       heapSizeReg := incHeapsize
 
       // initiate heapify up
-      heapifier.io.control.idx := Mux(heapSizeReg < (chCount + 1).U, 0.U, ((heapSizeReg - 1.U) >> log2Ceil(chCount)).asUInt)
+      heapifier.io.control.idx := Mux(
+        heapSizeReg < (chCount + 1).U,
+        0.U,
+        ((heapSizeReg - 1.U) >> log2Ceil(chCount)).asUInt
+      )
       heapifier.io.control.heapifyUp := true.B
       stateReg := waitForHeapifyUp
     }
@@ -287,14 +291,22 @@ class QueueControl(size: Int, chCount: Int, cWid: Int, nWid: Int, rWid: Int) ext
 
       // initiate heapify up
       heapifier.io.control.heapifyUp := true.B
-      heapifier.io.control.idx := Mux(removalIndex < (chCount + 1).U, 0.U, ((removalIndex - 1.U) >> log2Ceil(chCount)).asUInt)
+      heapifier.io.control.idx := Mux(
+        removalIndex < (chCount + 1).U,
+        0.U,
+        ((removalIndex - 1.U) >> log2Ceil(chCount)).asUInt
+      )
       stateReg := waitForHeapifyUp
     }
     is(waitForHeapifyUp) { // wait for the heapifier to complete one up pass
       stateReg := waitForHeapifyUp
       when(heapifier.io.control.done) {
         stateReg := idle
-        when(io.cmd.op === 0.U && !heapifier.io.control.swapped && ((removalIndex << log2Ceil(chCount)).asUInt + 1.U) < size.U) { // when no swap occurred during removal -> heapify down
+        when(
+          io.cmd.op === 0.U && !heapifier.io.control.swapped && ((removalIndex << log2Ceil(
+            chCount
+          )).asUInt + 1.U) < size.U
+        ) { // when no swap occurred during removal -> heapify down
           heapifier.io.control.idx := removalIndex
           heapifier.io.control.heapifyDown := true.B
           stateReg := waitForHeapifyDown

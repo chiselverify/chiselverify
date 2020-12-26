@@ -3,8 +3,7 @@ package examples.heappriorityqueue
 import chisel3._
 import chisel3.util._
 
-/**
-  * contains relevant bundle types and port types for the heap-based priority queue
+/** contains relevant bundle types and port types for the heap-based priority queue
   */
 
 object Interfaces {

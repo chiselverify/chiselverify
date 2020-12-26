@@ -4,8 +4,7 @@ import chisel3._
 import chisel3.util._
 import examples.heappriorityqueue.Interfaces.PriorityAndID
 
-/**
-  * Determines the highest priority (smallest number) with the lowest index among the input values.
+/** Determines the highest priority (smallest number) with the lowest index among the input values.
   * Outputs both the value and index
   *
   * @param n    number of priorities to compare
@@ -36,7 +35,13 @@ class MinFinder(n: Int, cWid: Int, nWid: Int, rWid: Int) extends Module {
   // lowest cyclic priority wins
   // if cyclic priorities are equal the normal priority decides
   // if both are equal the index decides
-  val res = inDup.reduceTree((x: Dup, y: Dup) => Mux((x.v.prio.cycl < y.v.prio.cycl) || (x.v.prio.cycl === y.v.prio.cycl && (x.v.prio.norm < y.v.prio.norm || (x.v.prio.norm === y.v.prio.norm && x.idx < y.idx))), x, y))
+  val res = inDup.reduceTree((x: Dup, y: Dup) =>
+    Mux(
+      (x.v.prio.cycl < y.v.prio.cycl) || (x.v.prio.cycl === y.v.prio.cycl && (x.v.prio.norm < y.v.prio.norm || (x.v.prio.norm === y.v.prio.norm && x.idx < y.idx))),
+      x,
+      y
+    )
+  )
 
   io.res := res.v
   io.idx := res.idx

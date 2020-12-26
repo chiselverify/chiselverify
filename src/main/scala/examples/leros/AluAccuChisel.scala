@@ -9,8 +9,7 @@ object Types {
   val nop :: add :: sub :: and :: or :: xor :: ld :: shr :: Nil = Enum(8)
 }
 
-/**
-  * Leros ALU including the accumulator register.
+/** Leros ALU including the accumulator register.
   *
   * @param size
   */
@@ -42,7 +41,7 @@ class AluAccuChisel(size: Int) extends AluAccu(size) {
     is(xor) {
       res := a ^ b
     }
-    is (shr) {
+    is(shr) {
       res := a >> 1
     }
     is(ld) {
@@ -50,7 +49,7 @@ class AluAccuChisel(size: Int) extends AluAccu(size) {
     }
   }
 
-  when (io.ena) {
+  when(io.ena) {
     accuReg := res
   }
 

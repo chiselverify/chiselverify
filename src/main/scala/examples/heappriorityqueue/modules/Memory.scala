@@ -2,10 +2,9 @@ package examples.heappriorityqueue.modules
 
 import chisel3._
 import chisel3.util._
-import examples.heappriorityqueue.Interfaces.{PriorityAndID, rdPort, searchPort, wrPort}
+import examples.heappriorityqueue.Interfaces.{rdPort, searchPort, wrPort, PriorityAndID}
 
-/**
-  * Abstract interface for a sequential memory
+/** Abstract interface for a sequential memory
   *   - ZBT -> write address is as well supplied on clock cycle in advance of a write
   *   - CAM functionality -> when a reference ID is provided, the module should find the first occurrence in memory
   *   - should be initialized to all 1's
@@ -22,8 +21,7 @@ abstract class SearchSeqMem(size: Int, chCount: Int, cWid: Int, nWid: Int, rWid:
   val srch = IO(Flipped(new searchPort(size, rWid)))
 }
 
-/**
-  * A implementation of SearchSeqMem, where the CAM-functionality is provided by a linear search through the memory
+/** A implementation of SearchSeqMem, where the CAM-functionality is provided by a linear search through the memory
   *
   * @param size    the number of values to be saved
   * @param chCount values are grouped together by this factor
@@ -31,7 +29,8 @@ abstract class SearchSeqMem(size: Int, chCount: Int, cWid: Int, nWid: Int, rWid:
   * @param nWid    width of the normal priority
   * @param rWid    width of the reference ID
   */
-class linearSearchMem(size: Int, chCount: Int, cWid: Int, nWid: Int, rWid: Int) extends SearchSeqMem(size, chCount, cWid, nWid, rWid) {
+class linearSearchMem(size: Int, chCount: Int, cWid: Int, nWid: Int, rWid: Int)
+    extends SearchSeqMem(size, chCount, cWid, nWid, rWid) {
 
   // create memory
   val mem = SyncReadMem(size / chCount, Vec(chCount, new PriorityAndID(cWid, nWid, rWid)))
@@ -66,7 +65,13 @@ class linearSearchMem(size: Int, chCount: Int, cWid: Int, nWid: Int, rWid: Int) 
   val resVec = Wire(Vec(chCount, Bool()))
   val errorFlag = RegInit(false.B)
 
-  val resetCell = WireDefault(VecInit(Seq.fill(chCount)(VecInit(Seq.fill(cWid + nWid + rWid)(true.B)).asUInt.asTypeOf(new PriorityAndID(cWid, nWid, rWid)))))
+  val resetCell = WireDefault(
+    VecInit(
+      Seq.fill(chCount)(
+        VecInit(Seq.fill(cWid + nWid + rWid)(true.B)).asUInt.asTypeOf(new PriorityAndID(cWid, nWid, rWid))
+      )
+    )
+  )
 
   resVec := rdData.map(_.id === srch.refID)
 
