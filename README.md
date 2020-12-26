@@ -42,7 +42,7 @@ The interesting part of the code can be found in `Functional_coverage_test/src/t
 
 #### What is done 
 So far a basic version of a _verification plan_ has been implemented. This allows one to define constructs similar to _SystemVerilog_'s `covergroup`, `coverpoint` and `bins`. The structure of the system can be seen in the diagram below.  
-![Structure of the Coverage system](CoverageChisel.png)  
+![Structure of the Coverage system](pictures/CoverageChisel.png)
   
 ##### Coverage Reporter
 This is the heart of the system. It handles everything from registering the Cover Points to managing the Coverage DataBase. It will also generate the final coverage report. Registering _Cover Points_ together will group them into a same _Cover Group_.  
