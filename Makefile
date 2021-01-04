@@ -1,6 +1,9 @@
 scalafmtCheck:
 	sbt scalafmtCheckAll
 
+format:
+	sbt scalafmtAll
+
 doit:
 	sbt test
 
