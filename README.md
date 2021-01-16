@@ -97,6 +97,114 @@ The current implementation allows for the following special types of timing:
 - `Always`: This only considers a hit if the it was detected every cycle in the next given amount of cycles.  
 - `Exactly`: This only considers a hit if it was detected exactly after a given amount of cycles.
 
+# Constraint Random Verification
+The CRV package inside this project aims to mimic the functionality of SystemVerilog constraint programming and integrates them into [chisel-tester2](https://github.com/ucb-bar/chisel-testers2).
+The CRV package combines a Constraint Satisfactory Problem Solver, with some helper classes to create and use random objects inside your tests.
+Currently, only the [jacop](https://github.com/radsz/jacop) backend is supported, but in the future other backends can be added.
+
+## Comparison
+### System Verilog
+
+```systemverilog
+class frame_t;
+rand pkt_type ptype;
+rand integer len;
+randc bit [1:0] no_repeat;
+// Constraint the members
+constraint legal {
+  len >= 2;
+  len <= 5;
+}
+```
+
+### CRV / jacop backend
+```scala
+class Frame extends RandObj(new Model) {
+  val pkType: Rand = new Rand(0, 3)
+  val len: Rand = new Rand(0, 10)
+  val noRepeat: Randc = new Randc(0, 1)
+
+  val legal: ConstraintGroup = new ConstraintGroup {
+    len #>= 2
+    len #<= 5
+  }
+}
+```
+
+## Random Objects
+Random objects can be created by extending the RandObj trait. This class accepts one parameter which is a Model. A model
+correspond to a database in which all the random variable and constraint declared inside the RandObj are stored.
+```scala
+class Frame extends RandObj(new Model)
+```
+A model can be initialized with a seed `new Model(42)`, which allows the user to create reproducible tests.
+
+### Random Fields
+A random field can be added to a `RandObj` by declaring a Rand variable.
+```scala
+  val len: Rand = new Rand(0, 10)
+```
+
+Random-cyclic variable can be added by declaring a `Randc` field inside a `RandObj`
+```scala
+  val noRepeat: Randc = Randc(0, 1)
+```
+
+### Constraints
+Each variable can have one or multiple constraint. Constraint relations are usually preceded by the `#` symbol.
+```scala
+len #>= 2
+```
+In the previous block of code we are specifying that the variable `len` can only take values that are grater then 2. 
+Each constraint can be assigned to a variable and  enabled or disabled at any time during the test
+```scala
+val lenConstraint = len #> 2
+[....]
+lenConstraint.disable()
+[....]
+lenConstraint.enable()
+```
+
+Constraint can also be grouped together in a `ConstraintGrup` and the group itself can be enabled or disabled.
+
+```scala
+val legal: ConstraintGroup = new ConstraintGroup {
+  len #>= 2
+  len #<= 5
+  payload.size #= len
+}
+[...]
+legal.disable()
+[...]
+legal.enable()
+```
+
+By default, constraints and constraints groups are enabled when they are declared. 
+
+
+The list of operator used to construct constraint is the following:
+`#<`, `#<=`, `#>`, `#>=`,`#=`, `div`, `#*`, `mod`, `#+`, `-`, `#\=`, `#^`, `in`, `inside`
+
+It is also possible to declare conditional constraints with constructors like `IfCon` and `IfElseCon`.
+```scala
+val constraint1: crv.Constraint = IfCon(len #= 1) {
+        payload.size #= 3
+    } ElseC {
+        payload.size #= 10
+    }
+```
+
+### Usage
+As in SystemVerilog, each random class exposes a method called `randomize()` this method automatically solves the
+constraint specified in the class and assign to each random filed a random value. The method returns `true`  only if the
+CSP found a set of values that satisfy the current constraints.
+```scala
+val myPacket = new Frame(new Model)
+assert(myPacket.randomize)
+```
+
+Other usage examples can be found in `src/test/scala/backends/jacopsrc/test/scala/verifyTests/crv/backends/jacop/`
+
 # Example Use Cases
 
 We will explore a handful of use cases to explore verification.
