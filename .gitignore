@@ -26,3 +26,5 @@ build/
 !NativeScoreboard.h
 .idea/**
 *.iml
+*/.DS_Store
+.DS_Store
