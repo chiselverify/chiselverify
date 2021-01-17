@@ -14,8 +14,8 @@ class accualu extends BlackBox with HasBlackBoxResource {
     val accu = Output(UInt(32.W))
   })
 
-  //Points to the Verilog file, which is located under src/main/resources
-  setResource("/accualu_converted.v")
+  // Points to the Verilog file, which is located under src/main/resources
+  addResource("/accualu_converted.v")
 }
 
 
