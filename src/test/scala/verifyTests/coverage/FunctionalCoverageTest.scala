@@ -3,6 +3,7 @@ package verifyTests.coverage
 import chisel3._
 import chiseltest._
 import chiselverify.coverage._
+import chiselverify.timing._
 import verifyTests.ToyDUT._
 import org.scalatest._
 

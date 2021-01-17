@@ -18,12 +18,14 @@ package chiselverify.assertions
 import chisel3._
 import chiseltest._
 import chiseltest.internal.TesterThreadList
-import chiselverify.timing.Delay._
+import chiselverify.timing._
 
 /* Checks for a condition to be valid in the circuit at all times, or within the specified amount of clock cycles.
   * If the condition evaluates to false, the circuit simulation stops with an error.
   *
   * This package is part of the special course "Verification of Digital Designs" on DTU, autumn semester 2020.
+  *
+  * Everytime the assertion is called it must be joined.
   *
   * @author Victor Alexander Hansen, s194027@student.dtu.dk
   * @author Niels Frederik Flemming Holm Frandsen, s194053@student.dtu.dk
@@ -40,8 +42,8 @@ object AssertTimed {
         case Always(delay) =>
             // Assertion for single thread clock cycle 0
             assert(cond(), message)
-            dut.clock.step(1)
             fork {
+                dut.clock.step(1)
                 (1 until delay) foreach (_ => {
                     assert(cond(), message)
                     dut.clock.step(1)
@@ -53,9 +55,9 @@ object AssertTimed {
          * at least once within the window of cycles
          */
         case Eventually(delay) =>
-            assert(!cond(), message)
-            dut.clock.step(1)
+            //TODO FIXME_> this breaks the assertion for some reason: assert(!cond(), message)
             fork {
+                dut.clock.step(1)
                 for {
                     i <- 0 until delay
                     if !cond()
@@ -76,9 +78,9 @@ object AssertTimed {
         case Never(delay) =>
             // Assertion for single thread clock cycle 0
             assert(!cond(), message)
-            dut.clock.step(1)
             fork {
-                (1 until delay) foreach (_ =>{
+                dut.clock.step(1)
+                (1 until delay) foreach (_ => {
                     assert(!cond(), message)
                     dut.clock.step(1)
                 })

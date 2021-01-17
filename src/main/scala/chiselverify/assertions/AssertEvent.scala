@@ -18,7 +18,7 @@ package chiselverify.assertions
 import chisel3._
 import chiseltest._
 import chiseltest.internal.TesterThreadList
-import chiselverify.timing.Event._
+import chiselverify.timing._
 
 /* Checks for a condition to be valid in the circuit at all times, or within the specified amount of clock cycles.
   * If the condition evaluates to false, the circuit simulation stops with an error.
@@ -27,18 +27,20 @@ import chiselverify.timing.Event._
   *
   * @author Victor Alexander Hansen, s194027@student.dtu.dk
   * @author Niels Frederik Flemming Holm Frandsen, s194053@student.dtu.dk
+  *
+  * @experimental
   */
 object AssertEvent {
-    def apply[T <: Module](dut: T, cond: () => Boolean = () => true, event: Boolean = false, message: String = "Assertion Error")
+    def apply[T <: Module](dut: T, cond: () => Boolean = () => true, event: () => Boolean = () => false, message: String = "Assertion Error")
                           (eventType: EventType): TesterThreadList = eventType match {
 
         //Checks for the argument condition to be true in the number of cycles passed
         case Always =>
             // Assertion for single thread clock cycle 0
             assert(cond(), message)
-            dut.clock.step(1)
             fork {
-                while (!event) {
+                dut.clock.step(1)
+                while (!event()) {
                     assert(cond(), message)
                     dut.clock.step(1)
                 }
@@ -48,7 +50,7 @@ object AssertEvent {
         case Eventually =>
             fork {
                 while (!cond()) {
-                    if (event) {
+                    if (event()) {
                         assert(cond = false, message)
                     }
                     dut.clock.step(1)
@@ -59,9 +61,9 @@ object AssertEvent {
         case Never =>
             // Assertion for single thread clock cycle 0
             assert(!cond(), message)
-            dut.clock.step(1)
             fork {
-                while (!event) {
+                dut.clock.step(1)
+                while (!event()) {
                     assert(!cond(), message)
                     dut.clock.step(1)
                 }
@@ -70,13 +72,13 @@ object AssertEvent {
         case EventuallyAlways =>
             fork {
                 while (!cond()) {
-                    if (event) {
+                    if (event()) {
                         assert(cond = false, message)
                     }
                     dut.clock.step(1)
                 }
 
-                while (!event) {
+                while (!event()) {
                     assert(cond(), message)
                     dut.clock.step(1)
                 }

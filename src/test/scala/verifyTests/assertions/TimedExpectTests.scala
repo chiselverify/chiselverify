@@ -1,14 +1,14 @@
 package verifyTests.assertions
 
 import chisel3._
-import chisel3.tester._
+import chisel3.tester.{testableClock, testableData}
 import chiseltest.ChiselScalatestTester
-import chiselverify.assertions.{AssertTimed, ExpectTimed}
+import chiselverify.assertions._
 import chiselverify.timing._
 import org.scalatest.{FlatSpec, Matchers}
 import verifyTests.ToyDUT.AssertionsToyDUT
 
-class TimedAssertionTests extends FlatSpec with ChiselScalatestTester with Matchers {
+class TimedExpectTests  extends FlatSpec with ChiselScalatestTester with Matchers {
     def toUInt(i: Int): UInt = (BigInt(i) & 0x00ffffffffL).asUInt(32.W)
 
     /**
@@ -23,14 +23,14 @@ class TimedAssertionTests extends FlatSpec with ChiselScalatestTester with Match
             dut.io.a.poke(10.U)
             dut.io.b.poke(10.U)
             dut.clock.step(1)
-            println(s"aEqb is ${dut.io.aEqb.peek().litValue()}")
-            AssertTimed(dut, () => dut.io.aEqb.peek().litValue() == 1, "aEqb timing is wrong")(Always(9)).join()
+            ExpectTimed(dut, dut.io.aEqb, 1.U, "aEqb expected timing is wrong")(Always(9)).join()
         }
 
         def testEventually(): Unit = {
             dut.io.a.poke(10.U)
             dut.io.b.poke(10.U)
-            AssertTimed(dut, () => dut.io.aEvEqC.peek().litValue() == 1, "a eventually isn't c")(Eventually(11)).join()
+            dut.clock.step(1)
+            ExpectTimed(dut, dut.io.aEvEqC, 1.U, "a never equals b within the first 11 cycles")(Eventually(11)).join()
         }
 
         def testExactly(): Unit = {
@@ -54,16 +54,16 @@ class TimedAssertionTests extends FlatSpec with ChiselScalatestTester with Match
         }
     }
 
-    "Timed Assertions Always" should "pass" in {
+    "Timed Expect Always" should "pass" in {
         test(new AssertionsToyDUT(32)){ dut => testGeneric(dut, Always) }
     }
-    "Timed Assertions Eventually" should "pass" in {
+    "Timed Expect Eventually" should "pass" in {
         test(new AssertionsToyDUT(32)){ dut => testGeneric(dut, Eventually) }
     }
-    "Timed Assertions Exactly" should "pass" in {
+    "Timed Expect Exactly" should "pass" in {
         test(new AssertionsToyDUT(32)){ dut => testGeneric(dut, Exactly) }
     }
-    "Timed Assertions Never" should "pass" in {
+    "Timed Expect Never" should "pass" in {
         test(new AssertionsToyDUT(32)){ dut => testGeneric(dut, Never) }
     }
 }
