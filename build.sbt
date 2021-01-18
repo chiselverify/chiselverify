@@ -11,6 +11,7 @@ resolvers ++= Seq(
 // Chisel 3.4
 libraryDependencies += "edu.berkeley.cs" %% "chisel-iotesters" % "1.5.1"
 libraryDependencies += "edu.berkeley.cs" %% "chiseltest" % "0.3.1"
+libraryDependencies += "org.jacop" % "jacop" % "4.7.0"
 
 // library name
 name := "chiselverify"
