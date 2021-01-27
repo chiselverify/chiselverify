@@ -1,7 +1,6 @@
 package chiselverify
 
 import chiselverify.crv.backends.jacop.{WeightedRange, WeightedValue}
-import chiselverify.crv.backends.jacop.experimental.WeightedRange
 
 package object crv {
   final case class CRVException(private val message: String = "", private val cause: Throwable = None.orNull)

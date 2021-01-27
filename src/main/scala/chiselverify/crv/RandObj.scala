@@ -8,6 +8,11 @@ trait RandObj {
     */
   def randomize: Boolean
 
+  /** Randomize the current object with additional [[Constraint]]
+    * @return Boolean returns true only if a solution was found
+    */
+  def randomizeWith(constraints: Constraint*): Boolean
+
   /** Method containing a set of directive to run before the current object is randomized
     */
   def preRandomize(): Unit = {}

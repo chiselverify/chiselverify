@@ -1,8 +1,6 @@
 package chiselverify.crv.backends.jacop
 
 import chiselverify.crv.CRVException
-import chiselverify.crv.backends.jacop.experimental.WConstraintGroup
-
 import scala.collection.immutable
 import scala.util.Random
 
