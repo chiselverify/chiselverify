@@ -404,7 +404,7 @@ class TestRandJacop extends FlatSpec with Matchers {
        if (myPacket.randomize) {
           myPacket.debug()
        } else {
-         println("Noo")
+         println("Couldn't randomize :-(")
        }
     }
 
