@@ -1,4 +1,5 @@
 package chiselverify.crv.backends.jacop
+
 import scala.collection.mutable.ListBuffer
 import scala.util.Random
 
@@ -9,6 +10,7 @@ import scala.util.Random
 class Model(val seed: Int = new Random().nextInt()) extends org.jacop.scala.Model {
   val crvconstr = new ListBuffer[Constraint]()
   val randcVars = new ListBuffer[Randc]
+  val distConst = new ListBuffer[DistConstraint]
 
   override def imposeAllConstraints() {
     // Reset number of constraints

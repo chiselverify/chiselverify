@@ -1,5 +1,6 @@
 package verifyTests.crv.backends.jacop
 import chiselverify.crv
+import chiselverify.crv.{ValueBinder, RangeBinder}
 import chiselverify.crv.backends.jacop.{Constraint, ConstraintGroup, IfCon, Model, Rand, RandObj, Randc}
 import org.scalatest.{FlatSpec, Matchers}
 
@@ -383,5 +384,29 @@ class TestRandJacop extends FlatSpec with Matchers {
 
     val myPacket = new Packet(new Model)
     myPacket.len.setVar(10)
+  }
+
+  it should "be possible to create dist" in {
+    class Packet extends RandObj {
+      currentModel = new Model(7)
+      val len: Rand = new Rand("len", 0, 1000)
+      len dist (
+        (1 to 10) := 5,
+        (0 to 10) :=  1,
+        (10 to 100) :=  1,
+        (100 to 1000) := 4,
+        5 := 10
+      )
+    }
+
+    val myPacket = new Packet
+    for (i <- Range(1, 100)) {
+       if (myPacket.randomize) {
+          myPacket.debug()
+       } else {
+         println("Noo")
+       }
+    }
+
   }
 }

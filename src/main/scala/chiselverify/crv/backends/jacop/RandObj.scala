@@ -87,6 +87,16 @@ trait RandObj extends chiselverify.crv.RandObj {
     constraints.foreach(_.disable())
     ret
   }
+
+  /**
+    * Selectivily enable a constraint inside each
+    * distribution constraint
+    */
+  def setDistConstraints(): Unit = {
+    currentModel.distConst.foreach(_.disableAll())
+    currentModel.distConst.filter(_.isEanble).foreach(_.randomlyEnable())
+  }
+
   /** Randomize the current [[RandObj]]
     *
     * @return Boolean the result of the current randomization
@@ -99,6 +109,7 @@ trait RandObj extends chiselverify.crv.RandObj {
 
     resetDomains()
     preRandomize()
+    setDistConstraints()
     // TODO: create a better implementation of Randc in order to add constraint to them
     currentModel.randcVars.foreach(_.next())
     val result = RandObj.satisfySearch(
