@@ -82,6 +82,11 @@ trait RandObj extends chiselverify.crv.RandObj {
     problemVariables.foreach(x => domainDatabase += (x -> x.domain.cloneLight()))
   }
 
+  def randomizeWith(constraints: Constraint*): Boolean = {
+   val ret = randomize
+    constraints.foreach(_.disable())
+    ret
+  }
   /** Randomize the current [[RandObj]]
     *
     * @return Boolean the result of the current randomization
