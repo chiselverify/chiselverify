@@ -1,6 +1,6 @@
 package chiselverify.crv
 
-/** Constraint trait that describes the common interface that each constraint needs to implement. As for [[crv.Rand]], the
+/** Constraint trait that describes the common interface that each constraint needs to implement. As for [[Rand]], the
   * common method for the constraints are defined based on the SystemVerilog implementation.
   *
   * @see <a href="https://www.chipverify.com/systemverilog/systemverilog-constraint-examples">systemverilog-random-variables</a>
