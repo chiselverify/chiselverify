@@ -37,8 +37,12 @@ package object coverage {
     class CoverageCollector {
         private val reports = mutable.ArrayBuffer[CoverageReport]()
 
-        def collect(groupReport: GroupReport): Unit = {
+        def collect(groupReport: CoverageReport): Unit = {
             reports += groupReport
+        }
+
+        def report: String = {
+            reports.reduce(_ + _).serialize
         }
     }
 
