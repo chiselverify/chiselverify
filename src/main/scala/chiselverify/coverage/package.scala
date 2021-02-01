@@ -394,8 +394,8 @@ package object coverage {
         val bin2Name : String = s"${name}_2"
 
          def ==(that: CrossBin): Boolean = (name == that.name) &&
-            (range1.start == that.range1.start) && (range1.end == that.range2.`end`) &&
-            (range2.start == that.range1.start) && (range2.end == that.range2.`end`)
+            (range1.start == that.range1.start) && (range1.end == that.range1.end) &&
+            (range2.start == that.range2.start) && (range2.end == that.range2.end)
     }
 
     /**
