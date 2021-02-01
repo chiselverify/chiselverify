@@ -380,7 +380,7 @@ package object coverage {
       * @param range the actual scala range
       */
     case class Bins(name: String, range: Range) {
-        def ==(that: Bins): Boolean = (name == that.name) && (range.start == that.range.start) && (range.end == that.range.`end`)
+        def ==(that: Bins): Boolean = (name == that.name) && (range.start == that.range.start) && (range.end == that.range.end)
     }
 
     /**
