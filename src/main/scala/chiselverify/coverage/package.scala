@@ -214,7 +214,9 @@ package object coverage {
       * @param nHits the number of hits sampled for this bin during the test suite
       */
     case class BinReport(bin: Bins, nHits: BigInt) extends Report {
-        override def report: String = s"BIN ${bin.name} COVERING ${bin.range.toString} HAS $nHits HIT(S)"
+        private val proportion = nHits.toInt / bin.range.size.toDouble
+        private val percentage = f"${if (proportion > 1) 100 else proportion * 100}%1.2f"
+        override def report: String = s"BIN ${bin.name} COVERING ${bin.range.toString} HAS $nHits HIT(S) = ${percentage}%"
 
         override def equals(that: Any): Boolean = {
             that match {
@@ -235,8 +237,10 @@ package object coverage {
       * @param nHits the number of hits sampled for this cross bin during the test suite
       */
     case class CrossBinReport(crossBin: CrossBin, nHits: BigInt) extends Report {
+        private val proportion = nHits.toInt / (crossBin.range1.size * crossBin.range2.size).toDouble
+        private val percentage = f"${if (proportion > 1) 100 else proportion * 100}%1.2f"
         override def report: String =
-            s"BIN ${crossBin.name} COVERING ${crossBin.range1.toString} CROSS ${crossBin.range2.toString} HAS $nHits HIT(S)"
+            s"BIN ${crossBin.name} COVERING ${crossBin.range1.toString} CROSS ${crossBin.range2.toString} HAS $nHits HIT(S) = ${percentage}%"
 
         override def equals(that: Any): Boolean = {
             that match {
