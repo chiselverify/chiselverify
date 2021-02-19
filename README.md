@@ -240,6 +240,7 @@ Collect pointers to relevant documents.
 
 ### CRV
 - [Choco-Solver](https://github.com/chocoteam/choco-solver) Java library for solving CSP problems
+- [QuickCheck](https://hackage.haskell.org/package/QuickCheck) Checker for Haskel, used Lava as example, the inspiration for ScalaCheck
 
 ### Testing Framewrok / Simulation tools
 #### Cocotb -- coroutine based cosimulation python library library for hardware development in Python
