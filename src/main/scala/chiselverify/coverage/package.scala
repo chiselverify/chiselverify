@@ -19,6 +19,8 @@ import chisel3.Data
 import chiseltest.testableData
 import chiselverify.timing._
 
+import scala.collection.mutable
+
 package object coverage {
 
     /**
@@ -30,6 +32,18 @@ package object coverage {
           * @return a string containing the coverage report
           */
         def report: String
+    }
+
+    class CoverageCollector {
+        private val reports = mutable.ArrayBuffer[CoverageReport]()
+
+        def collect(groupReport: CoverageReport): Unit = {
+            reports += groupReport
+        }
+
+        def report: String = {
+            reports.reduce(_ + _).serialize
+        }
     }
 
     /**
@@ -79,6 +93,20 @@ package object coverage {
                 }
             }
         }
+        override def equals(that: Any): Boolean = {
+            def sortGroups(a: GroupReport, b: GroupReport): Boolean = {
+                a.id > b.id
+            }
+
+            that match {
+                case CoverageReport(g) => g.sortWith(sortGroups) == groups.sortWith(sortGroups)
+                case _ => false
+            }
+        }
+        def +(that: CoverageReport): CoverageReport = {
+            require(this == that)
+            CoverageReport((that.groups zip groups).map{case(g1, g2) => g1 + g2})
+        }
     }
 
     /**
@@ -94,6 +122,29 @@ package object coverage {
             crosses foreach (cross => rep append s"${cross.report}\n=========================================\n")
             rep.mkString
         }
+
+        override def equals(that: Any): Boolean = {
+            def sortPointReport(a: PointReport, b: PointReport): Boolean = {
+                a.name > b.name
+            }
+
+            def sortCrossReport(a: CrossReport, b: CrossReport): Boolean = {
+                a.cross.name > b.cross.name
+            }
+
+            that match {
+                case GroupReport(i, p, c) => i == id && p.sortWith(sortPointReport) == points.sortWith(sortPointReport) &&
+                    c.sortWith(sortCrossReport) == crosses.sortWith(sortCrossReport)
+                case _ => false
+            }
+        }
+
+        def +(that: GroupReport): GroupReport = {
+            require(this == that)
+            val newPoints = (that.points zip points).map{case(p1, p2) => p1 + p2}
+            val newCrosses = (that.crosses zip crosses).map{case(c1, c2) => c1 + c2}
+            GroupReport(id, newPoints, newCrosses)
+        }
     }
 
     /**
@@ -106,6 +157,23 @@ package object coverage {
             val rep = new StringBuilder(s"COVER_POINT PORT NAME: $name")
             bins foreach (bin => rep append s"\n${bin.report}")
             rep.mkString
+        }
+
+        override def equals(that: Any): Boolean = {
+            def sortBinReport(a: BinReport, b: BinReport): Boolean = {
+                a.bin.name > b.bin.name
+            }
+
+            that match {
+                case PointReport(n, b) => n == name && b.sortWith(sortBinReport) == bins.sortWith(sortBinReport)
+                case _ => false
+            }
+        }
+
+        def +(that: PointReport): PointReport = {
+            require(this == that)
+            val newPoints = (bins zip that.bins).map{case(b1, b2) => b1 + b2}
+            PointReport(name, newPoints)
         }
     }
 
@@ -121,6 +189,23 @@ package object coverage {
             bins foreach (bin => rep append s"\n${bin.report}")
             rep.mkString
         }
+
+        override def equals(that: Any): Boolean = {
+            def sortCrossBinReport(a: CrossBinReport, b: CrossBinReport): Boolean = {
+                a.crossBin.name > b.crossBin.name
+            }
+
+            that match {
+                case CrossReport(c, b, d) => c == cross && bins.sortWith(sortCrossBinReport) == b.sortWith(sortCrossBinReport) && d == delay
+                case _ => false
+            }
+        }
+
+        def +(that: CrossReport): CrossReport = {
+            require(this == that)
+            val newBins = (bins zip that.bins).map{case(b1, b2) => b1 + b2}
+            CrossReport(cross, newBins, delay)
+        }
     }
 
     /**
@@ -129,7 +214,21 @@ package object coverage {
       * @param nHits the number of hits sampled for this bin during the test suite
       */
     case class BinReport(bin: Bins, nHits: BigInt) extends Report {
-        override def report: String = s"BIN ${bin.name} COVERING ${bin.range.toString} HAS $nHits HIT(S)"
+        private val proportion = nHits.toInt / bin.range.size.toDouble
+        private val percentage = f"${if (proportion > 1) 100 else proportion * 100}%1.2f"
+        override def report: String = s"BIN ${bin.name} COVERING ${bin.range.toString} HAS $nHits HIT(S) = ${percentage}%"
+
+        override def equals(that: Any): Boolean = {
+            that match {
+                case BinReport(b, _) => b == bin
+                case _ => false
+            }
+        }
+
+        def +(that: BinReport): BinReport = {
+            require(this == that)
+            BinReport(bin, that.nHits + nHits)
+        }
     }
 
     /**
@@ -138,8 +237,22 @@ package object coverage {
       * @param nHits the number of hits sampled for this cross bin during the test suite
       */
     case class CrossBinReport(crossBin: CrossBin, nHits: BigInt) extends Report {
+        private val proportion = nHits.toInt / (crossBin.range1.size * crossBin.range2.size).toDouble
+        private val percentage = f"${if (proportion > 1) 100 else proportion * 100}%1.2f"
         override def report: String =
-            s"BIN ${crossBin.name} COVERING ${crossBin.range1.toString} CROSS ${crossBin.range2.toString} HAS $nHits HIT(S)"
+            s"BIN ${crossBin.name} COVERING ${crossBin.range1.toString} CROSS ${crossBin.range2.toString} HAS $nHits HIT(S) = ${percentage}%"
+
+        override def equals(that: Any): Boolean = {
+            that match {
+                case CrossBinReport(c, _) => c == crossBin
+                case _ => false
+            }
+        }
+
+        def +(that: CrossBinReport): CrossBinReport = {
+            require(this == that)
+            CrossBinReport(crossBin, nHits + that.nHits)
+        }
     }
 
     /**
@@ -275,7 +388,7 @@ package object coverage {
       * @param range the actual scala range
       */
     case class Bins(name: String, range: Range) {
-        def ==(that: Bins): Boolean = (name == that.name) && (range.start == that.range.start) && (range.end == that.range.`end`)
+        def ==(that: Bins): Boolean = (name == that.name) && (range.start == that.range.start) && (range.end == that.range.end)
     }
 
     /**
@@ -289,8 +402,8 @@ package object coverage {
         val bin2Name : String = s"${name}_2"
 
          def ==(that: CrossBin): Boolean = (name == that.name) &&
-            (range1.start == that.range1.start) && (range1.end == that.range2.`end`) &&
-            (range2.start == that.range1.start) && (range2.end == that.range2.`end`)
+            (range1.start == that.range1.start) && (range1.end == that.range1.end) &&
+            (range2.start == that.range2.start) && (range2.end == that.range2.end)
     }
 
     /**
