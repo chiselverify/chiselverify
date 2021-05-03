@@ -5,6 +5,22 @@ and UVM. The ultimate goal is a verification framework within Scala for digital
 hardware described in Chisel also supporting legacy components in VHDL, Verilog,
 or SystemVerilog.
 
+A technical report describes the framework in detail: [Open-Source Verification with Chisel and Scala](https://arxiv.org/abs/2102.13460)
+
+When you use this library in a research project, please cite it as:
+
+```
+@misc{dobis2021opensource,
+      title={Open-Source Verification with Chisel and Scala}, 
+      author={Andrew Dobis and Tjark Petersen and Kasper Juul Hesse Rasmussen and Enrico Tolotto and Hans Jakob Damsgaard and Simon Thye Andersen and Richard Lin and Martin Schoeberl},
+      year={2021},
+      eprint={2102.13460},
+      archivePrefix={arXiv},
+      primaryClass={cs.PL}
+}
+```
+
+
 Run tests with
 ```
 make
