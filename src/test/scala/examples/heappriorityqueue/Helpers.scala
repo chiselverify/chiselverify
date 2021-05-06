@@ -2,7 +2,7 @@ package examples.heappriorityqueue
 
 import chisel3._
 import chiseltest._
-import examples.heappriorityqueue.Interfaces.{Priority, PriorityAndID}
+import examples.heappriorityqueue.Interfaces.{Event, TaggedEvent}
 
 /**
   * contains useful conversion as well as poke and peek methods for user defined bundles
@@ -18,10 +18,10 @@ object Helpers {
     rWid = r
   }
 
-  def pokePrioAndID(port: PriorityAndID, poke: Seq[Int] = null): Seq[Int] = {
+  def pokePrioAndID(port: TaggedEvent, poke: Seq[Int] = null): Seq[Int] = {
     if (poke != null) {
-      port.prio.cycl.poke(poke(0).U)
-      port.prio.norm.poke(poke(1).U)
+      port.event.superCycle.poke(poke(0).U)
+      port.event.cycle.poke(poke(1).U)
       port.id.poke(poke(2).U)
       return poke
     } else {
@@ -31,20 +31,20 @@ object Helpers {
     }
   }
 
-  def pokePrioAndIDVec(port: Vec[PriorityAndID], poke: Seq[Seq[Int]] = null): Seq[Seq[Int]] = {
+  def pokePrioAndIDVec(port: Vec[TaggedEvent], poke: Seq[Seq[Int]] = null): Seq[Seq[Int]] = {
     if (poke != null) Seq.tabulate(port.length)(i => pokePrioAndID(port(i), poke(i)))
     else Seq.tabulate(port.length)(i => pokePrioAndID(port(i)))
   }
 
-  def peekPrioAndId(port: PriorityAndID): Seq[Int] = {
-    Seq(port.prio.cycl, port.prio.norm, port.id).map(_.peek.litValue.toInt)
+  def peekPrioAndId(port: TaggedEvent): Seq[Int] = {
+    Seq(port.event.superCycle, port.event.cycle, port.id).map(_.peek.litValue.toInt)
   }
 
-  def peekPrio(port: Priority): Seq[Int] = {
-    Seq(port.cycl, port.norm).map(_.peek.litValue.toInt)
+  def peekPrio(port: Event): Seq[Int] = {
+    Seq(port.superCycle, port.cycle).map(_.peek.litValue.toInt)
   }
 
-  def peekPrioAndIdVec(port: Vec[PriorityAndID]): Seq[Seq[Int]] = {
+  def peekPrioAndIdVec(port: Vec[TaggedEvent]): Seq[Seq[Int]] = {
     Seq.tabulate(port.length)(i => peekPrioAndId(port(i)))
   }
 

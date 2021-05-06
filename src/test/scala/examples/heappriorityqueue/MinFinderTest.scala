@@ -22,15 +22,15 @@ class MinFinderTest extends FreeSpec with ChiselScalatestTester {
         }
     }
 
-    val cWid = 2
-    val nWid = 8
-    val rWid = 3
     val n = 8
+    implicit val parameters = PriorityQueueParameters(32,4,4,8,5)
 
     "MinFinder should identify minimum value with the lowest index" in {
-        test(new MinFinder(n, cWid, nWid, rWid)) { dut =>
+        test(new MinFinder(n)) { dut =>
 
-            setWidths(cWid, nWid, rWid)
+            import parameters._
+
+            setWidths(superCycleWidth, cycleWidth, referenceIdWidth)
 
             for (i <- 0 until 1000) {
 
@@ -39,8 +39,8 @@ class MinFinderTest extends FreeSpec with ChiselScalatestTester {
                 assert(peekPrioAndId(dut.io.res) == values(calculateOut(values)),
                     s"\n${prioAndIdVecToString(values)} should be ${prioAndIdToString(values(calculateOut(values)))} received ${prioAndIdToString(peekPrioAndId(dut.io.res))}")
 
-                assert(dut.io.idx.peek.litValue == calculateOut(values),
-                    s"\n${prioAndIdVecToString(values)} should be ${calculateOut(values)} received ${dut.io.idx.peek.litValue}")
+                assert(dut.io.index.peek.litValue == calculateOut(values),
+                    s"\n${prioAndIdVecToString(values)} should be ${calculateOut(values)} received ${dut.io.index.peek.litValue}")
             }
 
         }

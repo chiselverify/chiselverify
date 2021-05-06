@@ -1,5 +1,6 @@
 package examples.heappriorityqueue
 
+import chisel3.util.log2Ceil
 import chisel3._
 import chiseltest._
 import chiselverify.coverage.{Bins, CoverPoint, CoverageReporter, Cross, CrossBin, CrossPoint}
@@ -12,25 +13,23 @@ import org.scalatest._
   */
 class QueueControlTest extends FreeSpec with ChiselScalatestTester {
 
-    val cWid = 2
-    val nWid = 8
-    val rWid = 3
 
     "HeapPriorityQueue pass a single random poke test run" in {
-        val heapSize = 17
-        val chCount = 4
-        test(new QueueControl(heapSize, chCount, cWid, nWid, rWid)) { c => tester(c, heapSize, chCount, 0, 100) }
+        implicit val parameters = PriorityQueueParameters(33,4,4,8,5)
+        test(new QueueControl) { c => tester(c, 0, 100) }
     }
 
     "HeapPriorityQueue should pass random poke test runs with different memory sizes and children count" in {
         val sizes = Array(33, 65, 129, 257)
-        val chCounts = Array(2, 4, 8, 16)
-        sizes.foreach(heapSize => chCounts.foreach(chCount => {
-            test(new QueueControl(heapSize, chCount, cWid, nWid, rWid)) { c => tester(c, heapSize, chCount, 0, 50) }
+        val orders = Array(2, 4, 8, 16)
+        sizes.foreach(size => orders.foreach(order => {
+            implicit val parameters = PriorityQueueParameters(size,order,4,8,log2Ceil(size))
+            test(new QueueControl) { c => tester(c, 0, 10) }
         }))
     }
 
-    def tester(c: QueueControl, heapSize: Int, chCount: Int, debugLvl: Int, testRuns: Int): Unit = {
+    def tester(c: QueueControl, debugLvl: Int, testRuns: Int)(implicit parameters: PriorityQueueParameters): Unit = {
+        import parameters._
         var stepCounter = 0
         var successfulInsertions = 0
         var successfulRemovals = 0
@@ -40,9 +39,9 @@ class QueueControlTest extends FreeSpec with ChiselScalatestTester {
 
         val rand = scala.util.Random
 
-        val dut = new QueueControlWrapper(c, heapSize, chCount, debugLvl)(cWid, nWid, rWid)
+        val dut = new QueueControlWrapper(c, debugLvl)
         c.clock.setTimeout(0)
-        val model = new Behavioural(heapSize, chCount)(cWid, nWid, rWid)
+        val model = new Behavioural(size, order)(superCycleWidth, cycleWidth, referenceIdWidth)
 
         ////////////////////////////////////////////////////Coverage////////////////////////////////////////////////////////
 
@@ -50,30 +49,30 @@ class QueueControlTest extends FreeSpec with ChiselScalatestTester {
         cr.register(
             CoverPoint(c.io.cmd.op, "operation")(
                 Bins("insertion", 0 to 0) :: Bins("removal", 1 to 1) :: Nil) ::
-                CoverPoint(c.io.cmd.prio.cycl, "cmd.prio.cycl")(
+                CoverPoint(c.io.cmd.prio.superCycle, "cmd.prio.cycl")(
                     Bins("cyclic", 0 to 3) :: Nil) ::
-                CoverPoint(c.io.cmd.prio.norm, "cmd.prio.norm")(
-                    Bins("lower half", 0 to (Math.pow(2, nWid) / 2 - 1).toInt) :: Bins("upper half", (Math.pow(2, nWid) / 2 - 1).toInt to (Math.pow(2, nWid) - 1).toInt) :: Nil) ::
-                CoverPoint(c.io.head.prio.cycl, "head.prio.cycl")(
+                CoverPoint(c.io.cmd.prio.cycle, "cmd.prio.norm")(
+                    Bins("lower half", 0 to (Math.pow(2, cycleWidth) / 2 - 1).toInt) :: Bins("upper half", (Math.pow(2, cycleWidth) / 2 - 1).toInt to (Math.pow(2, cycleWidth) - 1).toInt) :: Nil) ::
+                CoverPoint(c.io.head.prio.superCycle, "head.prio.cycl")(
                     Bins("cyclic", 0 to 3) :: Nil) ::
-                CoverPoint(c.io.head.prio.norm, "head.prio.norm")(
-                    Bins("lower half", 0 to (Math.pow(2, nWid) / 2 - 1).toInt) :: Bins("upper half", (Math.pow(2, nWid) / 2 - 1).toInt to (Math.pow(2, nWid) - 1).toInt) :: Nil) ::
+                CoverPoint(c.io.head.prio.cycle, "head.prio.norm")(
+                    Bins("lower half", 0 to (Math.pow(2, cycleWidth) / 2 - 1).toInt) :: Bins("upper half", (Math.pow(2, cycleWidth) / 2 - 1).toInt to (Math.pow(2, cycleWidth) - 1).toInt) :: Nil) ::
                 Nil,
             //Declare cross points
             CrossPoint("cyclics at ops", "operation", "cmd.prio.cycl")(
                 CrossBin("insertion", 0 to 0, 0 to 3) :: CrossBin("removal", 1 to 1, 0 to 3) :: Nil) ::
             CrossPoint("normals at ops", "operation", "cmd.prio.norm")(
-                CrossBin("insertion lower half", 0 to 0, 0 to (Math.pow(2, nWid) / 2 - 1).toInt) :: CrossBin("insertion upper half", 0 to 0, (Math.pow(2, nWid) / 2 - 1).toInt to (Math.pow(2, nWid) - 1).toInt) ::
-                CrossBin("removal lower half", 1 to 1, 0 to (Math.pow(2, nWid) / 2 - 1).toInt) :: CrossBin("removal upper half", 1 to 1, (Math.pow(2, nWid) / 2 - 1).toInt to (Math.pow(2, nWid) - 1).toInt) :: Nil) ::
+                CrossBin("insertion lower half", 0 to 0, 0 to (Math.pow(2, cycleWidth) / 2 - 1).toInt) :: CrossBin("insertion upper half", 0 to 0, (Math.pow(2, cycleWidth) / 2 - 1).toInt to (Math.pow(2, cycleWidth) - 1).toInt) ::
+                CrossBin("removal lower half", 1 to 1, 0 to (Math.pow(2, cycleWidth) / 2 - 1).toInt) :: CrossBin("removal upper half", 1 to 1, (Math.pow(2, cycleWidth) / 2 - 1).toInt to (Math.pow(2, cycleWidth) - 1).toInt) :: Nil) ::
             Nil)
 
         ////////////////////////////////////////////////helper functions////////////////////////////////////////////////////
 
         def randomPoke(): Seq[Int] = {
             // op, cprio, nprio, refID
-            val ret = Seq(rand.nextInt(2), rand.nextInt(math.pow(2, cWid).toInt), rand.nextInt(math.pow(2, nWid).toInt), refIDcounter)
+            val ret = Seq(rand.nextInt(2), rand.nextInt(math.pow(2, superCycleWidth).toInt), rand.nextInt(math.pow(2, cycleWidth).toInt), refIDcounter)
             refIDcounter += 1
-            if (refIDcounter >= Math.pow(2, rWid) - 1) refIDcounter = 0
+            if (refIDcounter >= Math.pow(2, referenceIdWidth) - 1) refIDcounter = 0
             ret
         }
 
@@ -107,10 +106,10 @@ class QueueControlTest extends FreeSpec with ChiselScalatestTester {
                 }
                 // cross check dut and model; kill test and print debug if not matching
                 cr.sample()
-                assert(c.io.head.prio.cycl.peek.litValue == model.mem(0)(0), debug)
-                assert(c.io.head.prio.norm.peek.litValue == model.mem(0)(1), debug)
+                assert(c.io.head.prio.superCycle.peek.litValue == model.mem(0)(0), debug)
+                assert(c.io.head.prio.cycle.peek.litValue == model.mem(0)(1), debug)
                 assert(c.io.head.refID.peek.litValue == model.mem(0)(2), debug)
-                assert(model.mem.slice(1, model.mem.length).deep == dut.mem.flatten.deep, debug)
+                assert(model.mem.slice(1, model.mem.length).deep == dut.mem.flatten.deep,s"\n${"-"*20}\n" + debug)
             }
         }
 
@@ -127,7 +126,7 @@ class QueueControlTest extends FreeSpec with ChiselScalatestTester {
         val successRate = ((successfulInsertions + successfulRemovals.toDouble) / testRuns) * 100
 
         println(s"${"=" * 20}Report${"=" * 20}\n" +
-            s"Heapsize = $heapSize, children count = $chCount\n" +
+            s"Heapsize = $size, children count = $order\n" +
             s"${"%.2f".format(successRate)}% of operations were valid\n" +
             s"$successfulInsertions insertions which took on average ${"%.2f".format(avgIns)} cycles\n" +
             s"$successfulRemovals removals which took on average ${"%.2f".format(avgRem)} cycles\n" +
@@ -146,14 +145,10 @@ class QueueControlTest extends FreeSpec with ChiselScalatestTester {
   * Wrapper class to abstract interaction with the heap-based priority queue
   *
   * @param dut     a HeapPriorityQueue instance
-  * @param size    size of the heap
-  * @param chCount number of children per node
   * @param debug   0=no output, 1=operation reviews, 2=step-wise outputs
-  * @param cWid    width of cyclic priorities
-  * @param nWid    width of normal priorities
-  * @param rWid    width of reference IDs
   */
-class QueueControlWrapper(dut: QueueControl, size: Int, chCount: Int, debug: Int)(cWid: Int, nWid: Int, rWid: Int) {
+class QueueControlWrapper(dut: QueueControl, debug: Int)(implicit parameters: PriorityQueueParameters) {
+    import parameters._
     var pipedRdAddr = 0
     var pipedWrAddr = 0
     var searchSimDelay = 0
@@ -162,7 +157,7 @@ class QueueControlWrapper(dut: QueueControl, size: Int, chCount: Int, debug: Int
     var debugLvl = debug
     val states = Array("idle", "headInsertion", "normalInsertion", "initSearch", "waitForSearch", "resetCell", "lastRemoval", "headRemoval", "tailRemoval", "removal", "waitForHeapifyUp", "waitForHeapifyDown")
 
-    var mem = Array.fill(size - 1)(Array(Math.pow(2, cWid).toInt - 1, Math.pow(2, nWid).toInt - 1, Math.pow(2, rWid).toInt - 1)).sliding(chCount, chCount).toArray
+    var mem = Array.fill(size - 1)(Array(Math.pow(2, superCycleWidth).toInt - 1, Math.pow(2, cycleWidth).toInt - 1, Math.pow(2, referenceIdWidth).toInt - 1)).sliding(order, order).toArray
     dut.io.srch.done.poke(true.B)
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -171,10 +166,10 @@ class QueueControlWrapper(dut: QueueControl, size: Int, chCount: Int, debug: Int
         for (i <- 0 until n) {
             // read port
             try {
-                for (i <- 0 until chCount) {
+                for (i <- 0 until order) {
                     // ignores reads outside of array
-                    dut.io.rdPort.data(i).prio.cycl.poke(mem(pipedRdAddr)(i)(0).U)
-                    dut.io.rdPort.data(i).prio.norm.poke(mem(pipedRdAddr)(i)(1).U)
+                    dut.io.rdPort.data(i).event.superCycle.poke(mem(pipedRdAddr)(i)(0).U)
+                    dut.io.rdPort.data(i).event.cycle.poke(mem(pipedRdAddr)(i)(1).U)
                     dut.io.rdPort.data(i).id.poke(mem(pipedRdAddr)(i)(2).U)
                 }
             } catch {
@@ -182,10 +177,10 @@ class QueueControlWrapper(dut: QueueControl, size: Int, chCount: Int, debug: Int
             }
             // write port
             if (dut.io.wrPort.write.peek.litToBoolean) {
-                for (i <- 0 until chCount) {
+                for (i <- 0 until order) {
                     if ((dut.io.wrPort.mask.peek.litValue & (1 << i)) != 0) {
-                        mem(pipedWrAddr)(i)(0) = dut.io.wrPort.data(i).prio.cycl.peek.litValue.toInt
-                        mem(pipedWrAddr)(i)(1) = dut.io.wrPort.data(i).prio.norm.peek.litValue.toInt
+                        mem(pipedWrAddr)(i)(0) = dut.io.wrPort.data(i).event.superCycle.peek.litValue.toInt
+                        mem(pipedWrAddr)(i)(1) = dut.io.wrPort.data(i).event.cycle.peek.litValue.toInt
                         mem(pipedWrAddr)(i)(2) = dut.io.wrPort.data(i).id.peek.litValue.toInt
                     }
                 }
@@ -216,8 +211,8 @@ class QueueControlWrapper(dut: QueueControl, size: Int, chCount: Int, debug: Int
                 searchSimDelay = 0
             }
             str.append(
-                s"${states(dut.io.state.peek.litValue.toInt)} : ${dut.io.cmd.done.peek.litValue} : ${dut.io.cmd.result.peek.litValue}\n" +
-                    s"ReadPort: ${dut.io.rdPort.address.peek.litValue} | ${if (pipedRdAddr < size / chCount) mem(pipedRdAddr).map(_.mkString(":")).mkString(",") else ""}\n" +
+                s"\n${states(dut.io.state.peek.litValue.toInt)} : ${dut.io.cmd.done.peek.litValue} : ${dut.io.cmd.result.peek.litValue}\n" +
+                    s"ReadPort: ${dut.io.rdPort.address.peek.litValue} | ${if (pipedRdAddr < size / order) mem(pipedRdAddr).map(_.mkString(":")).mkString(",") else ""}\n" +
                     s"WritePort: ${dut.io.wrPort.address.peek.litValue} | ${prioAndIdVecToString(peekPrioAndIdVec(dut.io.wrPort.data))} | ${dut.io.wrPort.write.peek.litToBoolean} | ${dut.io.wrPort.mask.peek.litValue.toString(2).reverse}\n" +
                     getMem() + s"\n${"-" * 40}\n"
             )
@@ -249,8 +244,8 @@ class QueueControlWrapper(dut: QueueControl, size: Int, chCount: Int, debug: Int
     }
 
     def pokePriority(c: Int, n: Int): Unit = {
-        dut.io.cmd.prio.norm.poke(n.U)
-        dut.io.cmd.prio.cycl.poke(c.U)
+        dut.io.cmd.prio.cycle.poke(n.U)
+        dut.io.cmd.prio.superCycle.poke(c.U)
     }
 
     def pokePrioAndID(c: Int, n: Int, id: Int): Unit = {
@@ -299,11 +294,11 @@ class QueueControlWrapper(dut: QueueControl, size: Int, chCount: Int, debug: Int
     }
 
     def getMem(): String = {
-        return s"${dut.io.head.prio.cycl.peek.litValue}:${dut.io.head.prio.norm.peek.litValue}:${dut.io.head.refID.peek.litValue} | ${mem.map(_.map(_.mkString(":")).mkString(", ")).mkString(" | ")}"
+        return s"${dut.io.head.prio.superCycle.peek.litValue}:${dut.io.head.prio.cycle.peek.litValue}:${dut.io.head.refID.peek.litValue} | ${mem.map(_.map(_.mkString(":")).mkString(", ")).mkString(" | ")}"
     }
 
     def getRmPrio(): Array[Int] = {
-        return Seq(dut.io.cmd.rm_prio.cycl, dut.io.cmd.rm_prio.norm).map(_.peek.litValue.toInt).toArray
+        return Seq(dut.io.cmd.rm_prio.superCycle, dut.io.cmd.rm_prio.cycle).map(_.peek.litValue.toInt).toArray
     }
 
     def getSuccess(): Boolean = {
@@ -312,10 +307,10 @@ class QueueControlWrapper(dut: QueueControl, size: Int, chCount: Int, debug: Int
 
     def compareWithModel(arr: Array[Array[Int]]): Boolean = {
         var res = true
-        dut.io.head.prio.cycl.expect(arr(0)(0).U)
-        res &= dut.io.head.prio.cycl.peek.litValue == arr(0)(0)
-        dut.io.head.prio.norm.expect(arr(0)(1).U)
-        res &= dut.io.head.prio.norm.peek.litValue == arr(0)(1)
+        dut.io.head.prio.superCycle.expect(arr(0)(0).U)
+        res &= dut.io.head.prio.superCycle.peek.litValue == arr(0)(0)
+        dut.io.head.prio.cycle.expect(arr(0)(1).U)
+        res &= dut.io.head.prio.cycle.peek.litValue == arr(0)(1)
         dut.io.head.refID.expect(arr(0)(2).U)
         res &= dut.io.head.refID.peek.litValue == arr(0)(2)
         res &= arr.slice(1, arr.length).deep == mem.flatten.deep

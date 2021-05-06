@@ -9,18 +9,24 @@ import chisel3.util._
 
 object Interfaces {
 
-  class Priority(val cWid: Int, val nWid: Int) extends Bundle {
-    val norm = UInt(nWid.W)
-    val cycl = UInt(cWid.W)
+  class Event(implicit parameters: PriorityQueueParameters) extends Bundle {
+    import parameters._
+    val cycle = UInt(cycleWidth.W)
+    val superCycle = UInt(superCycleWidth.W)
 
-    override def cloneType = new Priority(cWid, nWid).asInstanceOf[this.type]
+    def <(that: Event): Bool = superCycle < that.superCycle || (superCycle === that.superCycle && cycle < that.cycle)
+    def >(that: Event): Bool = superCycle > that.superCycle || (superCycle === that.superCycle) && cycle > that.cycle
+    def ===(that: Event): Bool = superCycle === that.superCycle && cycle === that.cycle
+
+    override def cloneType = new Event().asInstanceOf[this.type]
   }
 
-  class PriorityAndID(cWid: Int, nWid: Int, rWid: Int) extends Bundle {
-    val prio = new Priority(cWid, nWid)
-    val id = UInt(rWid.W)
+  class TaggedEvent(implicit parameters: PriorityQueueParameters) extends Bundle {
+    import parameters._
+    val event = new Event
+    val id = UInt(referenceIdWidth.W)
 
-    override def cloneType = (new PriorityAndID(cWid, nWid, rWid)).asInstanceOf[this.type]
+    override def cloneType = new TaggedEvent().asInstanceOf[this.type]
   }
 
   class rdPort[T <: Data](addrWid: Int, dType: T) extends Bundle { // as seen from reader side
@@ -39,15 +45,16 @@ object Interfaces {
     override def cloneType = (new wrPort[T](addrWid, maskWid, dType)).asInstanceOf[this.type]
   }
 
-  class searchPort(size: Int, rWid: Int) extends Bundle { // as seen from requester side
-    val refID = Output(UInt(rWid.W))
+  class searchPort(implicit parameters: PriorityQueueParameters) extends Bundle { // as seen from requester side
+    import parameters._
+    val refID = Output(UInt(referenceIdWidth.W))
     val heapSize = Output(UInt(log2Ceil(size + 1).W))
     val res = Input(UInt(log2Ceil(size).W))
     val search = Output(Bool())
     val error = Input(Bool())
     val done = Input(Bool())
 
-    override def cloneType = (new searchPort(size, rWid)).asInstanceOf[this.type]
+    override def cloneType = new searchPort().asInstanceOf[this.type]
   }
 
 }

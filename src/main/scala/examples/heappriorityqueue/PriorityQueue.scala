@@ -5,6 +5,8 @@ import chisel3.util._
 import examples.heappriorityqueue.Interfaces._
 import examples.heappriorityqueue.modules.{QueueControl, linearSearchMem}
 
+case class PriorityQueueParameters(size: Int, order: Int, superCycleWidth: Int, cycleWidth: Int, referenceIdWidth: Int)
+
 /**
   * Component implementing a priority queue, where the minimum value gets to the head of the queue
   *  - The sorting is based on heap sort
@@ -22,12 +24,18 @@ import examples.heappriorityqueue.modules.{QueueControl, linearSearchMem}
   *  - the head element is furthermore presented at a dedicated port
   *
   * @param size    the maximum size of the heap
-  * @param chCount the number of children per node in the tree. Must be power of 2
+  * @param order the number of children per node in the tree. Must be power of 2
   * @param nWid    width of the normal priority value
   * @param cWid    width of the cyclic priority value
   * @param rWid    width of the reference ID tags
   */
-class HeapPriorityQueue(size: Int, chCount: Int, cWid: Int, nWid: Int, rWid: Int, exposeState: Boolean = false) extends Module {
+class PriorityQueue(size: Int, order: Int, superCycleRes: Int, cyclesPerSuperCycle: Int, exposeState: Boolean = false) extends Module {
+
+  val superCycleWidth = superCycleRes
+  val cycleWidth = log2Ceil(cyclesPerSuperCycle)
+  val referenceIdWidth = log2Ceil(size+1)
+  implicit val parameters = PriorityQueueParameters(size,order,superCycleWidth,cycleWidth,referenceIdWidth)
+
   val io = IO(new Bundle {
 
     // Interface for signaling head element to user.
@@ -35,8 +43,8 @@ class HeapPriorityQueue(size: Int, chCount: Int, cWid: Int, nWid: Int, rWid: Int
     val head = new Bundle {
       val valid = Output(Bool())
       val none = Output(Bool())
-      val prio = Output(new Priority(cWid, nWid))
-      val refID = Output(UInt(rWid.W))
+      val prio = Output(new Event)
+      val refID = Output(UInt(referenceIdWidth.W))
     }
 
     // Interface for element insertion/removal
@@ -48,22 +56,23 @@ class HeapPriorityQueue(size: Int, chCount: Int, cWid: Int, nWid: Int, rWid: Int
       // inputs
       val valid = Input(Bool())
       val op = Input(Bool()) // 0=Remove, 1=Insert
-      val prio = Input(new Priority(cWid, nWid))
-      val refID = Input(UInt(rWid.W))
+      val prio = Input(new Event)
+      val refID = Input(UInt(referenceIdWidth.W))
       // outputs
       val done = Output(Bool())
       val result = Output(Bool()) // 0=Success, 1=Failure
-      val rm_prio = Output(new Priority(cWid, nWid))
+      val rm_prio = Output(new Event)
     }
 
     val state = if (exposeState) Some(Output(UInt())) else None
 
   })
 
-  require(isPow2(chCount), "The number of children per node needs to be a power of 2!")
 
-  val mem = Module(new linearSearchMem(size - 1, chCount, cWid, nWid, rWid))
-  val queue = Module(new QueueControl(size, chCount, cWid, nWid, rWid))
+  require(isPow2(order), "The number of children per node needs to be a power of 2!")
+
+  val mem = Module(new linearSearchMem(size - 1))
+  val queue = Module(new QueueControl)
 
   mem.srch <> queue.io.srch
   mem.rd <> queue.io.rdPort

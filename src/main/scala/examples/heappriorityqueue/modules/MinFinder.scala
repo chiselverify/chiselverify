@@ -2,42 +2,33 @@ package examples.heappriorityqueue.modules
 
 import chisel3._
 import chisel3.util._
-import examples.heappriorityqueue.Interfaces.PriorityAndID
+import examples.heappriorityqueue.Interfaces.TaggedEvent
+import examples.heappriorityqueue.PriorityQueueParameters
 
 /**
   * Determines the highest priority (smallest number) with the lowest index among the input values.
   * Outputs both the value and index
   *
   * @param n    number of priorities to compare
-  * @param nWid width of the normal priority field
-  * @param cWid width of the cyclic priority field
-  * @param rWid width of the reference ID
+  * @param cycleWidth width of the normal priority field
+  * @param superCycleWidth width of the cyclic priority field
+  * @param referenceIdWidth width of the reference ID
   */
-class MinFinder(n: Int, cWid: Int, nWid: Int, rWid: Int) extends Module {
+class MinFinder(n: Int)(implicit parameters: PriorityQueueParameters) extends Module {
+  import parameters._
   val io = IO(new Bundle {
-    val values = Input(Vec(n, new PriorityAndID(cWid, nWid, rWid)))
-    val res = Output(new PriorityAndID(cWid, nWid, rWid))
-    val idx = Output(UInt(log2Ceil(n).W))
+    val values = Input(Vec(n, new TaggedEvent))
+    val res = Output(new TaggedEvent)
+    val index = Output(UInt(log2Ceil(n).W))
   })
-
-  class Dup extends Bundle {
-    val v = new PriorityAndID(cWid, nWid, rWid)
-    val idx = UInt(log2Ceil(n).W)
-  }
-
-  // bundle input values with their corresponding index
-  val inDup = Wire(Vec(n, new Dup()))
-  for (i <- 0 until n) {
-    inDup(i).v := io.values(i)
-    inDup(i).idx := i.U
-  }
-
-  // create a reduced tree structure to find the minimum value
   // lowest cyclic priority wins
   // if cyclic priorities are equal the normal priority decides
-  // if both are equal the index decides
-  val res = inDup.reduceTree((x: Dup, y: Dup) => Mux((x.v.prio.cycl < y.v.prio.cycl) || (x.v.prio.cycl === y.v.prio.cycl && (x.v.prio.norm < y.v.prio.norm || (x.v.prio.norm === y.v.prio.norm && x.idx < y.idx))), x, y))
+  // if both are equal the lowest index wins
+  val res = io.values.zipWithIndex.map{ case (d, i) => (d,i.U) }.reduce{ (left,right) =>
+    val selectLeft = left._1.event < right._1.event || (left._1.event === right._1.event && left._2 < right._2)
+    (Mux(selectLeft,left._1,right._1),Mux(selectLeft,left._2,right._2))
+  }
 
-  io.res := res.v
-  io.idx := res.idx
+  io.res := res._1
+  io.index := res._2
 }
