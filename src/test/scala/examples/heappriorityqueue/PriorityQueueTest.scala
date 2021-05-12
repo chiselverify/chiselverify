@@ -6,6 +6,7 @@ import chiselverify.coverage._
 import examples.heappriorityqueue.Helpers._
 import examples.heappriorityqueue.LocalHelpers._
 import org.scalatest._
+import examples.heappriorityqueue.PriorityQueue
 
 
 /**
@@ -18,9 +19,10 @@ class PriorityQueueTest extends FreeSpec with ChiselScalatestTester {
         val order = 4
         val superCycleRes = 4
         val cyclesPerSuperCycle = 256
-        test(new PriorityQueue(size, order, superCycleRes, cyclesPerSuperCycle, true)) { dut =>
 
-            val model = new Behavioural(size, order)(cWid, nWid, rWid)
+        test(new PriorityQueue(size, order, superCycleRes, cyclesPerSuperCycle, true)) { dut =>
+            setWidths(dut.parameters.superCycleWidth, dut.parameters.cycleWidth, dut.parameters.referenceIdWidth)
+            val model = new Behavioural(size, order)(dut.parameters.superCycleWidth, dut.parameters.cycleWidth, dut.parameters.referenceIdWidth)
 
             val cr = new CoverageReporter(dut)
             cr.register(

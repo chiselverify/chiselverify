@@ -101,16 +101,16 @@ class MemoryTest extends FreeSpec with ChiselScalatestTester {
                 while (!dut.srch.done.peek.litToBoolean && !dut.srch.error.peek.litToBoolean) dut.clock.step(1)
 
                 dut.srch.search.poke(false.B)
-                dut.clock.step(1)
+
 
                 val clue = s"\n${refIDs.mkString(", ")}\nsearched for: $searchKey should be: ${if (refIDs.contains(searchKey)) refIDs.indexOf(searchKey) else "error"} received: ${if (dut.srch.error.peek.litToBoolean) "error" else dut.srch.res.peek.litValue}"
 
                 if (refIDs.contains(searchKey)) {
-                    assert(dut.srch.res.peek.litValue == refIDs.indexOf(searchKey) + 1,
-                    )
+                    assert(dut.srch.res.peek.litValue == refIDs.indexOf(searchKey) + 1, clue)
                 } else {
                     assert(dut.srch.error.peek.litToBoolean, clue)
                 }
+                dut.clock.step(1)
             }
         }
     }

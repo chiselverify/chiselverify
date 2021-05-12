@@ -29,7 +29,7 @@ class linearSearchMem(capacity: Int)(implicit parameters: PriorityQueueParameter
   val mem = SyncReadMem(capacity / order, Vec(order, new TaggedEvent))
 
   // read port
-  val rdAddr = Wire(UInt(log2Ceil(size / order).W))
+  val rdAddr = Wire(UInt(log2Ceil(capacity / order).W))
   val rdPort = mem.read(rdAddr)
   val rdData = Wire(Vec(order, new TaggedEvent))
   rdData := rdPort
@@ -38,7 +38,7 @@ class linearSearchMem(capacity: Int)(implicit parameters: PriorityQueueParameter
 
   // write port
   val wrData = Wire(Vec(order, new TaggedEvent))
-  val wrAddr = Wire(UInt(log2Ceil(size / order).W))
+  val wrAddr = Wire(UInt(log2Ceil(capacity / order).W))
   val wrMask = Wire(Vec(order, Bool()))
   val write = Wire(Bool())
   wrData := wr.data
@@ -54,11 +54,11 @@ class linearSearchMem(capacity: Int)(implicit parameters: PriorityQueueParameter
   // search state machine
   val idle :: search :: setup :: Nil = Enum(3)
   val stateReg = RegInit(setup)
-  val pointerReg = RegInit(0.U(log2Ceil(size).W))
+  val pointerReg = RegInit(0.U(log2Ceil(capacity).W))
   val resVec = Wire(Vec(order, Bool()))
   val errorFlag = RegInit(false.B)
 
-  val resetCell = WireDefault(VecInit(Seq.fill(order)(VecInit(Seq.fill(superCycleWidth + cycleWidth + referenceIdWidth)(true.B)).asUInt.asTypeOf(new TaggedEvent))))
+  val resetCell = WireDefault(VecInit(Seq.fill(order)(VecInit(Seq.fill(superCycleWidth + cycleWidth + referenceIdWidth)(1.B)).asUInt.asTypeOf(new TaggedEvent))))
 
   resVec := rdData.map(_.id === srch.refID)
 
@@ -77,7 +77,7 @@ class linearSearchMem(capacity: Int)(implicit parameters: PriorityQueueParameter
       wrMask := VecInit(Seq.fill(order)(true.B))
       write := true.B
 
-      when(pointerReg === ((size / order) + 1).U) {
+      when(pointerReg === ((capacity / order) + 1).U) {
         stateReg := idle
       }
     }
