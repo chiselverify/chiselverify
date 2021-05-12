@@ -27,3 +27,5 @@ build/
 *.iml
 */.DS_Store
 .DS_Store
+project/
+.bsp/
