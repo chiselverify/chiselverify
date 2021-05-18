@@ -94,9 +94,7 @@ package object coverage {
             }
         }
         override def equals(that: Any): Boolean = {
-            def sortGroups(a: GroupReport, b: GroupReport): Boolean = {
-                a.id > b.id
-            }
+            def sortGroups(a: GroupReport, b: GroupReport): Boolean = a.id > b.id
 
             that match {
                 case CoverageReport(g) => g.sortWith(sortGroups) == groups.sortWith(sortGroups)
@@ -124,13 +122,9 @@ package object coverage {
         }
 
         override def equals(that: Any): Boolean = {
-            def sortPointReport(a: PointReport, b: PointReport): Boolean = {
-                a.name > b.name
-            }
+            def sortPointReport(a: PointReport, b: PointReport): Boolean = a.name > b.name
 
-            def sortCrossReport(a: CrossReport, b: CrossReport): Boolean = {
-                a.cross.name > b.cross.name
-            }
+            def sortCrossReport(a: CrossReport, b: CrossReport): Boolean = a.cross.name > b.cross.name
 
             that match {
                 case GroupReport(i, p, c) => i == id && p.sortWith(sortPointReport) == points.sortWith(sortPointReport) &&
@@ -160,9 +154,7 @@ package object coverage {
         }
 
         override def equals(that: Any): Boolean = {
-            def sortBinReport(a: BinReport, b: BinReport): Boolean = {
-                a.bin.name > b.bin.name
-            }
+            def sortBinReport(a: BinReport, b: BinReport): Boolean = a.bin.name > b.bin.name
 
             that match {
                 case PointReport(n, b) => n == name && b.sortWith(sortBinReport) == bins.sortWith(sortBinReport)
@@ -191,12 +183,11 @@ package object coverage {
         }
 
         override def equals(that: Any): Boolean = {
-            def sortCrossBinReport(a: CrossBinReport, b: CrossBinReport): Boolean = {
-                a.crossBin.name > b.crossBin.name
-            }
+            def sortCrossBinReport(a: CrossBinReport, b: CrossBinReport): Boolean = a.crossBin.name > b.crossBin.name
 
             that match {
-                case CrossReport(c, b, d) => c == cross && bins.sortWith(sortCrossBinReport) == b.sortWith(sortCrossBinReport) && d == delay
+                case CrossReport(c, b, d) =>
+                    c == cross && bins.sortWith(sortCrossBinReport) == b.sortWith(sortCrossBinReport) && d == delay
                 case _ => false
             }
         }
@@ -216,13 +207,11 @@ package object coverage {
     case class BinReport(bin: Bins, nHits: BigInt) extends Report {
         private val proportion = nHits.toInt / bin.range.size.toDouble
         private val percentage = f"${if (proportion > 1) 100 else proportion * 100}%1.2f"
-        override def report: String = s"BIN ${bin.name} COVERING ${bin.range.toString} HAS $nHits HIT(S) = ${percentage}%"
+        override def report: String = s"BIN ${bin.name} COVERING ${bin.range.toString} HAS $nHits HIT(S) = $percentage%"
 
-        override def equals(that: Any): Boolean = {
-            that match {
-                case BinReport(b, _) => b == bin
-                case _ => false
-            }
+        override def equals(that: Any): Boolean = that match {
+            case BinReport(b, _) => b == bin
+            case _ => false
         }
 
         def +(that: BinReport): BinReport = {
@@ -240,13 +229,11 @@ package object coverage {
         private val proportion = nHits.toInt / (crossBin.range1.size * crossBin.range2.size).toDouble
         private val percentage = f"${if (proportion > 1) 100 else proportion * 100}%1.2f"
         override def report: String =
-            s"BIN ${crossBin.name} COVERING ${crossBin.range1.toString} CROSS ${crossBin.range2.toString} HAS $nHits HIT(S) = ${percentage}%"
+            s"BIN ${crossBin.name} COVERING ${crossBin.range1.toString} CROSS ${crossBin.range2.toString} HAS $nHits HIT(S) = $percentage%"
 
-        override def equals(that: Any): Boolean = {
-            that match {
-                case CrossBinReport(c, _) => c == crossBin
-                case _ => false
-            }
+        override def equals(that: Any): Boolean = that match {
+            case CrossBinReport(c, _) => c == crossBin
+            case _ => false
         }
 
         def +(that: CrossBinReport): CrossBinReport = {
@@ -270,7 +257,7 @@ package object coverage {
       * @param bins the list of value ranges that will be checked for for the given port
       */
     case class CoverPoint(port: Data, portName: String)(val bins: List[Bins] = List(DefaultBin(port))) {
-        override def toString: String = s"CoverPoint($port, $portName)($bins)"
+        override def toString: String = s"CoverPoint($port, $portName)(${bins.map(_.serialize)})"
     }
 
     abstract class Cross(val name: String, val pointName1: String, val pointName2: String, val bins: List[CrossBin]) {
@@ -302,11 +289,7 @@ package object coverage {
         override def sample(db: CoverageDB) : Option[(CoverPoint, CoverPoint)] = {
 
             def sampleBins(point: CoverPoint, value: Int) : Unit =
-                point.bins.foreach(bin => {
-                    if(bin.range contains value) {
-                        db.addBinHit(point.portName, bin.name, value)
-                    }
-                })
+                point.bins.foreach(bin => bin.sample(point.portName, value, db))
 
             val (point1, point2) = db.getPointsFromCross(this)
             val pointVal1 = point1.port.peek().asUInt().litValue()
@@ -386,9 +369,15 @@ package object coverage {
       * A value range that will be used for sampling
       * @param name the name of the value range that will be used to represent it in the report
       * @param range the actual scala range
+      * @param condition an extra condition that can be used to consider a hit
       */
-    case class Bins(name: String, range: Range) {
+    case class Bins(name: String, range: Range, condition: () => Boolean = () => true) {
         def ==(that: Bins): Boolean = (name == that.name) && (range.start == that.range.start) && (range.end == that.range.end)
+
+        def sample(portName: String, value: Int, coverageDB: CoverageDB): Unit =
+            if(range.contains(value) && condition()) coverageDB.addBinHit(portName, name, value)
+
+        def serialize: String = s"Bin( $name, $range ${ if(condition != (() => true)) condition })"
     }
 
     /**
