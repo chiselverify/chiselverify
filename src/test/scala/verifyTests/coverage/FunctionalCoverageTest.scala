@@ -127,6 +127,7 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
         report.binNHits(1, "aplusb", "default") should be (BigInt(50))
     }
 
+    /** FOR FUTURE TESTING */
     def testDefaultVP[T <: BasicToyDUT](dut: T): Unit = {
         println("TESTING DEFAULT VERIFICATION PLAN")
         val cr = new CoverageReporter(dut)
@@ -243,11 +244,8 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
     }
 
     "CoverageWithDefaultBins" should "pass" in {
-        test(new BasicToyDUT(32)){
-            dut => {
-                testDefaults(dut)
-                //testDefaultVP(dut)
-            }
+        test(new BasicToyDUT(32)) {
+            dut => testDefaults(dut)
         }
     }
 
