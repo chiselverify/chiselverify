@@ -181,7 +181,7 @@ lenConstraint.disable()
 lenConstraint.enable()
 ```
 
-Constraint can also be grouped together in a `ConstraintGrup` and the group itself can be enabled or disabled.
+Constraint can also be grouped together in a `ConstraintGroup` and the group itself can be enabled or disabled.
 
 ```scala
 val legal: ConstraintGroup = new ConstraintGroup {
