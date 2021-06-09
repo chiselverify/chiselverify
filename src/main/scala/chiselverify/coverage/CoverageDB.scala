@@ -38,12 +38,16 @@ class CoverageDB {
     private val crossBinNumHitsMap: mutable.HashMap[CrossBin, BigInt] = new mutable.HashMap[CrossBin, BigInt]()
 
     //Mappings for cross coverage
-    private val pointNameToPoint: mutable.HashMap[String, CoverPoint] = new mutable.HashMap[String, CoverPoint]()
-    private val crossToPoints: mutable.HashMap[Cross, (CoverPoint, CoverPoint)] = new  mutable.HashMap[Cross, (CoverPoint, CoverPoint)]()
-    private val pointToCross: mutable.HashMap[CoverPoint, Cross] = new mutable.HashMap[CoverPoint, Cross]()
+    private val pointNameToPoint: mutable.HashMap[String, Cover] = new mutable.HashMap[String, Cover]()
+    private val crossToPoints: mutable.HashMap[Cross, (Cover, Cover)] = new  mutable.HashMap[Cross, (Cover, Cover)]()
+    private val pointToCross: mutable.HashMap[Cover, Cross] = new mutable.HashMap[Cover, Cross]()
 
     //((port1name, port2name) -> delay) timed relation delays mapping
     private val timedCrossDelays: mutable.HashMap[(String, String), Int] = new mutable.HashMap[(String, String), Int]()
+
+    //(pointname -> (condName)) Mappings for conditional coverage that hit
+    private val conditionalHits: mutable.HashMap[String, List[String]] =
+        new mutable.HashMap[String, List[String]]()
 
     //(pointname, binname) -> List[(value, bin hit cycle)] mapping for timed cross coverage
     private val timedCrossBinHits: mutable.HashMap[(String, String), List[(BigInt, BigInt)]] = new mutable.HashMap[(String, String), List[(BigInt, BigInt)]]()
@@ -76,7 +80,7 @@ class CoverageDB {
       * @param name the name of the point we want to retrieve
       * @return the coverpoint with the given name
       */
-    def getPoint(name: String): CoverPoint = pointNameToPoint get name match {
+    def getPoint(name: String): Cover = pointNameToPoint get name match {
         case None => throw new IllegalArgumentException(s"$name is not a registered coverpoint!")
         case Some(p) => p
     }
@@ -95,8 +99,8 @@ class CoverageDB {
         pointToCross update (point2, cross)
     }
 
-    def getCrossFromPoint(point: CoverPoint) : Cross = pointToCross getOrElse(point, null)
-    def getPointsFromCross(cross: Cross) : (CoverPoint, CoverPoint) = crossToPoints getOrElse(cross, null)
+    def getCrossFromPoint(point: Cover) : Cross = pointToCross getOrElse(point, null)
+    def getPointsFromCross(cross: Cross) : (Cover, Cover) = crossToPoints getOrElse(cross, null)
 
     /**
       * Updates the number of hits done in a given bin
@@ -129,11 +133,21 @@ class CoverageDB {
     }
 
     /**
+      * Keeps track of conditional hits that occur
+      * @param pointName the name of the CoverCondition
+      * @param condNames the name of the conditions that occured in a hit
+      */
+    def addConditionalHit(pointName: String, condNames: List[String]): Unit = {
+        val current = conditionalHits.getOrElse(pointName, Nil)
+        conditionalHits.update(pointName, current ++ condNames)
+    }
+
+    /**
       * Registers a given coverpoint in the databas
       * @param name the name of the point we want to register (will be used as it's primary key)
       * @param coverPoint the point which we want to register
       */
-    def registerCoverPoint(name: String, coverPoint: CoverPoint) : Unit =
+    def registerCoverPoint(name: String, coverPoint: Cover) : Unit =
         if(pointNameToPoint contains name) throw new IllegalArgumentException("CoverPoint Name already taken!")
         else pointNameToPoint update (name, coverPoint)
 
@@ -143,6 +157,7 @@ class CoverageDB {
       */
     def getNHits(pointName: String, binName: String): BigInt = binIdNumHitsMap getOrElse ((pointName, binName), 0)
     def getNHits(cross: CrossBin): BigInt = crossBinNumHitsMap getOrElse (cross, 0)
+    def getNHits(conditionalName: String): Int = conditionalHits.getOrElse(conditionalName, Nil).size
 
     /**
       * Retrieves a port name given an id
