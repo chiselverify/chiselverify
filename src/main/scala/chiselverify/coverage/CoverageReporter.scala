@@ -37,8 +37,7 @@ class CoverageReporter[T <: MultiIOModule](private val dut: T) {
         coverGroups.map(g =>
             GroupReport(
                 g.id,
-                g.points.map(p =>
-                    PointReport(p.portName, p.bins.map(b => BinReport(b, coverageDB.getNHits(p.portName, b.name))))),
+                g.points.map(_.report(coverageDB)),
                 g.crosses.map {
                     case t: TimedCross =>
                         //Sanity check
@@ -112,7 +111,7 @@ class CoverageReporter[T <: MultiIOModule](private val dut: T) {
     def sample(): Unit = {
 
         coverGroups foreach(group => {
-            var sampledPoints: List[CoverPoint] = Nil
+            var sampledPoints: List[Cover] = Nil
 
             //Sample cross points
             group.crosses.foreach(cross => {
@@ -131,8 +130,7 @@ class CoverageReporter[T <: MultiIOModule](private val dut: T) {
                     sampledPoints = sampledPoints :+ point
 
                     //Check for the ports & sample all bins
-                    val pointVal = point.port.peek().asUInt().litValue().toInt
-                    point.bins.foreach(_.sample(point.portName, pointVal, coverageDB))
+                    point.sample(coverageDB)
                 }
             })
         })
