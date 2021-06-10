@@ -142,12 +142,12 @@ class CoverageReporter[T <: MultiIOModule](private val dut: T) {
       *               These are defined by (portName: String, bins: List[BinSpec])
       * @return the unique ID attributed to the group
       */
-    def register(points: List[CoverPoint], crosses: List[Cross] = Nil): CoverGroup = {
+    def register(points: List[Cover], crosses: List[Cross] = Nil): CoverGroup = {
         //Generate the group's identifier
         val gid: BigInt = coverageDB.createCoverGroup()
 
         //Register coverpoints
-        points foreach (p => coverageDB.registerCoverPoint(p.portName, p))
+        points foreach (p => p.register(coverageDB))
         crosses foreach (c => c.register(coverageDB))
 
         //Create final coverGroup
