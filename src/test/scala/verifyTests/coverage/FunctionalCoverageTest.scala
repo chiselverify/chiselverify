@@ -19,13 +19,13 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
         val cr = new CoverageReporter(dut)
         cr.register(
             //Declare CoverPoints
-            CoverPoint(dut.io.outA , "a")( //CoverPoint 1
+            CoverPoint(dut.io.outA , "accu")( //CoverPoint 1
                 Bins("lo10", 0 until 10)::Bins("First100", 0 until 100)::Nil)::
-            CoverPoint(dut.io.outB, "b")( //CoverPoint 2
+            CoverPoint(dut.io.outB, "test")( //CoverPoint 2
                  Bins("testLo10", 0 until 10)::Nil)::
             Nil,
         //Declare cross points
-        CrossPoint("aANDb", "a", "b")(
+        CrossPoint("accuAndTest", "accu", "test")(
             CrossBin("both1", 1 to 1, 1 to 1)::Nil)::
         Nil)
 
@@ -35,7 +35,7 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
         def testOne(): Unit = {
             for (fun <- 0 until 50) {
                 dut.io.a.poke(toUInt(fun))
-                dut.io.b.poke(toUInt(fun % 5))
+                dut.io.b.poke(toUInt(fun % 4))
 
                 cr.sample()
             }
@@ -45,13 +45,52 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
 
         //Generate report
         val report = cr.report
+        print(report.serialize)
 
         //Check that the number of hits is correct
-        report.binNHits(1, "a", "lo10") should be (BigInt(10))
-        report.binNHits(1, "a", "First100") should be (BigInt(50))
-        report.binNHits(1, "b", "testLo10") should be (BigInt(5))
-        report.binNHits(1, "aANDb", "both1") should be (BigInt(1))
+        report.binNHits(1, "accu", "lo10") should be (BigInt(10))
+        report.binNHits(1, "accu", "First100") should be (BigInt(50))
+        report.binNHits(1, "test", "testLo10") should be (BigInt(4))
+        report.binNHits(1, "accuAndTest", "both1") should be (BigInt(1))
     }
+
+    def testCond[T <: BasicToyDUT](dut: T): Unit = {
+
+        val cr = new CoverageReporter(dut)
+        cr.register(
+            //Declare CoverPoints
+            CoverPoint(dut.io.outA , "accu")( //CoverPoint 1
+                Bins("lo10even", 0 until 10, () => dut.io.outA.peek().asUInt().litValue() % 2 == 0)::
+                Bins("First100odd", 0 until 100, () => dut.io.outA.peek().asUInt().litValue() % 2 != 0)::Nil)::
+            CoverPoint(dut.io.outB, "test")( //CoverPoint 2
+                Bins("testLo10", 0 until 10)::Nil)::
+        Nil)
+
+        /**
+          * Basic test to see if we get the right amount of hits
+          */
+        def testOne(): Unit = {
+            for (fun <- 0 until 100) {
+                dut.io.a.poke(toUInt(fun))
+                dut.io.b.poke(toUInt(fun % 4))
+
+                cr.sample()
+            }
+        }
+
+        testOne()
+
+        //Generate report
+        val report = cr.report
+        print(report.serialize)
+
+        //Check that the number of hits is correct
+        report.binNHits(1, "accu", "lo10even") should be (BigInt(5))
+        report.binNHits(1, "accu", "First100odd") should be (BigInt(50))
+        report.binNHits(1, "test", "testLo10") should be (BigInt(4))
+    }
+
+
 
     /**
       * Tests the default bins in functional coverage points
@@ -64,6 +103,36 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
             CoverPoint(dut.io.outB, "b")()::
             CoverPoint(dut.io.outAB, "aplusb")():: Nil
         )
+
+        /**
+          * Basic test to see if we get the right amount of hits
+          */
+        def testing(): Unit = {
+            for (fun <- 0 until 50) {
+                dut.io.a.poke(toUInt(fun))
+                dut.io.b.poke(toUInt(fun % 5))
+
+                cr.sample()
+            }
+        }
+
+        testing()
+
+        //Generate report
+        val report = cr.report
+
+        //Check that the number of hits is correct
+        report.binNHits(1, "a", "default") should be (BigInt(50))
+        report.binNHits(1, "b", "default") should be (BigInt(5))
+        report.binNHits(1, "aplusb", "default") should be (BigInt(50))
+    }
+
+    /** FOR FUTURE TESTING */
+    def testDefaultVP[T <: BasicToyDUT](dut: T): Unit = {
+        println("TESTING DEFAULT VERIFICATION PLAN")
+        val cr = new CoverageReporter(dut)
+
+        //Don't register anything
 
         /**
           * Basic test to see if we get the right amount of hits
@@ -175,7 +244,9 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
     }
 
     "CoverageWithDefaultBins" should "pass" in {
-        test(new BasicToyDUT(32)){ dut => testDefaults(dut) }
+        test(new BasicToyDUT(32)) {
+            dut => testDefaults(dut)
+        }
     }
 
     "CoverageWithDelays" should "pass" in {
@@ -184,5 +255,9 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
 
     "CoverageWithDelays" should "throw an exception" in {
         test(new TimedToyDUT(32)) { dut => testTimedFail(dut) }
+    }
+
+    "CoverageWithConditionalBins" should "pass" in {
+        test(new BasicToyDUT(32)) { dut => testCond(dut) }
     }
 }

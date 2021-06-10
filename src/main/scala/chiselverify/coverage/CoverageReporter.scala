@@ -43,7 +43,9 @@ class CoverageReporter[T <: MultiIOModule](private val dut: T) {
                     case t: TimedCross =>
                         //Sanity check
                         if(currentCycle == 0)
-                            throw new IllegalStateException("Stepping needs to be done with the coverage reporter in order to enable timed coverage!")
+                            throw new IllegalStateException(
+                                "Stepping needs to be done with the coverage reporter in order to enable timed coverage!"
+                            )
 
                         CrossReport(t, compileTimedHits(t).map(e => CrossBinReport(e._1, e._2)), t.delay)
 
@@ -61,8 +63,8 @@ class CoverageReporter[T <: MultiIOModule](private val dut: T) {
       * @note Needs to be used in order to enable timed coverage
       * @param cycles the number of cycles by which we want to advance the clock
       */
-    def step(cycles: Int = 1): Unit = {
-        for(_ <- 0 until cycles) {
+    def step(cycles: Int = 1): Unit = (0 until cycles) foreach {
+        _ => {
             sample()
 
             //Step the dut then the database
@@ -109,13 +111,6 @@ class CoverageReporter[T <: MultiIOModule](private val dut: T) {
       */
     def sample(): Unit = {
 
-        def sampleBins(point: CoverPoint, value: Int) : Unit =
-            point.bins.foreach(bin => {
-                if(bin.range contains value) {
-                    coverageDB.addBinHit(point.portName, bin.name, value)
-                }
-            })
-
         coverGroups foreach(group => {
             var sampledPoints: List[CoverPoint] = Nil
 
@@ -135,9 +130,9 @@ class CoverageReporter[T <: MultiIOModule](private val dut: T) {
                     //Add the point to the list
                     sampledPoints = sampledPoints :+ point
 
-                    //Check for the ports
-                    val pointVal = point.port.peek().asUInt().litValue()
-                    sampleBins(point, pointVal.toInt)
+                    //Check for the ports & sample all bins
+                    val pointVal = point.port.peek().asUInt().litValue().toInt
+                    point.bins.foreach(_.sample(point.portName, pointVal, coverageDB))
                 }
             })
         })
