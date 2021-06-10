@@ -17,8 +17,7 @@
 package chiselverify.coverage
 
 import chisel3._
-import chiseltest.testableData
-
+import chiselverify.coverage.Utils._
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
@@ -45,9 +44,10 @@ class CoverageDB {
     //((port1name, port2name) -> delay) timed relation delays mapping
     private val timedCrossDelays: mutable.HashMap[(String, String), Int] = new mutable.HashMap[(String, String), Int]()
 
-    //(pointname -> (condName)) Mappings for conditional coverage that hit
-    private val conditionalHits: mutable.HashMap[String, List[String]] =
-        new mutable.HashMap[String, List[String]]()
+    //Mappings for conditional coverage that hit
+    private val registeredConditions: mutable.ArrayBuffer[String] = new ArrayBuffer[String]()
+    private val conditionalHits: mutable.HashMap[String, List[List[BigInt]]] = new mutable.HashMap[String, List[List[BigInt]]]()
+    private val conditionSizes: mutable.HashMap[String, BigInt] = new mutable.HashMap[String, BigInt]()
 
     //(pointname, binname) -> List[(value, bin hit cycle)] mapping for timed cross coverage
     private val timedCrossBinHits: mutable.HashMap[(String, String), List[(BigInt, BigInt)]] = new mutable.HashMap[(String, String), List[(BigInt, BigInt)]]()
@@ -99,6 +99,41 @@ class CoverageDB {
         pointToCross update (point2, cross)
     }
 
+    /**
+      * Registers a new condition inside of the database
+      * WARNING: O(pow(W,N)) with N = #ports and W = maxWidth
+      * Complexity use with caution!
+      *
+      * @param condName the unique identifier for the condition
+      * @throws IllegalArgumentException if the name isn't unique
+      */
+    def registerConditions(pointName: String, conds: List[Condition]): Unit = pointNameToPoint.get(pointName) match {
+        case Some(p) => p match {
+            case covCond: CoverCondition =>
+                if(p.ports.length > 3) {
+                    println("WARNING: MORE THAN 3 PORTS IN A COVER_CONDITION MAY LEAD TO EXTREME COMPLEXITY, USE WITH CAUTION")
+                }
+                val cartesianRange = cartesianProduct(covCond.ports.map(DefaultBin.defaultRange(_).toList))
+
+                //Compute the size of the domain defined by each condition
+                conds foreach {condition =>
+                    if(registeredConditions.contains(condition.name)) {
+                        registeredConditions += condition.name
+
+                        val condSize = cartesianRange.count(r => condition(r.map(BigInt(_))))
+                        conditionSizes.update(condition.name, condSize)
+
+                    } else throw new IllegalArgumentException(
+                        s"${condition.name} is already taken! Please use a unique ID for each Condition!"
+                    )
+                }
+            case _ => throw new IllegalArgumentException("Requested point must be of type CoverCondition")
+        }
+        case None => throw new IllegalArgumentException(s"$pointName isn't a registered point!")
+    }
+
+    def getCondSize(condName: String): BigInt = conditionSizes.getOrElse(condName, 0)
+
     def getCrossFromPoint(point: Cover) : Cross = pointToCross getOrElse(point, null)
     def getPointsFromCross(cross: Cross) : (Cover, Cover) = crossToPoints getOrElse(cross, null)
 
@@ -137,9 +172,10 @@ class CoverageDB {
       * @param pointName the name of the CoverCondition
       * @param condNames the name of the conditions that occured in a hit
       */
-    def addConditionalHit(pointName: String, condNames: List[String]): Unit = {
-        val current = conditionalHits.getOrElse(pointName, Nil)
-        conditionalHits.update(pointName, current ++ condNames)
+    def addConditionalHit(condNames: List[String], values: List[BigInt]): Unit = {
+        condNames foreach { cond =>
+            conditionalHits.update(cond, conditionalHits.getOrElse(cond, Nil) :+ values)
+        }
     }
 
     /**

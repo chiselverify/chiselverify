@@ -184,17 +184,25 @@ package object coverage {
         override val name: String = s"$id"
     }
 
-    case class ConditionReport(name: String, conds: List[Report]) extends Report {
+    case class ConditionReport(name: String, conds: List[Condition], db: CoverageDB) extends Report {
         override def report: String = {
             val rep = new StringBuilder(s"COVER_CONDITION NAME: $name")
-            ???
+
+            conds foreach {
+                cond => {
+                    val nHits = db.getNHits(cond.name)
+                    val percent = (nHits.toDouble / db.getCondSize(cond.name).toDouble) * 100.0
+                    rep append s"\n${cond.report} HAS ${nHits} HITS = $percent%"
+                }
+            }
+            rep.mkString
         }
 
         override def +(that: Report): Report = that match {
-            case ConditionReport(_, tconds) =>
+            case ConditionReport(_, tconds, db) =>
                 require(this == that)
                 val newPoints = (conds zip tconds).map { case (b1, b2) => b1 + b2 }
-                ConditionReport(name, newPoints)
+                ConditionReport(name, newPoints, db)
 
             case _ => throw new IllegalArgumentException("Argument must be of type ConditionReport")
         }
@@ -360,17 +368,19 @@ package object coverage {
 
     case class Condition(name: String, cond: List[BigInt] => Boolean) {
         def apply(args: List[BigInt]): Boolean = cond(args)
+        def report: String = s"CONDITION $name IS $cond"
+        def +(that: Condition): Condition = Condition(s"$name + ${that.name}", (x : List[BigInt]) => cond(x) && that.cond(x))
     }
 
     case class CoverCondition(p: List[Data], pN: String)(val conds: List[Condition])
         extends Cover(p, pN) {
-        override def report(db: CoverageDB): Report = ???
+        override def report(db: CoverageDB): Report = ConditionReport(portName, conds, db)
 
         override def serialize: String = s"CoverCondition($ports, $portName)($conds)"
 
         override def sample(db: CoverageDB): Unit = {
             val pointVals = ports.map(_.peek().asUInt().litValue())
-            db.addConditionalHit(portName, conds.filter(c => c(pointVals)).map(_.name))
+            db.addConditionalHit(conds.filter(c => c(pointVals)).map(_.name), pointVals)
         }
     }
 
@@ -560,7 +570,7 @@ package object coverage {
       * Defines the default bins for both cover points and cross points
       */
     object DefaultBin {
-        private def defaultRange(port: Data): Range = 0 until math.pow(2, port.asUInt().getWidth).toInt
+        def defaultRange(port: Data): Range = 0 until math.pow(2, port.asUInt().getWidth).toInt
 
         /**
           * Generates a default bin for a given cover point port
