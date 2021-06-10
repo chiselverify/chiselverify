@@ -288,6 +288,7 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
     "CoverageWithCovConditions" should "pass" in {
         test(new BasicToyDUT(32)) {
             dut => testCovCond(dut)
+
         }
     }
 

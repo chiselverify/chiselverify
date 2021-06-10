@@ -12,71 +12,69 @@ import org.scalatest.{FlatSpec, Matchers}
   *  - the other does the same for the heapify down functionality
   */
 class HeapifierTest extends FlatSpec with Matchers {
-    val nWid = 8
-    val cWid = 2
-    val rWid = 4
-    val heapSize = 17
-    val chCount = 4
+    implicit val paramters = PriorityQueueParameters(17,4,2,8,4)
     val debugLvl = 0
     "Heapifier" should "heapify up" in {
-        chisel3.iotesters.Driver(() => new Heapifier(heapSize, chCount, cWid, nWid, rWid)) {
+        chisel3.iotesters.Driver(() => new Heapifier) {
             c => {
-                val dut = new HeapifierWrapper(c, heapSize, chCount, debugLvl)(cWid, nWid, rWid)
+                import paramters._
+                val dut = new HeapifierWrapper(c, paramters.size, order, debugLvl)(superCycleWidth, cycleWidth, referenceIdWidth)
 
                 for (i <- 0 until 100) {
                     // determine the heap size
-                    val size = dut.rand.nextInt(heapSize - chCount) + chCount
+                    val size = dut.rand.nextInt(paramters.size - order) + order
                     dut.setHeapSize(size)
 
                     // generate a memory state of the determined size
                     val mem = dut.newMemoryState().map(_.clone())
 
                     // determine the last parent in the heap and chose a random index between that one and root
-                    val lastParent = Seq.tabulate(heapSize)(i => (i * chCount) + 1 < size).lastIndexOf(true)
+                    val lastParent = Seq.tabulate(size)(i => (i * order) + 1 < size).lastIndexOf(true)
                     val index = if (lastParent > 0) dut.rand.nextInt(lastParent + 1) else 0
 
-                    if (debugLvl > 0) println(s"Start from index $index with heapsize $size\nStart:\t${memToString(mem, chCount)}")
+                    if (debugLvl > 0) println(s"Start from index $index with heapsize $size\nStart:\t${memToString(mem, order)}")
 
                     // simulate dut and model
-                    heapifyUp(mem, chCount, size, index)
+                    heapifyUp(mem, order, size, index)
                     dut.heapifyUp(index)
 
                     // compare dut and model
                     dut.compareWithModel(mem)
 
-                    if (debugLvl > 0) println(s"Dut:\t${dut.getMem()}\nModel:\t${memToString(mem, chCount)}")
+                    if (debugLvl > 0) println(s"Dut:\t${dut.getMem()}\nModel:\t${memToString(mem, order)}")
                 }
                 dut
             }
         } should be(true)
     }
     "Heapifier" should "heapify down" in {
-        chisel3.iotesters.Driver(() => new Heapifier(heapSize, chCount, cWid, nWid, rWid)) {
+        chisel3.iotesters.Driver(() => new Heapifier) {
             c => {
-                val dut = new HeapifierWrapper(c, heapSize, chCount, debugLvl)(cWid, nWid, rWid)
+                import paramters._
+                val dut = new HeapifierWrapper(c, paramters.size, order, debugLvl)(superCycleWidth, cycleWidth, referenceIdWidth)
 
                 for (i <- 0 until 100) {
                     // determine the heap size
-                    val size = dut.rand.nextInt(heapSize - chCount) + chCount
+                    val size = dut.rand.nextInt(paramters.size - order) + order
                     dut.setHeapSize(size)
 
                     // generate a memory state of the determined size
                     val mem = dut.newMemoryState().map(_.clone())
 
                     // determine the last parent in the heap and chose a random index between that one and root
-                    val lastParent = Seq.tabulate(heapSize)(i => (i * chCount) + 1 < size).lastIndexOf(true)
+                    val lastParent = Seq.tabulate(size)(i => (i * order) + 1 < size).lastIndexOf(true)
                     val index = if (lastParent > 0) dut.rand.nextInt(lastParent + 1) else 0
 
-                    if (debugLvl > 0) println(s"Start from index $index with heapsize $size\nStart:\t${memToString(mem, chCount)}")
+                    if (debugLvl > 0) println(s"Start from index $index with heapsize $size\nStart:\t${memToString(mem, order)}")
 
                     // simulate dut and model
-                    heapifyDown(mem, chCount, size, index)
+                    heapifyDown(mem, order, size, index)
                     dut.heapifyDown(index)
 
                     // compare dut and model
                     dut.compareWithModel(mem)
 
-                    if (debugLvl > 0) println(s"Dut:\t${dut.getMem()}\nModel:\t${memToString(mem, chCount)}")
+                    if (debugLvl > 0) println(s"Dut:\t${dut.getMem()}\nModel:\t${memToString(mem, order)}")
                 }
                 dut
             }
@@ -110,8 +108,8 @@ private class HeapifierWrapper(dut: Heapifier, size: Int, chCount: Int, debugLvl
     // initialize inputs
     poke(dut.io.control.heapifyDown, 0)
     poke(dut.io.control.heapifyUp, 0)
-    poke(dut.io.headPort.rdData.prio.cycl, root(0))
-    poke(dut.io.headPort.rdData.prio.norm, root(1))
+    poke(dut.io.headPort.rdData.event.superCycle, root(0))
+    poke(dut.io.headPort.rdData.event.cycle, root(1))
     poke(dut.io.control.heapSize, size)
 
 
@@ -129,8 +127,8 @@ private class HeapifierWrapper(dut: Heapifier, size: Int, chCount: Int, debugLvl
             try {
                 for (i <- 0 until chCount) {
                     // ignores reads outside of array
-                    poke(dut.io.rdPort.data(i).prio.cycl, mem(pipedRdAddr)(i)(0))
-                    poke(dut.io.rdPort.data(i).prio.norm, mem(pipedRdAddr)(i)(1))
+                    poke(dut.io.rdPort.data(i).event.superCycle, mem(pipedRdAddr)(i)(0))
+                    poke(dut.io.rdPort.data(i).event.cycle, mem(pipedRdAddr)(i)(1))
                     poke(dut.io.rdPort.data(i).id, mem(pipedRdAddr)(i)(2))
                 }
             } catch {
@@ -140,18 +138,18 @@ private class HeapifierWrapper(dut: Heapifier, size: Int, chCount: Int, debugLvl
             if (peek(dut.io.wrPort.write) == 1) {
                 for (i <- 0 until chCount) {
                     if ((peek(dut.io.wrPort.mask) & (BigInt(1) << i)) != 0) {
-                        mem(pipedWrAddr)(i)(0) = peek(dut.io.wrPort.data(i).prio.cycl).toInt
-                        mem(pipedWrAddr)(i)(1) = peek(dut.io.wrPort.data(i).prio.norm).toInt
+                        mem(pipedWrAddr)(i)(0) = peek(dut.io.wrPort.data(i).event.superCycle).toInt
+                        mem(pipedWrAddr)(i)(1) = peek(dut.io.wrPort.data(i).event.cycle).toInt
                         mem(pipedWrAddr)(i)(2) = peek(dut.io.wrPort.data(i).id).toInt
                     }
                 }
             }
-            poke(dut.io.headPort.rdData.prio.cycl, root(0))
-            poke(dut.io.headPort.rdData.prio.norm, root(1))
+            poke(dut.io.headPort.rdData.event.superCycle, root(0))
+            poke(dut.io.headPort.rdData.event.cycle, root(1))
             poke(dut.io.headPort.rdData.id, root(2))
             if (peek(dut.io.headPort.write).toInt == 1) {
-                root(0) = peek(dut.io.headPort.wrData.prio.cycl).toInt
-                root(1) = peek(dut.io.headPort.wrData.prio.norm).toInt
+                root(0) = peek(dut.io.headPort.wrData.event.superCycle).toInt
+                root(1) = peek(dut.io.headPort.wrData.event.cycle).toInt
                 root(2) = peek(dut.io.headPort.wrData.id).toInt
             }
 

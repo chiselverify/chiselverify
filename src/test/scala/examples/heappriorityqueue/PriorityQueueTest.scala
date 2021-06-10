@@ -11,29 +11,28 @@ import org.scalatest._
 /**
   * contains test for the whole priority queue
   */
-class HeapPriorityQueueTest extends FreeSpec with ChiselScalatestTester {
+class PriorityQueueTest extends FreeSpec with ChiselScalatestTester {
 
     "HeapPriorityQueue should pass random test" in {
         val size = 33
-        val chCount = 4
-        val cWid = 2
-        val nWid = 8
-        val rWid = 3
-        test(new HeapPriorityQueue(size, chCount, cWid, nWid, rWid, true)) { dut =>
+        val order = 4
+        val superCycleRes = 4
+        val cyclesPerSuperCycle = 256
+        test(new PriorityQueue(size, order, superCycleRes, cyclesPerSuperCycle, true)) { dut =>
 
-            val model = new Behavioural(size, chCount)(cWid, nWid, rWid)
+            val model = new Behavioural(size, order)(cWid, nWid, rWid)
 
             val cr = new CoverageReporter(dut)
             cr.register(
                 CoverPoint(dut.io.cmd.op, "operation")(
                     Bins("insertion", 0 to 0) :: Bins("removal", 1 to 1) :: Nil) ::
-                  CoverPoint(dut.io.cmd.prio.cycl, "cmd.prio.cycl")(
+                  CoverPoint(dut.io.cmd.prio.superCycle, "cmd.prio.cycl")(
                       Bins("cyclic", 0 to 3) :: Nil) ::
-                  CoverPoint(dut.io.cmd.prio.norm, "cmd.prio.norm")(
+                  CoverPoint(dut.io.cmd.prio.cycle, "cmd.prio.norm")(
                       Bins("lower half", 0 to (Math.pow(2, nWid) / 2 - 1).toInt) :: Bins("upper half", (Math.pow(2, nWid) / 2 - 1).toInt to (Math.pow(2, nWid) - 1).toInt) :: Nil) ::
-                  CoverPoint(dut.io.head.prio.cycl, "head.prio.cycl")(
+                  CoverPoint(dut.io.head.prio.superCycle, "head.prio.cycl")(
                       Bins("cyclic", 0 to 3) :: Nil) ::
-                  CoverPoint(dut.io.head.prio.norm, "head.prio.norm")(
+                  CoverPoint(dut.io.head.prio.cycle, "head.prio.norm")(
                       Bins("lower half", 0 to (Math.pow(2, nWid) / 2 - 1).toInt) :: Bins("upper half", (Math.pow(2, nWid) / 2 - 1).toInt to (Math.pow(2, nWid) - 1).toInt) :: Nil) ::
                   Nil,
                 //Declare cross points
@@ -78,10 +77,10 @@ class HeapPriorityQueueTest extends FreeSpec with ChiselScalatestTester {
 }
 
 private object LocalHelpers {
-    def insert(dut: HeapPriorityQueue, poke: Seq[Int]): Unit = {
+    def insert(dut: PriorityQueue, poke: Seq[Int]): Unit = {
         dut.io.cmd.refID.poke(poke(3).U)
-        dut.io.cmd.prio.cycl.poke(poke(1).U)
-        dut.io.cmd.prio.norm.poke(poke(2).U)
+        dut.io.cmd.prio.superCycle.poke(poke(1).U)
+        dut.io.cmd.prio.cycle.poke(poke(2).U)
         dut.io.cmd.op.poke(true.B) // 1=insert
         dut.io.cmd.valid.poke(true.B)
 
@@ -94,7 +93,7 @@ private object LocalHelpers {
 
     }
 
-    def remove(dut: HeapPriorityQueue, id: Int): Unit = {
+    def remove(dut: PriorityQueue, id: Int): Unit = {
         dut.io.cmd.refID.poke(id.U)
         dut.io.cmd.op.poke(false.B) // 0=remove
         dut.io.cmd.valid.poke(true.B)
@@ -112,19 +111,19 @@ private object LocalHelpers {
         Seq(rand.nextInt(2), rand.nextInt(math.pow(2, cWid).toInt), rand.nextInt(math.pow(2, nWid).toInt), rand.nextInt(math.pow(2, rWid).toInt - 1))
     }
 
-    def getHead(dut: HeapPriorityQueue): Seq[Int] = {
-        Seq(dut.io.head.prio.cycl, dut.io.head.prio.norm, dut.io.head.refID).map(_.peek.litValue.toInt)
+    def getHead(dut: PriorityQueue): Seq[Int] = {
+        Seq(dut.io.head.prio.superCycle, dut.io.head.prio.cycle, dut.io.head.refID).map(_.peek.litValue.toInt)
     }
 
-    def getSucces(dut: HeapPriorityQueue): Boolean = {
+    def getSucces(dut: PriorityQueue): Boolean = {
         !dut.io.cmd.result.peek.litToBoolean
     }
 
-    def getRmPrio(dut: HeapPriorityQueue): Seq[Int] = {
-        Seq(dut.io.cmd.rm_prio.cycl, dut.io.cmd.rm_prio.norm).map(_.peek.litValue.toInt)
+    def getRmPrio(dut: PriorityQueue): Seq[Int] = {
+        Seq(dut.io.cmd.rm_prio.superCycle, dut.io.cmd.rm_prio.cycle).map(_.peek.litValue.toInt)
     }
 
-    def getState(dut: HeapPriorityQueue): String = {
+    def getState(dut: PriorityQueue): String = {
         val states = Array("idle", "headInsertion", "normalInsertion", "initSearch", "waitForSearch", "resetCell", "lastRemoval", "headRemoval", "tailRemoval", "removal", "waitForHeapifyUp", "waitForHeapifyDown")
         states(dut.io.state.get.peek.litValue.toInt)
     }

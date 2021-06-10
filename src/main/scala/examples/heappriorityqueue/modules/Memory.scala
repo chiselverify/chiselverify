@@ -2,52 +2,44 @@ package examples.heappriorityqueue.modules
 
 import chisel3._
 import chisel3.util._
-import examples.heappriorityqueue.Interfaces.{PriorityAndID, rdPort, searchPort, wrPort}
+import examples.heappriorityqueue.Interfaces.{TaggedEvent, rdPort, searchPort, wrPort}
+import examples.heappriorityqueue.PriorityQueueParameters
 
 /**
   * Abstract interface for a sequential memory
   *   - ZBT -> write address is as well supplied on clock cycle in advance of a write
   *   - CAM functionality -> when a reference ID is provided, the module should find the first occurrence in memory
   *   - should be initialized to all 1's
-  *
-  * @param size    the number of values to be saved
-  * @param chCount values are grouped together by this factor
-  * @param cWid    width of the cycic priority
-  * @param nWid    width of the normal priority
-  * @param rWid    width of the reference ID
   */
-abstract class SearchSeqMem(size: Int, chCount: Int, cWid: Int, nWid: Int, rWid: Int) extends MultiIOModule {
-  val rd = IO(Flipped(new rdPort(log2Ceil(size / chCount), Vec(chCount, new PriorityAndID(cWid, nWid, rWid)))))
-  val wr = IO(Flipped(new wrPort(log2Ceil(size / chCount), chCount, Vec(chCount, new PriorityAndID(cWid, nWid, rWid)))))
-  val srch = IO(Flipped(new searchPort(size, rWid)))
+abstract class SearchSeqMem(capacity: Int)(implicit parameters: PriorityQueueParameters) extends MultiIOModule {
+  import parameters._
+  val rd = IO(Flipped(new rdPort(log2Ceil(size / order), Vec(order, new TaggedEvent))))
+  val wr = IO(Flipped(new wrPort(log2Ceil(size / order), order, Vec(order, new TaggedEvent))))
+  val srch = IO(Flipped(new searchPort))
 }
 
 /**
   * A implementation of SearchSeqMem, where the CAM-functionality is provided by a linear search through the memory
-  *
-  * @param size    the number of values to be saved
-  * @param chCount values are grouped together by this factor
-  * @param cWid    width of the cycic priority
-  * @param nWid    width of the normal priority
-  * @param rWid    width of the reference ID
   */
-class linearSearchMem(size: Int, chCount: Int, cWid: Int, nWid: Int, rWid: Int) extends SearchSeqMem(size, chCount, cWid, nWid, rWid) {
+class linearSearchMem(capacity: Int)(implicit parameters: PriorityQueueParameters) extends SearchSeqMem(capacity) {
+
+  import parameters._
 
   // create memory
-  val mem = SyncReadMem(size / chCount, Vec(chCount, new PriorityAndID(cWid, nWid, rWid)))
+  val mem = SyncReadMem(capacity / order, Vec(order, new TaggedEvent))
 
   // read port
-  val rdAddr = Wire(UInt(log2Ceil(size / chCount).W))
+  val rdAddr = Wire(UInt(log2Ceil(size / order).W))
   val rdPort = mem.read(rdAddr)
-  val rdData = Wire(Vec(chCount, new PriorityAndID(cWid, nWid, rWid)))
+  val rdData = Wire(Vec(order, new TaggedEvent))
   rdData := rdPort
   rdAddr := rd.address
   rd.data := rdData
 
   // write port
-  val wrData = Wire(Vec(chCount, new PriorityAndID(cWid, nWid, rWid)))
-  val wrAddr = Wire(UInt(log2Ceil(size / chCount).W))
-  val wrMask = Wire(Vec(chCount, Bool()))
+  val wrData = Wire(Vec(order, new TaggedEvent))
+  val wrAddr = Wire(UInt(log2Ceil(size / order).W))
+  val wrMask = Wire(Vec(order, Bool()))
   val write = Wire(Bool())
   wrData := wr.data
   wrAddr := wr.address
@@ -57,16 +49,16 @@ class linearSearchMem(size: Int, chCount: Int, cWid: Int, nWid: Int, rWid: Int) 
     mem.write(RegNext(wrAddr), wrData, wrMask)
   }
 
-  val lastAddr = Mux(srch.heapSize === 0.U, 0.U, ((srch.heapSize - 1.U) >> log2Ceil(chCount)).asUInt)
+  val lastAddr = Mux(srch.heapSize === 0.U, 0.U, ((srch.heapSize - 1.U) >> log2Ceil(order)).asUInt)
 
   // search state machine
   val idle :: search :: setup :: Nil = Enum(3)
   val stateReg = RegInit(setup)
   val pointerReg = RegInit(0.U(log2Ceil(size).W))
-  val resVec = Wire(Vec(chCount, Bool()))
+  val resVec = Wire(Vec(order, Bool()))
   val errorFlag = RegInit(false.B)
 
-  val resetCell = WireDefault(VecInit(Seq.fill(chCount)(VecInit(Seq.fill(cWid + nWid + rWid)(true.B)).asUInt.asTypeOf(new PriorityAndID(cWid, nWid, rWid)))))
+  val resetCell = WireDefault(VecInit(Seq.fill(order)(VecInit(Seq.fill(superCycleWidth + cycleWidth + referenceIdWidth)(true.B)).asUInt.asTypeOf(new TaggedEvent))))
 
   resVec := rdData.map(_.id === srch.refID)
 
@@ -82,10 +74,10 @@ class linearSearchMem(size: Int, chCount: Int, cWid: Int, nWid: Int, rWid: Int) 
 
       wrAddr := pointerReg
       wrData := resetCell
-      wrMask := VecInit(Seq.fill(chCount)(true.B))
+      wrMask := VecInit(Seq.fill(order)(true.B))
       write := true.B
 
-      when(pointerReg === ((size / chCount) + 1).U) {
+      when(pointerReg === ((size / order) + 1).U) {
         stateReg := idle
       }
     }
@@ -106,7 +98,7 @@ class linearSearchMem(size: Int, chCount: Int, cWid: Int, nWid: Int, rWid: Int) 
       stateReg := search
       when(resVec.asUInt =/= 0.U || !srch.search) { // deasserting "search" aborts search
         stateReg := idle
-        pointerReg := (pointerReg << log2Ceil(chCount)).asUInt + OHToUInt(PriorityEncoderOH(resVec)) + 1.U
+        pointerReg := (pointerReg << log2Ceil(order)).asUInt + OHToUInt(PriorityEncoderOH(resVec)) + 1.U
       }.elsewhen(pointerReg >= lastAddr) {
         errorFlag := true.B
         stateReg := idle
