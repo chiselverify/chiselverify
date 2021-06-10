@@ -1,13 +1,62 @@
 package examples.heappriorityqueue
 
 import chisel3._
+import chisel3.experimental.BundleLiterals.AddBundleLiteralConstructor
 import chiseltest._
 import chiselverify.coverage._
+import chiselverify.crv.backends.jacop.{IfCon, Model, Rand, RandObj}
+import chiselverify.timing.Eventually
 import examples.heappriorityqueue.Helpers._
+import examples.heappriorityqueue.Interfaces.{Event, QueryBundle}
 import examples.heappriorityqueue.LocalHelpers._
 import org.scalatest._
-import examples.heappriorityqueue.PriorityQueue
 
+
+import scala.math.pow
+import chiselverify.coverage.{Bins, CoverPoint, CoverageReporter, CrossBin}
+import chiselverify.crv.ValueBinder
+
+
+class PriorityQueueTransaction(seed: Int)(implicit params: PriorityQueueParameters) extends RandObj {
+    import params._
+    currentModel = new Model(seed)
+
+    val refID = new Rand("refID",0, pow(2,referenceIdWidth).toInt - 1)
+    val superCycle = new Rand("superCylce", 0, pow(2,superCycleWidth).toInt - 1)
+    val cycle = new Rand("cycle", 0, pow(2,cycleWidth).toInt - 1)
+    val valid = new Rand("valid", 0, 1)
+    val op = new Rand("op",0,1)
+
+    // produce more valid transactions than invalid ones
+    val validDist = valid.dist(0 := 2, 1 := 8)
+
+    val onlyRemoveConstr = op #= 0
+    onlyRemoveConstr.disable()
+
+    def toBundle: QueryBundle = {
+        (new QueryBundle).Lit(
+            _.valid -> valid.value().B,
+            _.op -> op.value().B,
+            _.refId -> refID.value().U,
+            _.event -> (new Event).Lit(
+                _.superCycle -> superCycle.value().U,
+                _.cycle -> cycle.value().U
+            )
+        )
+    }
+
+    override def toString: String = {
+        (if(valid.value() == 1) "valid" else "invalid") + " " + (if(op.value() == 1) {
+            s"insertion of event at ${superCycle.value()}:${cycle.value()} with refID ${refID.value()}"
+        }else{
+            s"removal of event with refID ${refID.value()}"
+        })
+    }
+
+    def isInsert: Boolean = op.value() == 1
+    def isRemove: Boolean = op.value() == 0
+    def onlyRemove(): Unit = onlyRemoveConstr.enable()
+}
 
 /**
   * contains test for the whole priority queue
@@ -15,57 +64,78 @@ import examples.heappriorityqueue.PriorityQueue
 class PriorityQueueTest extends FreeSpec with ChiselScalatestTester {
 
     "HeapPriorityQueue should pass random test" in {
-        val size = 33
-        val order = 4
-        val superCycleRes = 4
-        val cyclesPerSuperCycle = 256
 
-        test(new PriorityQueue(size, order, superCycleRes, cyclesPerSuperCycle, true)) { dut =>
-            setWidths(dut.parameters.superCycleWidth, dut.parameters.cycleWidth, dut.parameters.referenceIdWidth)
-            val model = new Behavioural(size, order)(dut.parameters.superCycleWidth, dut.parameters.cycleWidth, dut.parameters.referenceIdWidth)
+        test(new PriorityQueue(33, 4, 4, 256, true)) { dut =>
+            import dut.parameters._
+            setWidths(superCycleWidth, cycleWidth, referenceIdWidth)
+            val model = new Behavioural(size, order)(superCycleWidth, cycleWidth, referenceIdWidth)
 
             val cr = new CoverageReporter(dut)
-            cr.register(
-                CoverPoint(dut.io.cmd.op, "operation")(
-                    Bins("insertion", 0 to 0) :: Bins("removal", 1 to 1) :: Nil) ::
-                  CoverPoint(dut.io.cmd.prio.superCycle, "cmd.prio.cycl")(
-                      Bins("cyclic", 0 to 3) :: Nil) ::
-                  CoverPoint(dut.io.cmd.prio.cycle, "cmd.prio.norm")(
-                      Bins("lower half", 0 to (Math.pow(2, nWid) / 2 - 1).toInt) :: Bins("upper half", (Math.pow(2, nWid) / 2 - 1).toInt to (Math.pow(2, nWid) - 1).toInt) :: Nil) ::
-                  CoverPoint(dut.io.head.prio.superCycle, "head.prio.cycl")(
-                      Bins("cyclic", 0 to 3) :: Nil) ::
-                  CoverPoint(dut.io.head.prio.cycle, "head.prio.norm")(
-                      Bins("lower half", 0 to (Math.pow(2, nWid) / 2 - 1).toInt) :: Bins("upper half", (Math.pow(2, nWid) / 2 - 1).toInt to (Math.pow(2, nWid) - 1).toInt) :: Nil) ::
-                  Nil,
+            cr.register(List(
+                CoverPoint(dut.io.query.op, "operation")(List(
+                    Bins("insertion",       0 to 0),
+                    Bins("removal",         1 to 1)
+                )),
+                CoverPoint(dut.io.query.valid, "valid")(List(
+                    Bins("true",            1 to 1),
+                    Bins("false",           0 to 0)
+                )),
+                CoverPoint(dut.io.state.get, "state")(List(
+                    Bins("headInsertion",   1 to 1),
+                    Bins("normalInsertion", 3 to 3),
+                    Bins("lastRemoval",     6 to 6),
+                    Bins("headRemoval",     7 to 7),
+                    Bins("tailRemoval",     8 to 8),
+                    Bins("normalRemoval",   9 to 9)
+                )),
+                CoverPoint(dut.io.resp.done, "done")(List(
+                    Bins("true",            1 to 1),
+                    Bins("false",           0 to 0)
+                )),
+                CoverPoint(dut.io.resp.result, "result")(List(
+                    Bins("succes",          0 to 0),
+                    Bins("failure",         1 to 1)
+                )),
+                CoverPoint(dut.io.head.none, "empty")(List(
+                    Bins("true",            1 to 1),
+                    Bins("false",           0 to 0)
+                )),
+                CoverPoint(dut.io.head.valid, "valid head")(List(
+                    Bins("true",            1 to 1),
+                    Bins("false",           0 to 0)
+                ))
+                ),
                 //Declare cross points
-                CrossPoint("cyclics at ops", "operation", "cmd.prio.cycl")(
-                    CrossBin("insertion", 0 to 0, 0 to 3) :: CrossBin("removal", 1 to 1, 0 to 3) :: Nil) ::
-                  CrossPoint("normals at ops", "operation", "cmd.prio.norm")(
-                      CrossBin("insertion lower half", 0 to 0, 0 to (Math.pow(2, nWid) / 2 - 1).toInt) :: CrossBin("insertion upper half", 0 to 0, (Math.pow(2, nWid) / 2 - 1).toInt to (Math.pow(2, nWid) - 1).toInt) ::
-                        CrossBin("removal lower half", 1 to 1, 0 to (Math.pow(2, nWid) / 2 - 1).toInt) :: CrossBin("removal upper half", 1 to 1, (Math.pow(2, nWid) / 2 - 1).toInt to (Math.pow(2, nWid) - 1).toInt) :: Nil) ::
-                  Nil)
+                List(
+                    TimedCross("valid head and insertion","valid head","operation",Eventually(3))(List(
+                        CrossBin("head invalid while inserting", 0 to 0, 1 to 1)
+                    )),
+                    TimedCross("timed valid","valid","valid",Eventually(10))(List(
+                        CrossBin("revoked valid under operation",1 to 1, 0 to 0)
+                    ))
+                ))
 
             dut.clock.setTimeout(0)
+            LocalHelpers.cr = Some(cr)
+
+            val t = new PriorityQueueTransaction(2000)(dut.parameters)
 
             // wait for the memory to be initialized
-            while (!dut.io.cmd.done.peek.litToBoolean) dut.clock.step(1)
+            while (!dut.io.resp.done.peek.litToBoolean) dut.clock.step(1)
 
             for (_ <- 0 until 1000) {
-
-                val poke = randomPoke(cWid, nWid, rWid)
-
-                if (poke.head == 1) { // insert
-                    insert(dut, poke)
-                    assert(model.insert(poke) == getSucces(dut),
-                        s"tried to insert ${poke.slice(1, 4).mkString(":")}"
-                    )
+                t.randomize
+                applyPoke(dut,t.toBundle)
+                if (t.isInsert) { // insert
+                    if(t.valid.value() == 1){
+                        assert(model.insert(t.superCycle.value(),t.cycle.value(),t.refID.value()) == getSucces(dut), t.toString)
+                    }
                 } else { // remove
-                    remove(dut, poke(3))
-                    assert(model.remove(poke(3)) == (getSucces(dut), getRmPrio(dut)),
-                        s"removing ${poke(3)}"
-                    )
+                    if(t.valid.value() == 1){
+                        assert(model.remove(t.refID.value()) == (getSucces(dut), getRmPrio(dut)), t.toString)
+                    }
+
                 }
-                cr.sample()
                 // compare head of the queue
                 assert(dut.io.head.none.peek.litToBoolean == (model.heapSize==0),
                     s"\n${prioAndIdVecToString(model.getMem())}"
@@ -73,56 +143,64 @@ class PriorityQueueTest extends FreeSpec with ChiselScalatestTester {
                 assert(model.getHead == getHead(dut),
                     s"\n${prioAndIdVecToString(model.getMem())}")
             }
+
+            t.onlyRemove()
+            while(!dut.io.head.none.peek.litToBoolean){
+                t.randomize
+                remove(dut,dut.io.head.refId.peek.litValue().toInt)
+            }
+
           cr.printReport()
         }
     }
 }
 
 private object LocalHelpers {
-    def insert(dut: PriorityQueue, poke: Seq[Int]): Unit = {
-        dut.io.cmd.refID.poke(poke(3).U)
-        dut.io.cmd.prio.superCycle.poke(poke(1).U)
-        dut.io.cmd.prio.cycle.poke(poke(2).U)
-        dut.io.cmd.op.poke(true.B) // 1=insert
-        dut.io.cmd.valid.poke(true.B)
+    var cr: Option[CoverageReporter[PriorityQueue]] = None
+    def applyPoke(dut: PriorityQueue, poke: QueryBundle): Unit = {
+        dut.io.query.poke(poke)
 
-        dut.clock.step(1)
+        cr.get.step(1)
+        cr.get.sample()
 
-        while (!dut.io.cmd.done.peek.litToBoolean) dut.clock.step(1)
+        while (!dut.io.resp.done.peek.litToBoolean) {
+            cr.get.step(1)
+            cr.get.sample()
+        }
 
-        dut.io.cmd.valid.poke(false.B)
-        dut.clock.step(1)
+        dut.io.query.valid.poke(false.B)
+        cr.get.step(1)
+        cr.get.sample()
 
     }
 
     def remove(dut: PriorityQueue, id: Int): Unit = {
-        dut.io.cmd.refID.poke(id.U)
-        dut.io.cmd.op.poke(false.B) // 0=remove
-        dut.io.cmd.valid.poke(true.B)
+        dut.io.query.refId.poke(id.U)
+        dut.io.query.op.poke(0.B)
+        dut.io.query.valid.poke(true.B)
 
         dut.clock.step(1)
 
-        while (!dut.io.cmd.done.peek.litToBoolean) dut.clock.step(1)
+        while (!dut.io.resp.done.peek.litToBoolean) dut.clock.step(1)
 
-        dut.io.cmd.valid.poke(false.B)
+        dut.io.query.valid.poke(false.B)
+        while (!dut.io.resp.done.peek.litToBoolean) {
+            cr.get.step(1)
+            cr.get.sample()
+        }
 
-    }
-
-    def randomPoke(cWid: Int, nWid: Int, rWid: Int): Seq[Int] = {
-        val rand = scala.util.Random
-        Seq(rand.nextInt(2), rand.nextInt(math.pow(2, cWid).toInt), rand.nextInt(math.pow(2, nWid).toInt), rand.nextInt(math.pow(2, rWid).toInt - 1))
     }
 
     def getHead(dut: PriorityQueue): Seq[Int] = {
-        Seq(dut.io.head.prio.superCycle, dut.io.head.prio.cycle, dut.io.head.refID).map(_.peek.litValue.toInt)
+        Seq(dut.io.head.event.superCycle, dut.io.head.event.cycle, dut.io.head.refId).map(_.peek.litValue.toInt)
     }
 
     def getSucces(dut: PriorityQueue): Boolean = {
-        !dut.io.cmd.result.peek.litToBoolean
+        !dut.io.resp.result.peek.litToBoolean
     }
 
     def getRmPrio(dut: PriorityQueue): Seq[Int] = {
-        Seq(dut.io.cmd.rm_prio.superCycle, dut.io.cmd.rm_prio.cycle).map(_.peek.litValue.toInt)
+        Seq(dut.io.resp.rmPrio.superCycle, dut.io.resp.rmPrio.cycle).map(_.peek.litValue.toInt)
     }
 
     def getState(dut: PriorityQueue): String = {

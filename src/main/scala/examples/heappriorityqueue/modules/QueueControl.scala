@@ -13,24 +13,9 @@ class QueueControl(implicit parameters: PriorityQueueParameters) extends Module 
   /////////////////////////////////////////////////////IO///////////////////////////////////////////////////////////////
   val io = IO(new Bundle {
 
-    val head = new Bundle {
-      val valid = Output(Bool())
-      val none = Output(Bool())
-      val prio = Output(new Event)
-      val refID = Output(UInt(referenceIdWidth.W))
-    }
-
-    val cmd = new Bundle {
-      // inputs
-      val valid = Input(Bool())
-      val op = Input(Bool()) // 0=Remove, 1=Insert
-      val prio = Input(new Event)
-      val refID = Input(UInt(referenceIdWidth.W))
-      // outputs
-      val done = Output(Bool())
-      val result = Output(Bool()) // 0=Success, 1=Failure
-      val rm_prio = Output(new Event)
-    }
+    val head = Output(new HeadBundle)
+    val query = Input(new QueryBundle)
+    val resp = Output(new ResponseBundle)
 
     // ram ports to synchronous memory
     val rdPort = new rdPort(log2Ceil(size / order), Vec(order, new TaggedEvent))
@@ -96,14 +81,14 @@ class QueueControl(implicit parameters: PriorityQueueParameters) extends Module 
   io.wrPort.mask := heapifier.io.wrPort.mask
 
   // default assignments
-  io.head.prio := headReg.event
+  io.head.event := headReg.event
   io.head.none := heapSizeReg === 0.U
   io.head.valid := headValid
-  io.head.refID := headReg.id
-  io.cmd.done := false.B
-  io.cmd.result := errorReg
-  io.cmd.rm_prio := removedPrio
-  io.srch.refID := io.cmd.refID
+  io.head.refId := headReg.id
+  io.resp.done := false.B
+  io.resp.result := errorReg
+  io.resp.rmPrio := removedPrio
+  io.srch.refID := io.query.refId
   io.srch.search := false.B
   io.srch.heapSize := heapSizeReg
   io.state := stateReg
@@ -113,7 +98,7 @@ class QueueControl(implicit parameters: PriorityQueueParameters) extends Module 
   switch(stateReg) {
     is(idle) {
 
-      io.cmd.done := true.B
+      io.resp.done := true.B
 
       wrIndex := heapSizeReg // prepare write port for insertion
       rdIndex := decHeapsize // prepare read port for removal
@@ -124,9 +109,9 @@ class QueueControl(implicit parameters: PriorityQueueParameters) extends Module 
         headValid := true.B
       }
 
-      when(io.cmd.valid) {
+      when(io.query.valid) {
         errorReg := false.B
-        when(io.cmd.op) { // insertion
+        when(io.query.op) { // insertion
           headValid := false.B
           stateReg := normalInsertion
           when(heapSizeReg === size.U) { // queue is full
@@ -138,11 +123,11 @@ class QueueControl(implicit parameters: PriorityQueueParameters) extends Module 
         }.otherwise { // removal
           headValid := false.B
           when(heapSizeReg =/= 0.U) {
-            when(heapSizeReg === 1.U && headReg.id =/= io.cmd.refID) { //catch non matching reference ID on last removal
+            when(heapSizeReg === 1.U && headReg.id =/= io.query.refId) { //catch non matching reference ID on last removal
               errorReg := true.B
               stateReg := idle
               removedPrio := 0.U.asTypeOf(new Event)
-            }.elsewhen(heapSizeReg === 1.U && headReg.id === io.cmd.refID) {
+            }.elsewhen(heapSizeReg === 1.U && headReg.id === io.query.refId) {
               stateReg := lastRemoval
             }.otherwise {
               stateReg := initSearch
@@ -156,8 +141,8 @@ class QueueControl(implicit parameters: PriorityQueueParameters) extends Module 
       }
     }
     is(headInsertion) { // insertion into empty queue
-      headReg.event := io.cmd.prio
-      headReg.id := io.cmd.refID
+      headReg.event := io.query.event
+      headReg.id := io.query.refId
       heapSizeReg := incHeapsize
 
       stateReg := idle
@@ -165,8 +150,8 @@ class QueueControl(implicit parameters: PriorityQueueParameters) extends Module 
     is(normalInsertion) { // insertion into already filled queue
       // write new priority
       wrIndex := heapSizeReg
-      io.wrPort.data(wrIndexOffset).event := io.cmd.prio
-      io.wrPort.data(wrIndexOffset).id := io.cmd.refID
+      io.wrPort.data(wrIndexOffset).event := io.query.event
+      io.wrPort.data(wrIndexOffset).id := io.query.refId
       io.wrPort.mask := UIntToOH(wrIndexOffset, order)
       io.wrPort.write := true.B
 
@@ -194,11 +179,11 @@ class QueueControl(implicit parameters: PriorityQueueParameters) extends Module 
 
       stateReg := waitForSearch
       headValid := true.B // head is valid as long as we are not removing the head element
-      when(headReg.id === io.cmd.refID) { // compare head and tail with desired refID
+      when(headReg.id === io.query.refId) { // compare head and tail with desired refID
         stateReg := headRemoval
         headValid := false.B
         removedPrio := headReg.event
-      }.elsewhen(io.rdPort.data(rdIndexOffset).id === io.cmd.refID) {
+      }.elsewhen(io.rdPort.data(rdIndexOffset).id === io.query.refId) {
         stateReg := tailRemoval
         removedPrio := io.rdPort.data(rdIndexOffset).event
       }
@@ -290,7 +275,7 @@ class QueueControl(implicit parameters: PriorityQueueParameters) extends Module 
       stateReg := waitForHeapifyUp
       when(heapifier.io.control.done) {
         stateReg := idle
-        when(io.cmd.op === 0.U && !heapifier.io.control.swapped && ((removalIndex << log2Ceil(order)).asUInt + 1.U) < size.U) { // when no swap occurred during removal -> heapify down
+        when(!io.query.op && !heapifier.io.control.swapped && ((removalIndex << log2Ceil(order)).asUInt + 1.U) < size.U) { // when no swap occurred during removal -> heapify down
           heapifier.io.control.idx := removalIndex
           heapifier.io.control.heapifyDown := true.B
           stateReg := waitForHeapifyDown

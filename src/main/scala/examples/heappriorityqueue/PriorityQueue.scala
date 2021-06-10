@@ -40,29 +40,15 @@ class PriorityQueue(size: Int, order: Int, superCycleRes: Int, cyclesPerSuperCyc
 
     // Interface for signaling head element to user.
     // I.e. the element with the lowest priority
-    val head = new Bundle {
-      val valid = Output(Bool())
-      val none = Output(Bool())
-      val prio = Output(new Event)
-      val refID = Output(UInt(referenceIdWidth.W))
-    }
+    val head = Output(new HeadBundle)
 
     // Interface for element insertion/removal
     // Timing:
     // User must maintain input asserted until done is asserted.
     // User must deassert input when done is asserted (unless a new cmd is made).
     // User must ensure that reference ID tags are unique.
-    val cmd = new Bundle {
-      // inputs
-      val valid = Input(Bool())
-      val op = Input(Bool()) // 0=Remove, 1=Insert
-      val prio = Input(new Event)
-      val refID = Input(UInt(referenceIdWidth.W))
-      // outputs
-      val done = Output(Bool())
-      val result = Output(Bool()) // 0=Success, 1=Failure
-      val rm_prio = Output(new Event)
-    }
+    val query = Input(new QueryBundle)
+    val resp = Output(new ResponseBundle)
 
     val state = if (exposeState) Some(Output(UInt())) else None
 
@@ -78,9 +64,10 @@ class PriorityQueue(size: Int, order: Int, superCycleRes: Int, cyclesPerSuperCyc
   mem.rd <> queue.io.rdPort
   mem.wr <> queue.io.wrPort
   io.head <> queue.io.head
-  io.cmd <> queue.io.cmd
+  io.resp <> queue.io.resp
+  io.query <> queue.io.query
 
-  io.cmd.done := mem.srch.done && queue.io.cmd.done
+  io.resp.done := mem.srch.done && queue.io.resp.done
 
   if (exposeState) io.state.get := queue.io.state
 

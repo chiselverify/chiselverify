@@ -1,13 +1,41 @@
 package examples.heappriorityqueue
 
 import chisel3._
+import chisel3.experimental.ChiselEnum
 import chisel3.util._
+import examples.newpriorityqueue.heapifier.MemoryWrite.Value
 
 /**
   * contains relevant bundle types and port types for the heap-based priority queue
   */
 
 object Interfaces {
+
+
+  class QueryBundle(implicit parameters: PriorityQueueParameters) extends Bundle {
+    import parameters._
+    val valid = Bool()
+    val op = Bool()
+    val event = new Event
+    val refId = UInt(referenceIdWidth.W)
+    override def cloneType = new QueryBundle().asInstanceOf[this.type]
+  }
+
+  class ResponseBundle(implicit parameters: PriorityQueueParameters) extends Bundle {
+    val done = Bool()
+    val result = Bool()
+    val rmPrio = new Event
+    override def cloneType = new ResponseBundle().asInstanceOf[this.type]
+  }
+
+  class HeadBundle(implicit parameters: PriorityQueueParameters) extends Bundle {
+    import parameters._
+    val valid = Bool()
+    val none = Bool()
+    val event = new Event
+    val refId = UInt(referenceIdWidth.W)
+    override def cloneType = new HeadBundle().asInstanceOf[this.type]
+  }
 
   class Event(implicit parameters: PriorityQueueParameters) extends Bundle {
     import parameters._
