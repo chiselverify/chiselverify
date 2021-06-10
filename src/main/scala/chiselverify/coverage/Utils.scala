@@ -68,4 +68,19 @@ object Utils {
             }
         }
     }
+
+    //Hardcoded cartesian for better performance
+    def cartesian(ranges: List[List[Int]]): List[List[Int]] = ranges.length match {
+        case 1 => ranges
+        case 2 => for (r1 <- ranges.head; r2 <- ranges.tail.head) yield List(r1, r2)
+        case 3 => for (x1 <- ranges.head; x2 <- ranges.tail.head; x3 <- ranges.tail.tail.head)
+            yield List(x1, x2, x3)
+        case 4 => for {
+            x1 <- ranges.head
+            x2 <- ranges.tail.head
+            x3 <- ranges.tail.tail.head
+            x4 <- ranges.tail.tail.tail.head
+        } yield List(x1, x2, x3, x4)
+        case _ => throw new IllegalArgumentException("MAX ARRAY SIZE IN CARTESIAN PRODUCT IS 4")
+    }
 }

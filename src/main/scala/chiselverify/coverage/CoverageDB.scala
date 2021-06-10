@@ -99,39 +99,6 @@ class CoverageDB {
         pointToCross update (point2, cross)
     }
 
-    /**
-      * Registers a new condition inside of the database
-      * WARNING: O(pow(W,N)) with N = #ports and W = maxWidth
-      * Complexity use with caution!
-      *
-      * @param condName the unique identifier for the condition
-      * @throws IllegalArgumentException if the name isn't unique
-      */
-    def registerConditions(pointName: String, conds: List[Condition]): Unit = pointNameToPoint.get(pointName) match {
-        case Some(p) => p match {
-            case covCond: CoverCondition =>
-                if(p.ports.length > 3) {
-                    println("WARNING: MORE THAN 3 PORTS IN A COVER_CONDITION MAY LEAD TO EXTREME COMPLEXITY, USE WITH CAUTION")
-                }
-                val cartesianRange = cartesianProduct(covCond.ports.map(DefaultBin.defaultRange(_).toList))
-
-                //Compute the size of the domain defined by each condition
-                conds foreach {condition =>
-                    if(registeredConditions.contains(condition.name)) {
-                        registeredConditions += condition.name
-
-                        val condSize = cartesianRange.count(r => condition(r.map(BigInt(_))))
-                        conditionSizes.update(condition.name, condSize)
-
-                    } else throw new IllegalArgumentException(
-                        s"${condition.name} is already taken! Please use a unique ID for each Condition!"
-                    )
-                }
-            case _ => throw new IllegalArgumentException("Requested point must be of type CoverCondition")
-        }
-        case None => throw new IllegalArgumentException(s"$pointName isn't a registered point!")
-    }
-
     def getCondSize(condName: String): BigInt = conditionSizes.getOrElse(condName, 0)
 
     def getCrossFromPoint(point: Cover) : Cross = pointToCross getOrElse(point, null)
@@ -186,6 +153,45 @@ class CoverageDB {
     def registerCoverPoint(name: String, coverPoint: Cover) : Unit =
         if(pointNameToPoint contains name) throw new IllegalArgumentException("CoverPoint Name already taken!")
         else pointNameToPoint update (name, coverPoint)
+
+
+    /**
+      * Registers a new condition inside of the database
+      * WARNING: O(pow(W,N)) with N = #ports and W = maxWidth
+      * Complexity use with caution!
+      *
+      * @param condName the unique identifier for the condition
+      * @throws IllegalArgumentException if the name isn't unique
+      */
+    def registerConditions(pointName: String, conds: List[Condition]): Unit = pointNameToPoint.get(pointName) match {
+        case Some(p) => p match {
+            case covCond: CoverCondition =>
+                if(p.ports.length > 3) {
+                    println("WARNING: MORE THAN 3 PORTS IN A COVER_CONDITION MAY LEAD TO EXTREME COMPLEXITY, USE WITH CAUTION")
+                }
+                /* CAUSES HEAP OVERFLOW
+                val ranges = covCond.ports.map(DefaultBin.defaultRange(_).toList)
+                val cartesianRange = cartesian(ranges)
+                */
+
+                //Compute the size of the domain defined by each condition
+                conds foreach {condition =>
+                    if(!registeredConditions.contains(condition.name)) {
+                        registeredConditions += condition.name
+
+                        /* CAUSES HEAP OVERFLOW
+                        val condSize = cartesianRange.count(r => condition(r.map(BigInt(_))))
+                        conditionSizes.update(condition.name, condSize)
+                        */
+
+                    } else throw new IllegalArgumentException(
+                        s"${condition.name} is already taken! Please use a unique ID for each Condition!"
+                    )
+                }
+            case _ => throw new IllegalArgumentException("Requested point must be of type CoverCondition")
+        }
+        case None => throw new IllegalArgumentException(s"$pointName isn't a registered point!")
+    }
 
     /**
       * Gets the number of hits form the DB for a given bin id

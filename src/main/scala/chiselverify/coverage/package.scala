@@ -128,6 +128,11 @@ package object coverage {
                                             case _ => throw new IllegalStateException("Bin must be reported with a BinReport")
                                         }
                                     }
+                                case ConditionReport(_, conds, db) =>
+                                    conds.find(_.name == binName) match {
+                                        case None => throw new IllegalArgumentException(s"No condition with name $binName!!")
+                                        case Some(cond) => db.getNHits(cond.name)
+                                    }
                                 case _ => throw new IllegalStateException("Point must be reported with a PointReport")
                             }
                         }
@@ -191,8 +196,9 @@ package object coverage {
             conds foreach {
                 cond => {
                     val nHits = db.getNHits(cond.name)
-                    val percent = (nHits.toDouble / db.getCondSize(cond.name).toDouble) * 100.0
-                    rep append s"\n${cond.report} HAS ${nHits} HITS = $percent%"
+                    //CAUSES HEAP OVERFLOW
+                    //val percent = (nHits.toDouble / db.getCondSize(cond.name).toDouble) * 100.0
+                    rep append s"\n${cond.report} HAS ${nHits} HITS"// = $percent%"
                 }
             }
             rep.mkString
@@ -364,11 +370,17 @@ package object coverage {
           * @param db the coverage DataBase we are sampling in
           */
         def sample(db: CoverageDB): Unit
+
+        /**
+          * Register the current point in the given database
+          * @param db the database in which we want to register the point
+          */
+        def register(db: CoverageDB): Unit
     }
 
     case class Condition(name: String, cond: List[BigInt] => Boolean) {
         def apply(args: List[BigInt]): Boolean = cond(args)
-        def report: String = s"CONDITION $name IS $cond"
+        def report: String = s"CONDITION $name"
         def +(that: Condition): Condition = Condition(s"$name + ${that.name}", (x : List[BigInt]) => cond(x) && that.cond(x))
     }
 
@@ -381,6 +393,14 @@ package object coverage {
         override def sample(db: CoverageDB): Unit = {
             val pointVals = ports.map(_.peek().asUInt().litValue())
             db.addConditionalHit(conds.filter(c => c(pointVals)).map(_.name), pointVals)
+        }
+
+        override def register(db: CoverageDB): Unit = {
+            //Register the coverpoint
+            db.registerCoverPoint(portName, this)
+
+            //Register the conditions
+            db.registerConditions(portName, conds)
         }
     }
 
@@ -404,6 +424,8 @@ package object coverage {
 
         override def report(db: CoverageDB): Report =
             PointReport(portName, bins.map(b => BinReport(b, db.getNHits(portName, b.name))))
+
+        override def register(db: CoverageDB): Unit = db.registerCoverPoint(portName, this)
     }
 
     abstract class Cross(val name: String, val pointName1: String, val pointName2: String, val bins: List[CrossBin]) {
@@ -570,7 +592,7 @@ package object coverage {
       * Defines the default bins for both cover points and cross points
       */
     object DefaultBin {
-        def defaultRange(port: Data): Range = 0 until math.pow(2, port.asUInt().getWidth).toInt
+        def defaultRange(port: Data): Range = 0 until math.pow(2, port.getWidth).toInt
 
         /**
           * Generates a default bin for a given cover point port
