@@ -60,8 +60,8 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
         cr.register(
             //Declare CoverPoints
             CoverPoint(dut.io.outA , "accu")( //CoverPoint 1
-                Bins("lo10even", 0 until 10, () => dut.io.outA.peek().asUInt().litValue() % 2 == 0)::
-                Bins("First100odd", 0 until 100, () => dut.io.outA.peek().asUInt().litValue() % 2 != 0)::Nil)::
+                Bins("lo10even", 0 until 10, (x: BigInt) => x % 2 == 0)::
+                Bins("First100odd", 0 until 100, (x: BigInt) => x % 2 != 0)::Nil)::
             CoverPoint(dut.io.outB, "test")( //CoverPoint 2
                 Bins("testLo10", 0 until 10)::Nil)::
         Nil)
