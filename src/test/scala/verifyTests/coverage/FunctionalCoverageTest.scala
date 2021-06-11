@@ -60,8 +60,9 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
         cr.register(
             //Declare CoverPoints
             CoverPoint(dut.io.outA , "accu")( //CoverPoint 1
-                Bins("lo10even", 0 until 10, (x: BigInt) => x % 2 == 0)::
-                Bins("First100odd", 0 until 100, (x: BigInt) => x % 2 != 0)::Nil)::
+                Bins("lo10even", 0 until 10, Condition("onlyEven", { case (x:BigInt)::Nil => x % 2 == 0 }))::
+                Bins("First100odd", 0 until 100, Condition("onlyOdd",{ case (x:BigInt)::Nil => x % 2 != 0 }))::
+                Nil)::
             CoverPoint(dut.io.outB, "test")( //CoverPoint 2
                 Bins("testLo10", 0 until 10)::Nil)::
         Nil)
@@ -97,10 +98,10 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
             //Declare CoverPoints
             CoverCondition(dut.io.outA::dut.io.outB::Nil, "aAndB")(
                 Condition("aeqb", {
-                    case a :: b :: Nil => a == b
-                })::Condition("asuptob", {
+                    case a::b::Nil => a == b
+                })::Condition("asuptobAtLeast100", {
                     case a::b::Nil => a > b
-                })::Nil
+                }, Some(100))::Nil
             )::Nil)
 
         /**
@@ -108,7 +109,7 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
           */
         def testOne(): Unit = {
             for (fun <- 0 until 100) {
-                dut.io.a.poke(toUInt(fun))
+                dut.io.a.poke(toUInt(fun % 95))
                 dut.io.b.poke(toUInt(fun % 4))
 
                 cr.sample()
@@ -123,7 +124,7 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
 
         //Check that the number of hits is correct
         report.binNHits(1, "aAndB", "aeqb") should be (BigInt(4))
-        report.binNHits(1, "aAndB", "asuptob") should be (BigInt(96))
+        report.binNHits(1, "aAndB", "asuptobAtLeast100") should be (BigInt(95))
     }
 
 

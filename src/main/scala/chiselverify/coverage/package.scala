@@ -196,9 +196,14 @@ package object coverage {
             conds foreach {
                 cond => {
                     val nHits = db.getNHits(cond.name)
+                    rep append s"\n${cond.report} HAS ${nHits} HITS"
                     //CAUSES HEAP OVERFLOW
                     //val percent = (nHits.toDouble / db.getCondSize(cond.name).toDouble) * 100.0
-                    rep append s"\n${cond.report} HAS ${nHits} HITS"// = $percent%"
+                    //Using expected hits instead
+                    rep append (cond.expectedHits match {
+                        case None => ""
+                        case Some(eH) => s" EXPECTED $eH = ${(nHits.toDouble / eH.toDouble) * 100.0}%"
+                    })
                 }
             }
             rep.mkString
@@ -289,8 +294,8 @@ package object coverage {
         private val percentage = f"${if (proportion > 1) 100 else proportion * 100}%1.2f"
 
         override def report: String = s"BIN ${bin.name} COVERING ${bin.range.toString}" +
-            s"${if (bin.condition != ((_: BigInt) => true)) s"WITH CONDITION ${bin.condition}" else ""}" +
-            s"HAS $nHits HIT(S) = $percentage%"
+            s"${if (bin.condition.name != "$$__def__$$") s" WITH ${bin.condition.report}" else ""}" +
+            s" HAS $nHits HIT(S) = $percentage%"
 
         override def equals(that: Any): Boolean = that match {
             case BinReport(b, _) => b == bin
@@ -315,8 +320,8 @@ package object coverage {
       * @param nHits    the number of hits sampled for this cross bin during the test suite
       */
     case class CrossBinReport(crossBin: CrossBin, nHits: BigInt) extends Report {
-        private val proportion = nHits.toInt / (crossBin.range1.size * crossBin.range2.size).toDouble
-        private val percentage = f"${if (proportion > 1) 100 else proportion * 100}%1.2f"
+        private val proportion = nHits.toDouble / (crossBin.range1.size * crossBin.range2.size).toDouble
+        private val percentage = f"${if (proportion > 1) 100 else proportion * 100.0}%1.2f"
 
         override def report: String =
             s"BIN ${crossBin.name} COVERING ${crossBin.range1.toString} CROSS ${crossBin.range2.toString} HAS $nHits HIT(S) = $percentage%"
@@ -378,7 +383,7 @@ package object coverage {
         def register(db: CoverageDB): Unit
     }
 
-    case class Condition(name: String, cond: List[BigInt] => Boolean) {
+    case class Condition(name: String, cond: List[BigInt] => Boolean, expectedHits: Option[BigInt] = None) {
         def apply(args: List[BigInt]): Boolean = cond(args)
         def report: String = s"CONDITION $name"
         def +(that: Condition): Condition = Condition(s"$name + ${that.name}", (x : List[BigInt]) => cond(x) && that.cond(x))
@@ -547,7 +552,7 @@ package object coverage {
       * @param range     the actual scala range
       * @param condition an extra condition that can be used to consider a hit
       */
-    class Bins(val name: String, val rangeOpt: Option[Range], val condition: (BigInt) => Boolean = _ => true) {
+    class Bins(val name: String, val rangeOpt: Option[Range], val condition: Condition = Condition("$$__def__$$", _ => true)) {
         def ==(that: Bins): Boolean = {
             val r = rangeOpt.getOrElse(0 to 0)
             val thatR = that.rangeOpt.getOrElse(0 to 0)
@@ -555,20 +560,20 @@ package object coverage {
         }
 
         def sample(portName: String, value: BigInt, coverageDB: CoverageDB): Unit =
-            if (condition(value)) rangeOpt match {
+            if (condition(List(value))) rangeOpt match {
                 case None => coverageDB.addBinHit(portName, name, value)
                 case Some(r) => if (r.contains(value)) coverageDB.addBinHit(portName, name, value)
             }
 
         def range: Range = rangeOpt.getOrElse(0 to 0)
 
-        def serialize: String = s"Bin( $name, ${rangeOpt.getOrElse("")} ${if (condition != ((_: BigInt) => true)) condition})"
+        def serialize: String = s"Bin( $name, ${rangeOpt.getOrElse("")} ${if (condition.cond != ((_: List[BigInt]) => true)) condition})"
     }
 
     object Bins {
-        def apply(name: String, condition: BigInt => Boolean): Bins = new Bins(name, None, condition)
+        def apply(name: String, condition: Condition): Bins = new Bins(name, None, condition)
         def apply(name: String, range: Range): Bins = new Bins(name, Some(range))
-        def apply(name: String, range: Range, condition: BigInt => Boolean) = new Bins(name, Some(range), condition)
+        def apply(name: String, range: Range, condition: Condition) = new Bins(name, Some(range), condition)
     }
 
 
