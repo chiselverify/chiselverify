@@ -1,11 +1,8 @@
-# Verification with Chisel and UVM
+# ChiselVerify: A Hardware Verification Library for Chisel
 
-This repo is for the project to explore the combination and interaction of Chisel
-and UVM. The ultimate goal is a verification framework within Scala for digital
-hardware described in Chisel also supporting legacy components in VHDL, Verilog,
-or SystemVerilog.
+In this repository, we proprose ChiselVerify, which is the begining of a verification library within Scala for digital hardware described in Chisel, but also upporting legacy components in VHDL, Verilog, or SystemVerilog. The library runs off of [ChiselTest](https://github.com/ucb-bar/chisel-testers2) for all of the DUT interfacing. 
 
-A technical report describes the framework in detail: [Open-Source Verification with Chisel and Scala](https://arxiv.org/abs/2102.13460)
+A technical report describes the library in detail: [Open-Source Verification with Chisel and Scala](https://arxiv.org/abs/2102.13460)
 
 When you use this library in a research project, please cite it as:
 
@@ -20,59 +17,39 @@ When you use this library in a research project, please cite it as:
 }
 ```
 
-
 Run tests with
 ```
 make
 ```
 
+**********************************
 
-# UVM Examples
-In the [sv](sv) directory, a number of UVM examples are located. 
+# Verification Library for Chisel
+The library can be divided into 3 main parts:  
+1. __Functional Coverage__: Enabling Functional Coverage features like Cover Points, Cross Coverage, Timed Coverage and Conditional Coverage.  
+2. __Constrained Random Verification__: Allowing for constraints and random variables to be defined and used directly in Scala.  
+3. __Bus Functional Models__: Enabling Transactional modeling for standardized Buses like _AXI4_. 
 
-## Simple examples
- In `sv/uvm-simple-examples` a number of simple examples are located. These start with a very basic testbench with no DUT attached, and gradually transition into a complete testbench.
+## Functional Coverage in Chisel
+The idea is to implement functional coverage features directly in Chisel.   
+The structure of the system can be seen in the diagram below.
 
-## Vivado UVM Examples
-These examples assume that a copy of Xilinx Vivado is installed and present in the PATH. The examples are currently tested only on Linux.
-* The first example is taken from [Vivado Design Suite Tutorial - Logic Simulation](https://www.xilinx.com/support/documentation/sw_manuals/xilinx2020_1/ug937-vivado-design-suite-simulation-tutorial.pdf)
-
-
-## Leros ALU
-In the directory `sv/leros`, the [Leros ALU](src/main/scala/leros/AluAccuChisel.scala) is tested using UVM, to showcase that Chisel and UVM can work together. This testbench is reused to also test a VHDL implementation of the ALU, to show that UVM is usable on mixed-language designs (when using a mixed-language simulator).
-
-The VHDL implementaion is run by setting the makefile argument `TOP=top_vhd`.
-
-# Using the SV DPI and Javas JNI
-Using the SystemVerilog DPI (Direct Programming Interface) to cosimulate with a golden model described in C is explored in the [scoreboard_dpi.svh file](sv/leros/scoreboards/scoreboard_dpi.svh). The C-model is implemented in `scoreboard.c`, and the checking functionality is called from the SystemVerilog code.
-
-Implementing a similar functionality in Scala/Chisel has been explored via the JNI (Java Native Interface). In the directory `native`, the necessary code for a simple Leros tester using the JNI is implemented. 
-
-To use the JNI functionality, first run `make jni` to generate the correct header files and shared libraries. Then, open sbt and type `project native` to access the native project. Then run `sbt test` to test the Leros ALU using a C model called from within Scala. To switch back, type `project chisel-uvm`. 
-  
-# Functional Coverage in Chisel
-The idea is to implement functional coverage features from SystemVerilog such as `covergroup`, `coverpoint` and `bins` directly in Chisel.  
-
-### Work
-The interesting part of the code can be found in `Functional_coverage_test/src/test/scala/coverage` and a test use case can be found in `Functional_coverage_test/src/test/scala/gcd/GcdTesters2.scala`  
-
-#### What is done 
-So far a basic version of a _verification plan_ has been implemented. This allows one to define constructs similar to _SystemVerilog_'s `covergroup`, `coverpoint` and `bins`. The structure of the system can be seen in the diagram below.  
 ![Structure of the Coverage system](CoverageChisel.png)  
   
-##### Coverage Reporter
+#### Coverage Reporter
 This is the heart of the system. It handles everything from registering the Cover Points to managing the Coverage DataBase. It will also generate the final coverage report. Registering _Cover Points_ together will group them into a same _Cover Group_.  
   
-##### Coverage DB
+#### Coverage DB
 This DataBase handles the maintenance of the values that were sampled for each of the Cover Point bins. This allows us to know how much of the verification plan was tested.  
 The DB also keeps mappings linking _Cover Groups_ to their contained _Cover Points_.  
 
-## How to use it  
+### How to use it  
 The Functional coverage system is compatible with the chisel _testers2_ framework.  
 1. The `CoverageReporter` must first be instanciated within a chisel test.  
-2. `CoverGroup`s can then be created by using the `register` method of the coverage reporter. This takes as parameter a list of `CoverPoints` that contain a `port` that will be sampled, a `portName` that will be shown in the report and a `List[Bins]` created from a name and a scala range.  
-3. The port must then be manually sampled by calling the `sample` method of the coverage reporter.  
-4. Once the test is done, a coverage report can be generated by calling the `printReport` or `report` methods of the coverage reporter.  
+2. `CoverGroup`s can then be created by using the `register` method of the coverage reporter. This takes as parameter a `List[Cover]`. `Cover` represents either a `CoverPoint` or a `CoverCondition` that contains a `port` that will be sampled, a `portName` that will be shown in the report and either a `List[Bins]`, created from a name and a scala range, or a `List[Condition]`, created from a name and an arbitrary condition function.  
+3. `CoverGroups` may also contain a `List[Cross]` which represents a set of hit relations between two ports.  
+4. The port must then be manually sampled by calling the `sample` method of the coverage reporter.  
+5. Once the test is done, a coverage report can be generated by calling the `printReport` or `report` methods of the coverage reporter.  
     
 An example of this can be found [here](https://github.com/chisel-uvm/chisel-uvm/blob/master/src/test/scala/leros/AluAccuTester.scala).  
   
@@ -111,9 +88,50 @@ This is done in order ensure that the coverage database will always remain synch
 The current implementation allows for the following special types of timing:  
 - `Eventually`: This sees if a cross hit was detected at any point in the next given amount of cycles.  
 - `Always`: This only considers a hit if the it was detected every cycle in the next given amount of cycles.  
-- `Exactly`: This only considers a hit if it was detected exactly after a given amount of cycles.
+- `Exactly`: This only considers a hit if it was detected exactly after a given amount of cycles.  
 
-# Constraint Random Verification
+### Cover Conditions  
+__Idea__: A type of coverpoint that can apply arbitrary hit conditions to an arbitrary number of ports.  
+```scala
+CoverCondition(ports: List[Data], readableName: String)(conditions: List[Condition])
+//where a condition is
+Condition(name: String, func : List[BigInt] => Boolean)
+```
+__Example__:
+```scala
+val cr = new CoverageReporter(dut)
+cr.register(
+  //Declare CoverPoints
+  CoverCondition(dut.io.outA::dut.io.outB::Nil, "aAndB")(
+    Condition("aeqb", {
+      case a :: b :: Nil => a == b
+    })::Nil
+)::Nil)
+```
+Bins are thus defined using arbitrary functions of the type `List[BigInt] => Boolean` which represent different hit conditions.
+No coverage percentage is given due to cartesian product complexity. Instead we offer the possibility to use a user-defined "expected number of Hits" to get a coverage percentage. This looks like the following:
+```scala
+val cr = new CoverageReporter(dut)
+cr.register(
+  //Declare CoverPoints
+  CoverCondition(dut.io.outA::dut.io.outB::Nil, "aAndB")(
+    Condition("asuptobAtLeast100Times", {
+      case a::b::Nil => a > b
+  }, Some(100))::Nil
+)::Nil)
+```
+The above example results in the following coverage report:
+```
+============ COVERAGE REPORT ============
+============== GROUP ID: 1 ==============
+COVER_CONDITION NAME: aAndB
+CONDITION aeqb HAS 4 HITS
+CONDITION asuptobAtLeast100 HAS 95 HITS EXPECTED 100 = 95.0%
+=========================================
+=========================================
+```
+
+## Constrained Random Verification
 The CRV package inside this project aims to mimic the functionality of SystemVerilog constraint programming and integrates them into [chisel-tester2](https://github.com/ucb-bar/chisel-testers2).
 The CRV package combines a Constraint Satisfactory Problem Solver, with some helper classes to create and use random objects inside your tests.
 Currently, only the [jacop](https://github.com/radsz/jacop) backend is supported, but in the future other backends can be added.
@@ -221,7 +239,7 @@ assert(myPacket.randomize)
 
 Other usage examples can be found in `src/test/scala/backends/jacopsrc/test/scala/verifyTests/crv/backends/jacop/`
 
-# Example Use Cases
+## Example Use Cases
 
 We will explore a handful of use cases to explore verification.
 
@@ -231,6 +249,32 @@ We will explore a handful of use cases to explore verification.
  * Network-on-chip (in Chisel), see https://github.com/schoeberl/soc-comm
  * Decimation filter from WSA (VHDL code plus testbench given)
 
+*******************************
+
+# UVM Examples
+In the early stages of this project, we explored the possibilty of using UVM to verify Chisel designs. The [sv](sv) directory thus contains a number of UVM examples.
+
+## Simple examples
+ In `sv/uvm-simple-examples` a number of simple examples are located. These start with a very basic testbench with no DUT attached, and gradually transition into a complete testbench.
+
+## Vivado UVM Examples
+These examples assume that a copy of Xilinx Vivado is installed and present in the PATH. The examples are currently tested only on Linux.
+* The first example is taken from [Vivado Design Suite Tutorial - Logic Simulation](https://www.xilinx.com/support/documentation/sw_manuals/xilinx2020_1/ug937-vivado-design-suite-simulation-tutorial.pdf)
+
+## Leros ALU
+In the directory `sv/leros`, the [Leros ALU](src/main/scala/leros/AluAccuChisel.scala) is tested using UVM, to showcase that Chisel and UVM can work together. This testbench is reused to also test a VHDL implementation of the ALU, to show that UVM is usable on mixed-language designs (when using a mixed-language simulator).
+
+The VHDL implementaion is run by setting the makefile argument `TOP=top_vhd`.
+
+# Using the SV DPI and Javas JNI
+Using the SystemVerilog DPI (Direct Programming Interface) to cosimulate with a golden model described in C is explored in the [scoreboard_dpi.svh file](sv/leros/scoreboards/scoreboard_dpi.svh). The C-model is implemented in `scoreboard.c`, and the checking functionality is called from the SystemVerilog code.
+
+Implementing a similar functionality in Scala/Chisel has been explored via the JNI (Java Native Interface). In the directory `native`, the necessary code for a simple Leros tester using the JNI is implemented. 
+
+To use the JNI functionality, first run `make jni` to generate the correct header files and shared libraries. Then, open sbt and type `project native` to access the native project. Then run `sbt test` to test the Leros ALU using a C model called from within Scala. To switch back, type `project chisel-uvm`. 
+
+************************************
+
 # Resources
 If you're interested in learning more about the UVM, we recommend that you explore the repository, as well as some of the following links:
 * [First steps with UVM](https://www.youtube.com/watch?v=qLr8ayWM_Ww)
@@ -238,14 +282,9 @@ If you're interested in learning more about the UVM, we recommend that you explo
 * [ChipVerify.com UVM Tutorials](https://www.chipverify.com/table/uvm/)
 * [Ray Salemi's UVM Primer videos](https://www.youtube.com/watch?v=eeU2zpgXv1A&list=PLigQ6Cc3qFpI_WTgqtDXi_Msk3yRuKGGJ)
 
-
 # Documents
 
 Collect pointers to relevant documents.
-
-## General Verification Documents
-
-## OVM Documents
 
 ## Related Work
 
@@ -277,8 +316,6 @@ Collect pointers to relevant documents.
 - [python-uvm](https://github.com/tpoikela/uvm-python): port of SystemVerilog (SV) Universal Verification Methodology (UVM) 1.2 to Python and cocotb
 ### Hwt --  Python library for hardware development
 [hwt](https://github.com/Nic30/hwt):  one of the golas of this library is to implement some simulation feature similar to UVM
-
-
 
 ## Not strictly relevant resources
 - [CRAVE: An advanced constrained random verification environment for SystemC](https://ieeexplore.ieee.org/document/6376356)

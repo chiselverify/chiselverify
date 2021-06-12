@@ -37,8 +37,7 @@ class CoverageReporter[T <: MultiIOModule](private val dut: T) {
         coverGroups.map(g =>
             GroupReport(
                 g.id,
-                g.points.map(p =>
-                    PointReport(p.portName, p.bins.map(b => BinReport(b, coverageDB.getNHits(p.portName, b.name))))),
+                g.points.map(_.report(coverageDB)),
                 g.crosses.map {
                     case t: TimedCross =>
                         //Sanity check
@@ -112,7 +111,7 @@ class CoverageReporter[T <: MultiIOModule](private val dut: T) {
     def sample(): Unit = {
 
         coverGroups foreach(group => {
-            var sampledPoints: List[CoverPoint] = Nil
+            var sampledPoints: List[Cover] = Nil
 
             //Sample cross points
             group.crosses.foreach(cross => {
@@ -131,8 +130,7 @@ class CoverageReporter[T <: MultiIOModule](private val dut: T) {
                     sampledPoints = sampledPoints :+ point
 
                     //Check for the ports & sample all bins
-                    val pointVal = point.port.peek().asUInt().litValue().toInt
-                    point.bins.foreach(_.sample(point.portName, pointVal, coverageDB))
+                    point.sample(coverageDB)
                 }
             })
         })
@@ -144,12 +142,12 @@ class CoverageReporter[T <: MultiIOModule](private val dut: T) {
       *               These are defined by (portName: String, bins: List[BinSpec])
       * @return the unique ID attributed to the group
       */
-    def register(points: List[CoverPoint], crosses: List[Cross] = Nil): CoverGroup = {
+    def register(points: List[Cover], crosses: List[Cross] = Nil): CoverGroup = {
         //Generate the group's identifier
         val gid: BigInt = coverageDB.createCoverGroup()
 
         //Register coverpoints
-        points foreach (p => coverageDB.registerCoverPoint(p.portName, p))
+        points foreach (p => p.register(coverageDB))
         crosses foreach (c => c.register(coverageDB))
 
         //Create final coverGroup

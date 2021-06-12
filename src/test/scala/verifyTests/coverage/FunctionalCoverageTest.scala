@@ -60,8 +60,9 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
         cr.register(
             //Declare CoverPoints
             CoverPoint(dut.io.outA , "accu")( //CoverPoint 1
-                Bins("lo10even", 0 until 10, () => dut.io.outA.peek().asUInt().litValue() % 2 == 0)::
-                Bins("First100odd", 0 until 100, () => dut.io.outA.peek().asUInt().litValue() % 2 != 0)::Nil)::
+                Bins("lo10even", 0 until 10, Condition("onlyEven", { case (x:BigInt)::Nil => x % 2 == 0 }))::
+                Bins("First100odd", 0 until 100, Condition("onlyOdd",{ case (x:BigInt)::Nil => x % 2 != 0 }))::
+                Nil)::
             CoverPoint(dut.io.outB, "test")( //CoverPoint 2
                 Bins("testLo10", 0 until 10)::Nil)::
         Nil)
@@ -88,6 +89,42 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
         report.binNHits(1, "accu", "lo10even") should be (BigInt(5))
         report.binNHits(1, "accu", "First100odd") should be (BigInt(50))
         report.binNHits(1, "test", "testLo10") should be (BigInt(4))
+    }
+
+    def testCovCond[T <: BasicToyDUT](dut: T): Unit = {
+
+        val cr = new CoverageReporter(dut)
+        cr.register(
+            //Declare CoverPoints
+            CoverCondition(dut.io.outA::dut.io.outB::Nil, "aAndB")(
+                Condition("aeqb", {
+                    case a::b::Nil => a == b
+                })::Condition("asuptobAtLeast100", {
+                    case a::b::Nil => a > b
+                }, Some(100))::Nil
+            )::Nil)
+
+        /**
+          * Basic test to see if we get the right amount of hits
+          */
+        def testOne(): Unit = {
+            for (fun <- 0 until 100) {
+                dut.io.a.poke(toUInt(fun % 95))
+                dut.io.b.poke(toUInt(fun % 4))
+
+                cr.sample()
+            }
+        }
+
+        testOne()
+
+        //Generate report
+        val report = cr.report
+        print(report.serialize)
+
+        //Check that the number of hits is correct
+        report.binNHits(1, "aAndB", "aeqb") should be (BigInt(4))
+        report.binNHits(1, "aAndB", "asuptobAtLeast100") should be (BigInt(95))
     }
 
 
@@ -246,6 +283,13 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
     "CoverageWithDefaultBins" should "pass" in {
         test(new BasicToyDUT(32)) {
             dut => testDefaults(dut)
+        }
+    }
+
+    "CoverageWithCovConditions" should "pass" in {
+        test(new BasicToyDUT(32)) {
+            dut => testCovCond(dut)
+
         }
     }
 
