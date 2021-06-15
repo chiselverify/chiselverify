@@ -91,9 +91,7 @@ The current implementation allows for the following special types of timing:
 - `Exactly`: This only considers a hit if it was detected exactly after a given amount of cycles.  
 
 ### Timed Assertions  
-Delay types can also be used in order to used `Timed Assertions` or `Timed Expect`.  
-These can be used in order to check an assertion, in the form of an arbitrary function, with an added timing argument.  
-We could thus check, for example, that two ports are equal two cycles appart. For example:  
+Delay types can also be used in order to used `Timed Assertions` or `Timed Expect`. These can be used in order to check an assertion, in the form of an arbitrary function, with an added timing argument. We could thus check, for example, that two ports are equal two cycles appart. For example:  
 ```scala
 AssertTimed(dut,() => dut.io.a.peek() == dut.io.b.peek(), "aEqb expected timing is wrong")(Exactly(2)).join()
 ```
