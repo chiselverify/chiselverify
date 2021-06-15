@@ -46,7 +46,7 @@ class CoverageDB {
 
     //Mappings for conditional coverage that hit
     private val registeredConditions: mutable.ArrayBuffer[String] = new ArrayBuffer[String]()
-    private val conditionalHits: mutable.HashMap[String, List[List[BigInt]]] = new mutable.HashMap[String, List[List[BigInt]]]()
+    private val conditionalHits: mutable.HashMap[String, List[Seq[BigInt]]] = new mutable.HashMap[String, List[Seq[BigInt]]]()
     private val conditionSizes: mutable.HashMap[String, BigInt] = new mutable.HashMap[String, BigInt]()
 
     //(pointname, binname) -> List[(value, bin hit cycle)] mapping for timed cross coverage
@@ -139,7 +139,7 @@ class CoverageDB {
       * @param pointName the name of the CoverCondition
       * @param condNames the name of the conditions that occured in a hit
       */
-    def addConditionalHit(condNames: List[String], values: List[BigInt]): Unit = {
+    def addConditionalHit(condNames: Seq[String], values: Seq[BigInt]): Unit = {
         condNames foreach { cond =>
             conditionalHits.update(cond, conditionalHits.getOrElse(cond, Nil) :+ values)
         }

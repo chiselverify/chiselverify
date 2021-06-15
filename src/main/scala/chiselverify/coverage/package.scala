@@ -352,7 +352,7 @@ package object coverage {
       */
     case class CoverGroup(id: BigInt, points: List[Cover], crosses: List[Cross])
 
-    abstract class Cover(val ports: List[Data], val portName: String) {
+    abstract class Cover(val portName: String, val ports: Seq[Data]) {
         override def toString: String = serialize
 
         /**
@@ -383,21 +383,23 @@ package object coverage {
         def register(db: CoverageDB): Unit
     }
 
-    case class Condition(name: String, cond: List[BigInt] => Boolean, expectedHits: Option[BigInt] = None) {
-        def apply(args: List[BigInt]): Boolean = cond(args)
+    case class Condition(name: String, cond: Seq[BigInt] => Boolean, expectedHits: Option[BigInt] = None) {
+        def apply(args: Seq[BigInt]): Boolean = cond(args)
         def report: String = s"CONDITION $name"
-        def +(that: Condition): Condition = Condition(s"$name + ${that.name}", (x : List[BigInt]) => cond(x) && that.cond(x))
+        def +(that: Condition): Condition = Condition(s"$name + ${that.name}", (x : Seq[BigInt]) => cond(x) && that.cond(x))
     }
 
-    case class CoverCondition(p: List[Data], pN: String)(val conds: List[Condition])
-        extends Cover(p, pN) {
-        override def report(db: CoverageDB): Report = ConditionReport(portName, conds, db)
+    case class CoverCondition(pN: String, p: Data*)(conds: Condition*)
+        extends Cover(pN, p.toList) {
+        val conditions: List[Condition] = conds.toList
+
+        override def report(db: CoverageDB): Report = ConditionReport(portName, conditions, db)
 
         override def serialize: String = s"CoverCondition($ports, $portName)($conds)"
 
         override def sample(db: CoverageDB): Unit = {
             val pointVals = ports.map(_.peek().asUInt().litValue())
-            db.addConditionalHit(conds.filter(c => c(pointVals)).map(_.name), pointVals)
+            db.addConditionalHit(conditions.filter(c => c(pointVals)).map(_.name), pointVals)
         }
 
         override def register(db: CoverageDB): Unit = {
@@ -405,7 +407,7 @@ package object coverage {
             db.registerCoverPoint(portName, this)
 
             //Register the conditions
-            db.registerConditions(portName, conds)
+            db.registerConditions(portName, conditions)
         }
     }
 
@@ -416,8 +418,9 @@ package object coverage {
       * @param pN   the name that will be used to represent the point in the report
       * @param bins the list of value ranges that will be checked for for the given port
       */
-    case class CoverPoint(port: Data, pN: String)(val bins: List[Bins] = List(DefaultBin(port)))
-        extends Cover(port::Nil, pN) {
+    case class CoverPoint(pN: String, port: Data)(b: Bins*)
+        extends Cover(pN, port::Nil) {
+        val bins: List[Bins] = if(b.isEmpty) List(DefaultBin(port)) else b.toList
 
         override def serialize: String = s"CoverPoint($port, $portName)(${bins.map(_.serialize)})"
 
@@ -459,8 +462,10 @@ package object coverage {
       * @param pointName2 the other point in the relation
       * @param bins       the list of value ranges that will be checked for for the given relation
       */
-    case class CrossPoint(override val name: String, override val pointName1: String, override val pointName2: String)(override val bins: List[CrossBin])
-        extends Cross(name, pointName1, pointName2, bins) {
+    case class CrossPoint(override val name: String, override val pointName1: String, override val pointName2: String)(b: CrossBin*)
+        extends Cross(name, pointName1, pointName2, b.toList) {
+
+        override val bins: List[CrossBin] = b.toList
 
         override def sample(db: CoverageDB): Option[(Cover, Cover)] = {
 
@@ -500,7 +505,9 @@ package object coverage {
       * @param bins       the list of value ranges that will be checked for for the given relation
       */
     case class TimedCross(override val name: String, override val pointName1: String, override val pointName2: String,
-                          delay: DelayType)(override val bins: List[CrossBin]) extends Cross(name, pointName1, pointName2, bins) {
+                          delay: DelayType)(b: CrossBin*) extends Cross(name, pointName1, pointName2, b.toList) {
+        override val bins: List[CrossBin] = b.toList
+
         private var initCycle: Option[BigInt] = None
 
         override def sample(db: CoverageDB): Option[(CoverPoint, CoverPoint)] = {

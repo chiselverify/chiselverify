@@ -30,7 +30,6 @@ object ExpectTimed {
          * at least once within the window of cycles
          */
         case Eventually(delay) =>
-            //TODO Why test the condition at cycle 0? port.expect(expectedVal, message)
             fork {
                 dut.clock.step(1)
                 for {
