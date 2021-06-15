@@ -17,332 +17,10 @@ package chiselverify
 
 import chisel3.Data
 import chiseltest.testableData
+import chiselverify.coverage.CoverReport._
 import chiselverify.timing._
 
-import scala.collection.mutable
-
 package object coverage {
-
-    /**
-      * Class that can generate a part of the coverage report
-      */
-    abstract class Report {
-        /**
-          * Generates a part of or the entirety of the coverage report
-          *
-          * @return a string containing the coverage report
-          */
-        def report: String
-
-        /**
-          * String ID for the current report
-          */
-        val name: String
-
-        /**
-          * Integer ID for the current report
-          */
-        val id: BigInt
-
-        /**
-          * Adds two different reports of the same type together
-          *
-          * @param that an other report of the same type as this one
-          * @return a concatenated version of the two reports
-          */
-        def +(that: Report): Report
-    }
-
-    def sortByName(a: Report, b: Report): Boolean = a.name > b.name
-
-    def sortById(a: Report, b: Report): Boolean = a.id > b.id
-
-    class CoverageCollector {
-        private val reports = mutable.ArrayBuffer[CoverageReport]()
-
-        def collect(groupReport: CoverageReport): Unit = {
-            reports += groupReport
-        }
-
-        def report: String = {
-            reports.reduce(_ + _).serialize
-        }
-    }
-
-    /**
-      * General data class containing the coverage report
-      *
-      * @param groups the list of group reports
-      */
-    case class CoverageReport(groups: List[Report]) extends Serializable {
-        /**
-          * Creates a human-readable coverage report
-          */
-        def serialize: String = {
-            val rep = new StringBuilder(s"\n============ COVERAGE REPORT ============\n")
-            groups foreach (group => rep append s"${group.report}")
-            rep append "=========================================\n"
-            rep.mkString
-        }
-
-        /**
-          * Traverses the report tree to find the given bin (if any)
-          *
-          * @param groupId   the id of the group containing the bin
-          * @param pointName the name the point that contains the bin
-          * @param binName   the name of the bin itself
-          * @return
-          */
-        def binNHits(groupId: BigInt, pointName: String, binName: String): BigInt = {
-            //Look for the group
-            groups.find(_.id == groupId) match {
-                case None => throw new IllegalArgumentException(s"No group with ID $groupId!!")
-
-                //Look for the point
-                case Some(group) => group match {
-                    case GroupReport(_, points, crosses) =>
-                        points.find(_.name == pointName) match {
-                            case None => crosses.find(_.name == pointName) match {
-                                case None => throw new IllegalArgumentException(s"No point with name $pointName!!")
-
-                                //Look for the cross bin
-                                case Some(c) => c match {
-                                    case CrossReport(_, bins, _) =>
-                                        bins.find(_.name == binName) match {
-                                            case None => throw new IllegalArgumentException(s"No bin with name $binName!!")
-                                            case Some(b) => b match {
-                                                case CrossBinReport(_, nHits) => nHits
-                                                case _ => throw new IllegalStateException("CrossBin must be reported with a CrossBinReport")
-                                            }
-                                        }
-                                    case _ => throw new IllegalStateException("Cross must be reported with a CrossReport")
-                                }
-                            }
-                            //Look for the bin
-                            case Some(p) => p match {
-                                case PointReport(_, bins) =>
-                                    bins.find(_.name == binName) match {
-                                        case None => throw new IllegalArgumentException(s"No bin with name $binName!!")
-                                        case Some(b) => b match {
-                                            case BinReport(_, nHits) => nHits
-                                            case _ => throw new IllegalStateException("Bin must be reported with a BinReport")
-                                        }
-                                    }
-                                case ConditionReport(_, conds, db) =>
-                                    conds.find(_.name == binName) match {
-                                        case None => throw new IllegalArgumentException(s"No condition with name $binName!!")
-                                        case Some(cond) => db.getNHits(cond.name)
-                                    }
-                                case _ => throw new IllegalStateException("Point must be reported with a PointReport")
-                            }
-                        }
-                    case _ => throw new IllegalStateException("Group must be reported with a GroupReport")
-                }
-            }
-        }
-
-        override def equals(that: Any): Boolean = that match {
-            case CoverageReport(g) => g.sortWith(sortById) == groups.sortWith(sortById)
-            case _ => false
-        }
-
-        def +(that: CoverageReport): CoverageReport = {
-            require(this == that)
-            CoverageReport((that.groups zip groups).map { case (g1, g2) => g1 + g2 })
-        }
-    }
-
-    /**
-      * Contains the coverage report info for a given cover group
-      *
-      * @param id      the id of the group
-      * @param points  the list of reports for the coverpoints contained in this group
-      * @param crosses the list of reports for the crosspoints contained in this group
-      */
-    case class GroupReport(id: BigInt, points: List[Report] = Nil, crosses: List[Report] = Nil) extends Report {
-        override def report: String = {
-            val rep = new StringBuilder(s"============== GROUP ID: $id ==============\n")
-            points foreach (point => rep append s"${point.report}\n=========================================\n")
-            crosses foreach (cross => rep append s"${cross.report}\n=========================================\n")
-            rep.mkString
-        }
-
-        override def equals(that: Any): Boolean = that match {
-            case GroupReport(i, p, c) => i == id && p.sortWith(sortByName) == points.sortWith(sortByName) &&
-                c.sortWith(sortByName) == crosses.sortWith(sortByName)
-            case _ => false
-        }
-
-        override def +(that: Report): Report = that match {
-            case GroupReport(_, tpoints, tcrosses) =>
-                require(this == that)
-                val newPoints: List[Report] = (tpoints zip points).map { case (p1, p2) => p1 + p2 }
-                val newCrosses = (tcrosses zip crosses).map { case (c1, c2) => c1 + c2 }
-                GroupReport(id, newPoints, newCrosses)
-
-            case _ => throw new IllegalArgumentException("Argument must be of type GroupReport")
-        }
-
-        /**
-          * String ID for the current report
-          */
-        override val name: String = s"$id"
-    }
-
-    case class ConditionReport(name: String, conds: List[Condition], db: CoverageDB) extends Report {
-        override def report: String = {
-            val rep = new StringBuilder(s"COVER_CONDITION NAME: $name")
-
-            conds foreach {
-                cond => {
-                    val nHits = db.getNHits(cond.name)
-                    rep append s"\n${cond.report} HAS ${nHits} HITS"
-                    //CAUSES HEAP OVERFLOW
-                    //val percent = (nHits.toDouble / db.getCondSize(cond.name).toDouble) * 100.0
-                    //Using expected hits instead
-                    rep append (cond.expectedHits match {
-                        case None => ""
-                        case Some(eH) => s" EXPECTED $eH = ${(nHits.toDouble / eH.toDouble) * 100.0}%"
-                    })
-                }
-            }
-            rep.mkString
-        }
-
-        override def +(that: Report): Report = that match {
-            case ConditionReport(_, tconds, db) =>
-                require(this == that)
-                val newPoints = (conds zip tconds).map { case (b1, b2) => b1 + b2 }
-                ConditionReport(name, newPoints, db)
-
-            case _ => throw new IllegalArgumentException("Argument must be of type ConditionReport")
-        }
-
-        override val id: BigInt = name.hashCode
-    }
-
-    /**
-      * Contains the coverage report info for a given cover point
-      *
-      * @param name the name of the cover point
-      * @param bins the list of reports related to the bins of the current cover point
-      */
-    case class PointReport(name: String, bins: List[Report]) extends Report {
-        override def report: String = {
-            val rep = new StringBuilder(s"COVER_POINT PORT NAME: $name")
-            bins foreach (bin => rep append s"\n${bin.report}")
-            rep.mkString
-        }
-
-        override def equals(that: Any): Boolean = that match {
-            case PointReport(n, b) => n == name && b.sortWith(sortByName) == bins.sortWith(sortByName)
-            case _ => false
-        }
-
-        override def +(that: Report): Report = that match {
-            case PointReport(_, tbins) =>
-                require(this == that)
-                val newPoints = (bins zip tbins).map { case (b1, b2) => b1 + b2 }
-                PointReport(name, newPoints)
-
-            case _ => throw new IllegalArgumentException("Argument must be of type PointReport")
-        }
-
-        override val id: BigInt = name.hashCode
-    }
-
-    /**
-      * Contains the coverage report info for a given cross point
-      *
-      * @param cross a reference to the cross point for which we are generating a report
-      * @param bins  the list of reports related to the bins of the current cross point
-      */
-    case class CrossReport(cross: Cross, bins: List[Report], delay: DelayType = NoDelay) extends Report {
-        override def report: String = {
-            val rep = new StringBuilder(s"CROSS_POINT ${cross.name} FOR POINTS ${cross.pointName1} AND ${cross.pointName2}")
-            rep append delay.toString
-            bins foreach (bin => rep append s"\n${bin.report}")
-            rep.mkString
-        }
-
-        override def equals(that: Any): Boolean = that match {
-            case CrossReport(c, b, d) =>
-                c == cross && bins.sortWith(sortByName) == b.sortWith(sortByName) && d == delay
-            case _ => false
-        }
-
-        def +(that: Report): Report = that match {
-            case CrossReport(_, tbins, _) =>
-                require(this == that)
-                val newBins = (bins zip tbins).map { case (b1, b2) => b1 + b2 }
-                CrossReport(cross, newBins, delay)
-            case _ => throw new IllegalArgumentException("Argument must be of type CrossReport")
-        }
-
-        override val name: String = cross.name
-        override val id: BigInt = name.hashCode
-    }
-
-    /**
-      * Contains the coverage report info for a given cover point bin
-      *
-      * @param bin   a reference to the bin for which we are generating a report
-      * @param nHits the number of hits sampled for this bin during the test suite
-      */
-    case class BinReport(bin: Bins, nHits: BigInt) extends Report {
-        private val proportion = nHits.toInt / bin.range.size.toDouble
-        private val percentage = f"${if (proportion > 1) 100 else proportion * 100}%1.2f"
-
-        override def report: String = s"BIN ${bin.name} COVERING ${bin.range.toString}" +
-            s"${if (bin.condition.name != "$$__def__$$") s" WITH ${bin.condition.report}" else ""}" +
-            s" HAS $nHits HIT(S) = $percentage%"
-
-        override def equals(that: Any): Boolean = that match {
-            case BinReport(b, _) => b == bin
-            case _ => false
-        }
-
-        override def +(that: Report): Report = that match {
-            case BinReport(_, tnHits) =>
-                require(this == that)
-                BinReport(bin, tnHits + nHits)
-            case _ => throw new IllegalArgumentException("Argument must be of type BinReport")
-        }
-
-        override val name: String = bin.name
-        override val id: BigInt = bin.name.hashCode
-    }
-
-    /**
-      * Contains the coverage report info for a given cross point bin
-      *
-      * @param crossBin a reference to the cross bin for which we are generating a report
-      * @param nHits    the number of hits sampled for this cross bin during the test suite
-      */
-    case class CrossBinReport(crossBin: CrossBin, nHits: BigInt) extends Report {
-        private val proportion = nHits.toDouble / (crossBin.range1.size * crossBin.range2.size).toDouble
-        private val percentage = f"${if (proportion > 1) 100 else proportion * 100.0}%1.2f"
-
-        override def report: String =
-            s"BIN ${crossBin.name} COVERING ${crossBin.range1.toString} CROSS ${crossBin.range2.toString} HAS $nHits HIT(S) = $percentage%"
-
-        override def equals(that: Any): Boolean = that match {
-            case CrossBinReport(c, _) => c == crossBin
-            case _ => false
-        }
-
-        def +(that: Report): Report = that match {
-            case CrossBinReport(_, tnHits) =>
-                require(this == that)
-                CrossBinReport(crossBin, nHits + tnHits)
-            case _ => throw new IllegalArgumentException("Argument must be of type CrossBinReport")
-        }
-
-        override val name: String = crossBin.name
-        override val id: BigInt = name.hashCode
-
-    }
-
     /**
       * Represents a group of cover points that will be sampled simultaneously
       *
@@ -352,7 +30,7 @@ package object coverage {
       */
     case class CoverGroup(id: BigInt, points: List[Cover], crosses: List[Cross])
 
-    abstract class Cover(val ports: List[Data], val portName: String) {
+    abstract class Cover(val portName: String, val ports: Seq[Data]) {
         override def toString: String = serialize
 
         /**
@@ -383,21 +61,23 @@ package object coverage {
         def register(db: CoverageDB): Unit
     }
 
-    case class Condition(name: String, cond: List[BigInt] => Boolean, expectedHits: Option[BigInt] = None) {
-        def apply(args: List[BigInt]): Boolean = cond(args)
+    case class Condition(name: String, cond: Seq[BigInt] => Boolean, expectedHits: Option[BigInt] = None) {
+        def apply(args: Seq[BigInt]): Boolean = cond(args)
         def report: String = s"CONDITION $name"
-        def +(that: Condition): Condition = Condition(s"$name + ${that.name}", (x : List[BigInt]) => cond(x) && that.cond(x))
+        def +(that: Condition): Condition = Condition(s"$name + ${that.name}", (x : Seq[BigInt]) => cond(x) && that.cond(x))
     }
 
-    case class CoverCondition(p: List[Data], pN: String)(val conds: List[Condition])
-        extends Cover(p, pN) {
-        override def report(db: CoverageDB): Report = ConditionReport(portName, conds, db)
+    case class CoverCondition(pN: String, p: Data*)(conds: Condition*)
+        extends Cover(pN, p.toList) {
+        val conditions: List[Condition] = conds.toList
+
+        override def report(db: CoverageDB): Report = ConditionReport(portName, conditions, db)
 
         override def serialize: String = s"CoverCondition($ports, $portName)($conds)"
 
         override def sample(db: CoverageDB): Unit = {
             val pointVals = ports.map(_.peek().asUInt().litValue())
-            db.addConditionalHit(conds.filter(c => c(pointVals)).map(_.name), pointVals)
+            db.addConditionalHit(conditions.filter(c => c(pointVals)).map(_.name), pointVals)
         }
 
         override def register(db: CoverageDB): Unit = {
@@ -405,7 +85,7 @@ package object coverage {
             db.registerCoverPoint(portName, this)
 
             //Register the conditions
-            db.registerConditions(portName, conds)
+            db.registerConditions(portName, conditions)
         }
     }
 
@@ -416,8 +96,9 @@ package object coverage {
       * @param pN   the name that will be used to represent the point in the report
       * @param bins the list of value ranges that will be checked for for the given port
       */
-    case class CoverPoint(port: Data, pN: String)(val bins: List[Bins] = List(DefaultBin(port)))
-        extends Cover(port::Nil, pN) {
+    case class CoverPoint(pN: String, port: Data)(b: Bins*)
+        extends Cover(pN, port::Nil) {
+        val bins: List[Bins] = if(b.isEmpty) List(DefaultBin(port)) else b.toList
 
         override def serialize: String = s"CoverPoint($port, $portName)(${bins.map(_.serialize)})"
 
@@ -459,8 +140,10 @@ package object coverage {
       * @param pointName2 the other point in the relation
       * @param bins       the list of value ranges that will be checked for for the given relation
       */
-    case class CrossPoint(override val name: String, override val pointName1: String, override val pointName2: String)(override val bins: List[CrossBin])
-        extends Cross(name, pointName1, pointName2, bins) {
+    case class CrossPoint(override val name: String, override val pointName1: String, override val pointName2: String)(b: CrossBin*)
+        extends Cross(name, pointName1, pointName2, b.toList) {
+
+        override val bins: List[CrossBin] = b.toList
 
         override def sample(db: CoverageDB): Option[(Cover, Cover)] = {
 
@@ -500,7 +183,9 @@ package object coverage {
       * @param bins       the list of value ranges that will be checked for for the given relation
       */
     case class TimedCross(override val name: String, override val pointName1: String, override val pointName2: String,
-                          delay: DelayType)(override val bins: List[CrossBin]) extends Cross(name, pointName1, pointName2, bins) {
+                          delay: DelayType)(b: CrossBin*) extends Cross(name, pointName1, pointName2, b.toList) {
+        override val bins: List[CrossBin] = b.toList
+
         private var initCycle: Option[BigInt] = None
 
         override def sample(db: CoverageDB): Option[(CoverPoint, CoverPoint)] = {

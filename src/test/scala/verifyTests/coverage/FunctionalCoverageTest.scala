@@ -19,15 +19,15 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
         val cr = new CoverageReporter(dut)
         cr.register(
             //Declare CoverPoints
-            CoverPoint(dut.io.outA , "accu")( //CoverPoint 1
-                Bins("lo10", 0 until 10)::Bins("First100", 0 until 100)::Nil)::
-            CoverPoint(dut.io.outB, "test")( //CoverPoint 2
-                 Bins("testLo10", 0 until 10)::Nil)::
-            Nil,
-        //Declare cross points
-        CrossPoint("accuAndTest", "accu", "test")(
-            CrossBin("both1", 1 to 1, 1 to 1)::Nil)::
-        Nil)
+            CoverPoint("accu", dut.io.outA)( //CoverPoint 1
+                Bins("lo10", 0 until 10), Bins("First100", 0 until 100)),
+            CoverPoint("test", dut.io.outB)( //CoverPoint 2
+                 Bins("testLo10", 0 until 10))
+        )(
+            //Declare cross points
+            CrossPoint("accuAndTest", "accu", "test")(
+                CrossBin("both1", 1 to 1, 1 to 1))
+        )
 
         /**
           * Basic test to see if we get the right amount of hits
@@ -59,13 +59,12 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
         val cr = new CoverageReporter(dut)
         cr.register(
             //Declare CoverPoints
-            CoverPoint(dut.io.outA , "accu")( //CoverPoint 1
-                Bins("lo10even", 0 until 10, Condition("onlyEven", { case (x:BigInt)::Nil => x % 2 == 0 }))::
-                Bins("First100odd", 0 until 100, Condition("onlyOdd",{ case (x:BigInt)::Nil => x % 2 != 0 }))::
-                Nil)::
-            CoverPoint(dut.io.outB, "test")( //CoverPoint 2
-                Bins("testLo10", 0 until 10)::Nil)::
-        Nil)
+            CoverPoint("accu", dut.io.outA)( //CoverPoint 1
+                Bins("lo10even", 0 until 10, Condition("onlyEven", { case Seq(x) => x % 2 == 0 })),
+                Bins("First100odd", 0 until 100, Condition("onlyOdd",{ case Seq(x) => x % 2 != 0 }))),
+            CoverPoint("test", dut.io.outB)( //CoverPoint 2
+                Bins("testLo10", 0 until 10))
+        )()
 
         /**
           * Basic test to see if we get the right amount of hits
@@ -96,13 +95,11 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
         val cr = new CoverageReporter(dut)
         cr.register(
             //Declare CoverPoints
-            CoverCondition(dut.io.outA::dut.io.outB::Nil, "aAndB")(
-                Condition("aeqb", {
-                    case a::b::Nil => a == b
-                })::Condition("asuptobAtLeast100", {
-                    case a::b::Nil => a > b
-                }, Some(100))::Nil
-            )::Nil)
+            CoverCondition("aAndB",dut.io.outA, dut.io.outB)(
+                Condition("aeqb", { case Seq(a, b) => a == b }),
+                Condition("asuptobAtLeast100", { case Seq(a, b) => a > b }, Some(100))
+            )
+        )()
 
         /**
           * Basic test to see if we get the right amount of hits
@@ -136,10 +133,10 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
         val cr = new CoverageReporter(dut)
         cr.register(
             //Declare CoverPoints with default bins
-            CoverPoint(dut.io.outA , "a")()::
-            CoverPoint(dut.io.outB, "b")()::
-            CoverPoint(dut.io.outAB, "aplusb")():: Nil
-        )
+            CoverPoint("a", dut.io.outA)(),
+            CoverPoint("b", dut.io.outB)(),
+            CoverPoint("aplusb", dut.io.outAB)()
+        )()
 
         /**
           * Basic test to see if we get the right amount of hits
@@ -201,24 +198,26 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
         val cr = new CoverageReporter(dut)
         cr.register(
             //Declare CoverPoints
-            CoverPoint(dut.io.outA , "a")( //CoverPoint 1
-                Bins("lo10", 0 until 10)::Nil)::
-            CoverPoint(dut.io.count, "count")( //CoverPoint 2
-                Bins("testLo10", 0 until 10)::Nil)::
-            CoverPoint(dut.io.outB, "b")(
-                Bins("test10", 0 until 10)::Nil
-            )::
-            CoverPoint(dut.io.outC, "c")(
-                Bins("test5", 0 until 5)::Nil
-            )::Nil,
+            CoverPoint("a", dut.io.outA)( //CoverPoint 1
+                Bins("lo10", 0 until 10)),
+            CoverPoint("count", dut.io.count)( //CoverPoint 2
+                Bins("testLo10", 0 until 10)),
+            CoverPoint("b", dut.io.outB)(
+                Bins("test10", 0 until 10)
+            ),
+            CoverPoint("c", dut.io.outC)(
+                Bins("test5", 0 until 5)
+            )
+        )(
             //Declare timed cross points
             TimedCross("timedAB", "a", "count", Exactly(3))(
-                CrossBin("both3", 3 to 3, 3 to 3)::Nil)::
+                CrossBin("both3", 3 to 3, 3 to 3)),
             TimedCross("EventuallyTimedAB", "b", "count", Eventually(3))(
-                CrossBin("both1", 1 to 1, 1 to 1)::Nil)::
+                CrossBin("both1", 1 to 1, 1 to 1)),
             TimedCross("AlwaysTimedAB", "c", "a", Always(3))(
-                CrossBin("both3", 3 to 3, 3 to 3)::Nil
-            )::Nil)
+                CrossBin("both3", 3 to 3, 3 to 3)
+            )
+        )
 
 
         /**
@@ -251,15 +250,15 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
         val cr = new CoverageReporter(dut)
         cr.register(
             //Declare CoverPoints
-            CoverPoint(dut.io.outA , "a")( //CoverPoint 1
-                Bins("lo10", 0 until 10)::Nil)::
-            CoverPoint(dut.io.outB, "b")( //CoverPoint 2
-                Bins("testLo10", 0 until 10)::Nil)::
-            Nil,
+            CoverPoint("a", dut.io.outA)( //CoverPoint 1
+                Bins("lo10", 0 until 10)),
+            CoverPoint("b", dut.io.outB)( //CoverPoint 2
+                Bins("testLo10", 0 until 10))
+        )(
             //Declare timed cross points
             TimedCross("timedAB", "a", "b", Exactly(3))(
-                CrossBin("both1", 3 to 3, 3 to 3)::Nil)::
-            Nil)
+                CrossBin("both1", 3 to 3, 3 to 3))
+        )
 
         /**
           * Basic test to see if we get the right exception

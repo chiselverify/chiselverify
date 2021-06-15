@@ -61,16 +61,16 @@ __Example__: We have the following situation, imagine we have a device that brea
 
 We want to verify that the above case was tested. This can be done by defining a `TimedCross` between the two points:  
 ```scala
-        val cr = new CoverageReporter(dut)
-        cr.register(
-            //Declare CoverPoints
-            CoverPoint(dut.io.a, "a")())::
-            CoverPoint(dut.io.b, "b")())::
-            Nil,
-            //Declare timed cross point with a delay of 1 cycle
-            TimedCross("timedAB", "a", "b", Exactly(1))(
-                CrossBin("both1", 1 to 1, 1 to 1)::Nil)::
-            Nil)
+val cr = new CoverageReporter(dut)
+cr.register(
+      //Declare CoverPoints
+      CoverPoint(dut.io.a, "a")()),
+      CoverPoint(dut.io.b, "b")()),
+      //Declare timed cross point with a delay of 1 cycle
+      TimedCross("timedAB", "a", "b", Exactly(1))(
+            CrossBin("both1", 1 to 1, 1 to 1)
+      )
+)
 ```  
 
 Using that, we can check that we tested the above case in our test suite.  
@@ -90,23 +90,31 @@ The current implementation allows for the following special types of timing:
 - `Always`: This only considers a hit if the it was detected every cycle in the next given amount of cycles.  
 - `Exactly`: This only considers a hit if it was detected exactly after a given amount of cycles.  
 
+### Timed Assertions  
+Delay types can also be used in order to used `Timed Assertions` or `Timed Expect`. These can be used in order to check an assertion, in the form of an arbitrary function, with an added timing argument. We could thus check, for example, that two ports are equal two cycles appart. For example:  
+```scala
+AssertTimed(dut,() => dut.io.a.peek() == dut.io.b.peek(), "aEqb expected timing is wrong")(Exactly(2)).join()
+```
+This can also be done more naturally with the `Expect` interface:  
+```scala
+ExpectTimed(dut,dut.io.a, dut.io.b.peek().litValue(), "aEqb expected timing is wrong")(Exactly(2)).join()
+```
+
 ### Cover Conditions  
 __Idea__: A type of coverpoint that can apply arbitrary hit conditions to an arbitrary number of ports.  
 ```scala
-CoverCondition(ports: List[Data], readableName: String)(conditions: List[Condition])
+CoverCondition(readableName: String, ports: Data*)(conditions: Condition*)
 //where a condition is
-Condition(name: String, func : List[BigInt] => Boolean)
+Condition(name: String, func : Seq[BigInt] => Boolean)
 ```
 __Example__:
 ```scala
 val cr = new CoverageReporter(dut)
 cr.register(
   //Declare CoverPoints
-  CoverCondition(dut.io.outA::dut.io.outB::Nil, "aAndB")(
-    Condition("aeqb", {
-      case a :: b :: Nil => a == b
-    })::Nil
-)::Nil)
+  CoverCondition("aAndB", dut.io.outA, dut.io.outB)(
+    Condition("aeqb", { case Seq(a, b) => a == b })
+))
 ```
 Bins are thus defined using arbitrary functions of the type `List[BigInt] => Boolean` which represent different hit conditions.
 No coverage percentage is given due to cartesian product complexity. Instead we offer the possibility to use a user-defined "expected number of Hits" to get a coverage percentage. This looks like the following:
@@ -114,11 +122,9 @@ No coverage percentage is given due to cartesian product complexity. Instead we 
 val cr = new CoverageReporter(dut)
 cr.register(
   //Declare CoverPoints
-  CoverCondition(dut.io.outA::dut.io.outB::Nil, "aAndB")(
-    Condition("asuptobAtLeast100Times", {
-      case a::b::Nil => a > b
-  }, Some(100))::Nil
-)::Nil)
+  CoverCondition("aAndB", dut.io.outA, dut.io.outB)(
+    Condition("asuptobAtLeast100Times", { case Seq(a, b) => a > b }, Some(100))
+))
 ```
 The above example results in the following coverage report:
 ```
