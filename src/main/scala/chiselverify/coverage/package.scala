@@ -30,6 +30,11 @@ package object coverage {
       */
     case class CoverGroup(id: BigInt, points: List[Cover], crosses: List[Cross])
 
+    /**
+      * Represents the generic notion of a CoverPoint.
+      * @param portName the readable name used by the reporter.
+      * @param ports a sequence of ports that are associated to this point.
+      */
     abstract class Cover(val portName: String, val ports: Seq[Data]) {
         override def toString: String = serialize
 
@@ -61,12 +66,69 @@ package object coverage {
         def register(db: CoverageDB): Unit
     }
 
+    /**
+      * Represents the generic idea of a cross point
+      * @param name the readable name of the cross point, which will be used by the reporter.
+      * @param pointName1 the name of the 1st point associated to the cross relation.
+      *                   Must have already been registered before it can be used in the cross point.
+      * @param pointName2 the name of the 2nd point associated to the cross relation.
+      *                   Must have already been registered before it can be used in the cross point.
+      * @param bins the set of bins associated to the relation.
+      */
+    abstract class Cross(val name: String, val pointName1: String, val pointName2: String, val bins: List[CrossBin]) {
+
+        /**
+          * Samples the current cross relation using a given database
+          *
+          * @param db the current database used throughout the test suits
+          * @return the two points that were sampled during this cross sampling
+          */
+        def sample(db: CoverageDB): Option[(Cover, Cover)]
+
+        /**
+          * Registers the current cross point with the given coverage DB
+          *
+          * @param db the database used for the current test suite
+          */
+        def register(db: CoverageDB): Unit
+    }
+
+    /**
+      * Represents a hit-consideration condition. Similar to a Bin, but with condition defined ranges.
+      * @param name the name of the condition that will be used in the report
+      * @param cond the condition function
+      * @param expectedHits optional expected number of hits. This will add a coverage % field in the report.
+      */
     case class Condition(name: String, cond: Seq[BigInt] => Boolean, expectedHits: Option[BigInt] = None) {
+        /**
+          * Applies the condition on given dut port values.
+          * @param args a sequence of dut port values.
+          * @return the result of condition on the given values.
+          */
         def apply(args: Seq[BigInt]): Boolean = cond(args)
+
+        /**
+          * Generated the condition's "part" of the report.
+          * @return a string containing the condition's readable name.
+          */
         def report: String = s"CONDITION $name"
+
+        /**
+          * Adds two conditions together.
+          * @param that the condition we are adding to our own.
+          * @return a new condition containing the names of both conditions and a function that is valid only when
+          *         both conditions are valid.
+          */
         def +(that: Condition): Condition = Condition(s"$name + ${that.name}", (x : Seq[BigInt]) => cond(x) && that.cond(x))
     }
 
+    /**
+      * Represents a CoverPoint where the bins are defined by arbitrary conditions.
+      * These special points can be related to multiple points.
+      * @param pN the name of the point, used by the coverage reporter.
+      * @param p a variable number of associated ports.
+      * @param conds a variable number of conditions associated to the set of ports.
+      */
     case class CoverCondition(pN: String, p: Data*)(conds: Condition*)
         extends Cover(pN, p.toList) {
         val conditions: List[Condition] = conds.toList
@@ -112,24 +174,6 @@ package object coverage {
             PointReport(portName, bins.map(b => BinReport(b, db.getNHits(portName, b.name))))
 
         override def register(db: CoverageDB): Unit = db.registerCoverPoint(portName, this)
-    }
-
-    abstract class Cross(val name: String, val pointName1: String, val pointName2: String, val bins: List[CrossBin]) {
-
-        /**
-          * Samples the current cross relation using a given database
-          *
-          * @param db the current database used throughout the test suits
-          * @return the two points that were sampled during this cross sampling
-          */
-        def sample(db: CoverageDB): Option[(Cover, Cover)]
-
-        /**
-          * Registers the current cross point with the given coverage DB
-          *
-          * @param db the database used for the current test suite
-          */
-        def register(db: CoverageDB): Unit
     }
 
     /**
@@ -186,6 +230,7 @@ package object coverage {
                           delay: DelayType)(b: CrossBin*) extends Cross(name, pointName1, pointName2, b.toList) {
         override val bins: List[CrossBin] = b.toList
 
+        //Used to keep track of time
         private var initCycle: Option[BigInt] = None
 
         override def sample(db: CoverageDB): Option[(CoverPoint, CoverPoint)] = {
@@ -255,6 +300,9 @@ package object coverage {
         def serialize: String = s"Bin( $name, ${rangeOpt.getOrElse("")} ${if (condition.cond != ((_: List[BigInt]) => true)) condition})"
     }
 
+    /**
+      * Shorthand to simplify the Bin's API
+      */
     object Bins {
         def apply(name: String, condition: Condition): Bins = new Bins(name, None, condition)
         def apply(name: String, range: Range): Bins = new Bins(name, Some(range))
