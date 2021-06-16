@@ -17,6 +17,13 @@ When you use this library in a research project, please cite it as:
 }
 ```
 
+ChiselVerify is published on Maven. To use it, add following line to your
+```build.sbt```:
+
+```
+libraryDependencies += "io.github.chiselverify" % "chiselverify" % "0.1"
+```
+
 Run tests with
 ```
 make
