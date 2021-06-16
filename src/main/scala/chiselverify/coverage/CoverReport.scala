@@ -80,29 +80,21 @@ object CoverReport {
             //Look for the group
             groups.find(_.id == groupId) match {
                 case None => throw new IllegalArgumentException(s"No group with ID $groupId!!")
-
                 //Look for the point
                 case Some(group) => group match {
-                    case GroupReport(_, points, crosses) =>
+                    case GroupReport(_, points) =>
                         points.find(_.name == pointName) match {
-                            case None => crosses.find(_.name == pointName) match {
-                                case None => throw new IllegalArgumentException(s"No point with name $pointName!!")
-
-                                //Look for the cross bin
-                                case Some(c) => c match {
-                                    case CrossReport(_, bins, _) =>
-                                        bins.find(_.name == binName) match {
-                                            case None => throw new IllegalArgumentException(s"No bin with name $binName!!")
-                                            case Some(b) => b match {
-                                                case CrossBinReport(_, nHits) => nHits
-                                                case _ => throw new IllegalStateException("CrossBin must be reported with a CrossBinReport")
-                                            }
+                            case None => throw new IllegalArgumentException(s"No point with name $pointName!!")
+                            //Look for the cross bin
+                            case Some(c) => c match {
+                                case CrossReport(_, bins, _) =>
+                                    bins.find(_.name == binName) match {
+                                        case None => throw new IllegalArgumentException(s"No bin with name $binName!!")
+                                        case Some(b) => b match {
+                                            case CrossBinReport(_, nHits) => nHits
+                                            case _ => throw new IllegalStateException("CrossBin must be reported with a CrossBinReport")
                                         }
-                                    case _ => throw new IllegalStateException("Cross must be reported with a CrossReport")
-                                }
-                            }
-                            //Look for the bin
-                            case Some(p) => p match {
+                                    }
                                 case PointReport(_, bins) =>
                                     bins.find(_.name == binName) match {
                                         case None => throw new IllegalArgumentException(s"No bin with name $binName!!")
@@ -116,7 +108,7 @@ object CoverReport {
                                         case None => throw new IllegalArgumentException(s"No condition with name $binName!!")
                                         case Some(cond) => db.getNHits(cond.name)
                                     }
-                                case _ => throw new IllegalStateException("Point must be reported with a PointReport")
+                                case _ => throw new IllegalStateException("Illegal report type!")
                             }
                         }
                     case _ => throw new IllegalStateException("Group must be reported with a GroupReport")
@@ -142,26 +134,23 @@ object CoverReport {
       * @param points  the list of reports for the coverpoints contained in this group
       * @param crosses the list of reports for the crosspoints contained in this group
       */
-    case class GroupReport(id: BigInt, points: List[Report] = Nil, crosses: List[Report] = Nil) extends Report {
+    case class GroupReport(id: BigInt, points: List[Report] = Nil) extends Report {
         override def report: String = {
             val rep = new StringBuilder(s"============== GROUP ID: $id ==============\n")
             points foreach (point => rep append s"${point.report}\n=========================================\n")
-            crosses foreach (cross => rep append s"${cross.report}\n=========================================\n")
             rep.mkString
         }
 
         override def equals(that: Any): Boolean = that match {
-            case GroupReport(i, p, c) => i == id && p.sortWith(sortByName) == points.sortWith(sortByName) &&
-                c.sortWith(sortByName) == crosses.sortWith(sortByName)
+            case GroupReport(i, p) => i == id && p.sortWith(sortByName) == points.sortWith(sortByName)
             case _ => false
         }
 
         override def +(that: Report): Report = that match {
-            case GroupReport(_, tpoints, tcrosses) =>
+            case GroupReport(_, tpoints) =>
                 require(this == that)
                 val newPoints: List[Report] = (tpoints zip points).map { case (p1, p2) => p1 + p2 }
-                val newCrosses = (tcrosses zip crosses).map { case (c1, c2) => c1 + c2 }
-                GroupReport(id, newPoints, newCrosses)
+                GroupReport(id, newPoints)
 
             case _ => throw new IllegalArgumentException("Argument must be of type GroupReport")
         }
@@ -242,7 +231,7 @@ object CoverReport {
       */
     case class CrossReport(cross: Cross, bins: List[Report], delay: DelayType = NoDelay) extends Report {
         override def report: String = {
-            val rep = new StringBuilder(s"CROSS_POINT ${cross.name} FOR POINTS ${cross.pointName1} AND ${cross.pointName2}")
+            val rep = new StringBuilder(s"CROSS_POINT ${cross.name}")
             rep append delay.toString
             bins foreach (bin => rep append s"\n${bin.report}")
             rep.mkString
@@ -303,11 +292,11 @@ object CoverReport {
       * @param nHits    the number of hits sampled for this cross bin during the test suite
       */
     case class CrossBinReport(crossBin: CrossBin, nHits: BigInt) extends Report {
-        private val proportion = nHits.toDouble / (crossBin.range1.size * crossBin.range2.size).toDouble
+        private val proportion = nHits.toDouble / crossBin.ranges.map(_.size).foldLeft(0.0)(_*_)
         private val percentage = f"${if (proportion > 1) 100 else proportion * 100.0}%1.2f"
 
         override def report: String =
-            s"BIN ${crossBin.name} COVERING ${crossBin.range1.toString} CROSS ${crossBin.range2.toString} HAS $nHits HIT(S) = $percentage%"
+            s"BIN ${crossBin.name} COVERING: ${crossBin.ranges.map(r => s"$r CROSS")} HAS $nHits HIT(S) = $percentage%"
 
         override def equals(that: Any): Boolean = that match {
             case CrossBinReport(c, _) => c == crossBin

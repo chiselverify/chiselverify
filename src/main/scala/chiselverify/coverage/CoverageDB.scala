@@ -33,24 +33,20 @@ class CoverageDB {
     private val binIdNumHitsMap: mutable.HashMap[(String, String), BigInt] = new mutable.HashMap[(String, String), BigInt]()
 
     //CrossBins
-    private val crossBinHitValuesMap: mutable.HashMap[CrossBin, List[(BigInt, BigInt)]] = new mutable.HashMap[CrossBin, List[(BigInt, BigInt)]]()
+    private val crossBinHitValuesMap: mutable.HashMap[CrossBin, List[Seq[BigInt]]] = new mutable.HashMap[CrossBin, List[Seq[BigInt]]]()
     private val crossBinNumHitsMap: mutable.HashMap[CrossBin, BigInt] = new mutable.HashMap[CrossBin, BigInt]()
 
     //Mappings for cross coverage
     private val pointNameToPoint: mutable.HashMap[String, Cover] = new mutable.HashMap[String, Cover]()
-    private val crossToPoints: mutable.HashMap[Cross, (Cover, Cover)] = new  mutable.HashMap[Cross, (Cover, Cover)]()
-    private val pointToCross: mutable.HashMap[Cover, Cross] = new mutable.HashMap[Cover, Cross]()
-
-    //((port1name, port2name) -> delay) timed relation delays mapping
-    private val timedCrossDelays: mutable.HashMap[(String, String), Int] = new mutable.HashMap[(String, String), Int]()
+    private val registeredCrossBins: mutable.ArrayBuffer[String] = new mutable.ArrayBuffer[String]()
 
     //Mappings for conditional coverage that hit
     private val registeredConditions: mutable.ArrayBuffer[String] = new ArrayBuffer[String]()
     private val conditionalHits: mutable.HashMap[String, List[Seq[BigInt]]] = new mutable.HashMap[String, List[Seq[BigInt]]]()
     private val conditionSizes: mutable.HashMap[String, BigInt] = new mutable.HashMap[String, BigInt]()
 
-    //(pointname, binname) -> List[(value, bin hit cycle)] mapping for timed cross coverage
-    private val timedCrossBinHits: mutable.HashMap[(String, String), List[(BigInt, BigInt)]] = new mutable.HashMap[(String, String), List[(BigInt, BigInt)]]()
+    //(binname) -> List[(value, bin hit cycle)] mapping for timed cross coverage
+    private val timedCrossBinHits: mutable.HashMap[String, List[(BigInt, BigInt)]] = new mutable.HashMap[String, List[(BigInt, BigInt)]]()
 
     //Keep track of the different valid IDs
     private val groupIds: ArrayBuffer[BigInt] = new ArrayBuffer[BigInt]()
@@ -73,7 +69,7 @@ class CoverageDB {
 
     def step(cycles: Int = 1): Unit = curCycle += cycles
 
-    def getTimedHits(pointName: String, binName: String): List[(BigInt, BigInt)] = timedCrossBinHits.getOrElse((pointName, binName), Nil)
+    def getTimedHits(binName: String): List[(BigInt, BigInt)] = timedCrossBinHits.getOrElse(binName, Nil)
 
     /**
       * Retrieves a coverpoint registered in the database
@@ -90,19 +86,18 @@ class CoverageDB {
       * @param cross the relation which we want to register
       */
     def registerCross(cross: Cross) : Unit = {
-        val point1 = getPoint(cross.pointName1)
-        val point2 = getPoint(cross.pointName2)
+        cross.bins.foreach {
+            case CrossBin(name, _@_*) =>
+                if (registeredCrossBins contains name)
+                    throw new IllegalArgumentException(s"CrossBins must have unique names, $name is already taken!")
+                else
+                    registeredCrossBins += name
+            case _ => throw new IllegalArgumentException("A cross can't be registered without a crossBin!")
+        }
 
-        //Register the cross
-        crossToPoints update (cross, (point1, point2))
-        pointToCross update (point1, cross)
-        pointToCross update (point2, cross)
     }
 
     def getCondSize(condName: String): BigInt = conditionSizes.getOrElse(condName, 0)
-
-    def getCrossFromPoint(point: Cover) : Cross = pointToCross getOrElse(point, null)
-    def getPointsFromCross(cross: Cross) : (Cover, Cover) = crossToPoints getOrElse(cross, null)
 
     /**
       * Updates the number of hits done in a given bin
@@ -117,7 +112,7 @@ class CoverageDB {
     /**
       * Updates the number of hits done in a given bin
       */
-    def addCrossBinHit(crossBin: CrossBin, value: (BigInt, BigInt)): Unit = {
+    def addCrossBinHit(crossBin: CrossBin, value: Seq[BigInt]): Unit = {
         val newValues = (crossBinHitValuesMap.getOrElse(crossBin, Nil) :+ value).distinct
 
         crossBinHitValuesMap update (crossBin, newValues)
@@ -129,9 +124,9 @@ class CoverageDB {
       * @param pointName the name of the point we want to record a hit for
       * @param cycle the cycle at which a hit occurred
       */
-    def addTimedBinHit(pointName: String, binName: String, value: BigInt, cycle: BigInt): Unit = {
-        val newCycles = (timedCrossBinHits.getOrElse((pointName, binName), Nil) :+ (value, cycle)).distinct
-        timedCrossBinHits.update((pointName, binName), newCycles)
+    def addTimedBinHit(binName: String, value: BigInt, cycle: BigInt): Unit = {
+        val newCycles = (timedCrossBinHits.getOrElse(binName, Nil) :+ (value, cycle)).distinct
+        timedCrossBinHits.update(binName, newCycles)
     }
 
     /**

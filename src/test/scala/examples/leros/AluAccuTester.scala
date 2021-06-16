@@ -22,7 +22,7 @@ class AluAccuTester extends FlatSpec with ChiselScalatestTester with Matchers {
             )
                 // CoverPoint(dut.io.test, "test", //CoverPoint 2
                 //     Bins("testLo10", 0 to 10)::Nil)::
-        )()
+        )
         //Declare cross points
         /*Cross("accuAndTest", "accu", "test",
             CrossBin("both1", 1 to 1, 1 to 1)::Nil)::
