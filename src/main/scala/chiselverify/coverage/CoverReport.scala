@@ -122,7 +122,6 @@ object CoverReport {
         }
 
         def +(that: CoverageReport): CoverageReport = {
-            require(this == that)
             CoverageReport((that.groups zip groups).map { case (g1, g2) => g1 + g2 })
         }
     }
