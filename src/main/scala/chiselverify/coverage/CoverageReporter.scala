@@ -34,24 +34,8 @@ class CoverageReporter[T <: MultiIOModule](private val dut: T) {
       * Makes a readable functional coverage report
       * @return the report in string form
       */
-    def report: CoverageReport = CoverageReport(
-        coverGroups.map(g =>
-            GroupReport(
-                g.id,
-                g.points.map(_.report(coverageDB)),
-                g.crosses.map {
-                    case t: TimedCross =>
-                        //Sanity check
-                        if(currentCycle == 0)
-                            throw new IllegalStateException(
-                                "Stepping needs to be done with the coverage reporter in order to enable timed coverage!"
-                            )
-
-                        CrossReport(t, compileTimedHits(t).map(e => CrossBinReport(e._1, e._2)), t.delay)
-
-                    case c: CrossPoint => CrossReport(c, c.bins.map(cb => CrossBinReport(cb, coverageDB.getNHits(cb))))
-                }
-    )).toList)
+    def report: CoverageReport =
+        CoverageReport(coverGroups.map(g => GroupReport(g.id, g.points.map(_.report(coverageDB)))).toList)
 
     /**
       * Prints out a human readable coverage report
@@ -79,63 +63,10 @@ class CoverageReporter[T <: MultiIOModule](private val dut: T) {
     def currentCycle: BigInt = coverageDB.getCurCycle
 
     /**
-      * Go through the database and compile the number of timed hits into a number of delayed hits
-      * @param t the timed cross point in question
-      * @return a list of Cross bin => numHits mappings
-      */
-    private def compileTimedHits(t: TimedCross): List[(CrossBin, BigInt)] =
-        t.bins.map(cb => {
-            //Retrieve the timed hit samples for both ranges
-            val bin1cycles = coverageDB.getTimedHits(t.pointName1, cb.bin1Name)
-            val bin2cycles = coverageDB.getTimedHits(t.pointName2, cb.bin2Name)
-
-            //Compute the number of delay-synchronized hits
-            val groups = bin1cycles.zip(bin2cycles)
-            t.delay match {
-                case Exactly(delay) =>
-                    (cb, BigInt(groups.filter(g => (g._1._2 + delay) == g._2._2).map(g => g._1._1).length))
-                case Eventually(delay) =>
-                    (cb, BigInt(groups.filter(g => (g._2._2 - g._1._2) <= delay).map(g => g._1._1).length))
-                case Always(delay) => (cb,
-                      if((0 until delay).forall(i => bin2cycles.map(_._2).contains(i) && bin1cycles.map(_._2).contains(i)))
-                          BigInt(1)
-                      else
-                          BigInt(0))
-                case _ => (cb, BigInt(0))
-            }
-        })
-
-    /**
       * Samples all of the coverpoints defined in the various covergroups
       * and updates the values stored in the coverageDB
       */
-    def sample(): Unit = {
-
-        coverGroups foreach(group => {
-            var sampledPoints: List[Cover] = Nil
-
-            //Sample cross points
-            group.crosses.foreach(cross => {
-                val points = cross.sample(coverageDB)
-
-                if(points.isDefined) {
-                    sampledPoints = sampledPoints :+ points.get._1
-                    sampledPoints = sampledPoints :+ points.get._2
-                }
-            })
-
-            //Sample individual points
-            group.points.foreach(point => {
-                if(!sampledPoints.contains(point)) {
-                    //Add the point to the list
-                    sampledPoints = sampledPoints :+ point
-
-                    //Check for the ports & sample all bins
-                    point.sample(coverageDB)
-                }
-            })
-        })
-    }
+    def sample(): Unit = coverGroups foreach(group => group.points.foreach(_.sample(coverageDB)))
 
     /**
       * Creates a new coverGroup given a list of coverPoints
@@ -143,16 +74,15 @@ class CoverageReporter[T <: MultiIOModule](private val dut: T) {
       *               These are defined by (portName: String, bins: List[BinSpec])
       * @return the unique ID attributed to the group
       */
-    def register(points: Cover*)(crosses: Cross*): CoverGroup = {
+    def register(points: Cover*): CoverGroup = {
         //Generate the group's identifier
         val gid: BigInt = coverageDB.createCoverGroup()
 
         //Register coverpoints
         points foreach (p => p.register(coverageDB))
-        crosses foreach (c => c.register(coverageDB))
 
         //Create final coverGroup
-        val group = CoverGroup(gid, points.toList, crosses.toList)
+        val group = CoverGroup(gid, points.toList)
         coverGroups append group
         group
     }

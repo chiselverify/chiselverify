@@ -72,10 +72,9 @@ val cr = new CoverageReporter(dut)
 cr.register(
       //Declare CoverPoints
       CoverPoint("a", dut.io.a)()),
-      CoverPoint("b", dut.io.b)())
-)(
+      CoverPoint("b", dut.io.b)()),
       //Declare timed cross point with a delay of 1 cycle
-      TimedCross("timedAB", "a", "b", Exactly(1))(
+      TimedCross("timedAB", dut.io.a, dut.io.b)(Exactly(1))(
             CrossBin("both1", 1 to 1, 1 to 1)
       )
 )
