@@ -4,7 +4,8 @@ import chisel3._
 import chisel3.experimental.BundleLiterals.AddBundleLiteralConstructor
 import chisel3.tester._
 import chiseltest.ChiselScalatestTester
-import chiselverify.coverage.{Bins, CoverPoint, CoverageCollector, CoverageReporter, CrossBin, CrossPoint}
+import chiselverify.coverage.{Bins, CoverPoint, CoverageReporter, CrossBin, CrossPoint}
+import chiselverify.coverage.CoverReport._
 import chiselverify.crv.{RangeBinder, ValueBinder}
 import chiselverify.crv.backends.jacop._
 import org.scalatest.{BeforeAndAfterAll, FlatSpec}
