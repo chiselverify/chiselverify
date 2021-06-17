@@ -357,3 +357,4 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
         test(new TimedToyDUT(32)) {dut => testAll(dut)}
     }
 }
+
