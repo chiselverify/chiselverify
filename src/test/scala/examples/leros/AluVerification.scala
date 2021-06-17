@@ -126,9 +126,8 @@ trait AluBehavior {
                     CoverPoint("ena", dut.input.ena)(
                         Bins("disabled", 0 to 0),
                         Bins("enabled", 1 to 1)
-                    )
-                )(
-                    CrossPoint("operations cross enable", "op", "ena")(
+                    ),
+                    CrossPoint("operations cross enable", dut.input.op, dut.input.ena)(
                         CrossBin("operation enable", 0 to 7, 1 to 1),
                         CrossBin("operation disabled", 0 to 7, 0 to 0)
                     )

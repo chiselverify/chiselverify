@@ -35,13 +35,12 @@ class PriorityQueueTest extends FreeSpec with ChiselScalatestTester {
                     Bins("cyclic", 0 to 3)),
                 CoverPoint("head.prio.norm", dut.io.head.prio.cycle)(
                     Bins("lower half", 0 to (Math.pow(2, nWid) / 2 - 1).toInt),
-                    Bins("upper half", (Math.pow(2, nWid) / 2 - 1).toInt to (Math.pow(2, nWid) - 1).toInt))
-            )(
+                    Bins("upper half", (Math.pow(2, nWid) / 2 - 1).toInt to (Math.pow(2, nWid) - 1).toInt)),
                 //Declare cross points
-                CrossPoint("cyclics at ops", "operation", "cmd.prio.cycl")(
+                CrossPoint("cyclics at ops", dut.io.cmd.op, dut.io.cmd.prio.cycle)(
                     CrossBin("insertion", 0 to 0, 0 to 3),
                     CrossBin("removal", 1 to 1, 0 to 3)),
-                CrossPoint("normals at ops", "operation", "cmd.prio.norm")(
+                CrossPoint("normals at ops", dut.io.cmd.op, dut.io.head.prio.cycle)(
                     CrossBin("insertion lower half", 0 to 0, 0 to (Math.pow(2, nWid) / 2 - 1).toInt),
                     CrossBin("insertion upper half", 0 to 0, (Math.pow(2, nWid) / 2 - 1).toInt to (Math.pow(2, nWid) - 1).toInt),
                     CrossBin("removal lower half", 1 to 1, 0 to (Math.pow(2, nWid) / 2 - 1).toInt),
