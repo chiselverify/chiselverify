@@ -272,6 +272,58 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
         assertThrows[IllegalStateException](cr.report)
     }
 
+    def testAll[T <: TimedToyDUT](dut: T): Unit = {
+        val cr = new CoverageReporter(dut)
+        cr.register(
+            //Declare CoverPoints with conditional bins
+            CoverPoint("accu", dut.io.outA)(
+                Bins("lo10even", 0 until 10, Condition("onlyEven", { case Seq(x) => x % 2 == 0 })),
+                Bins("First100odd", 0 until 100, Condition("onlyOdd",{ case Seq(x) => x % 2 != 0 }))),
+            //Declare CoverPoints without conditional bins
+            CoverPoint("test", dut.io.outB)(
+                Bins("testLo10", 0 until 10)),
+            //Declare CoverConditions
+            CoverCondition("aAndB",dut.io.outA, dut.io.outB)(
+                Condition("aeqb", { case Seq(a, b) => a == b }),
+                Condition("asuptobAtLeast100", { case Seq(a, b) => a > b }, Some(100))),
+            //Declare cross points
+            CrossPoint("accuAndTest", dut.io.outA, dut.io.outB)(
+                CrossBin("both1", 1 to 1, 1 to 1)),
+            //Declare timed cross points
+            TimedCross("timedAB", dut.io.outA, dut.io.count)(Exactly(3))(
+                CrossBin("ExactlyBoth3", 3 to 3, 3 to 3)),
+            TimedCross("EventuallyTimedAB", dut.io.outB, dut.io.count)(Eventually(3))(
+                CrossBin("EventuallyBoth1", 1 to 1, 1 to 1)),
+            TimedCross("AlwaysTimedAB", dut.io.outC, dut.io.outA)(Always(3))(
+                CrossBin("AlwaysBoth3", 3 to 3, 3 to 3))
+        )
+
+
+        /**
+          * Basic test to see if we get the right amount of hits
+          */
+        def test(): Unit = {
+            dut.io.a.poke(3.U)
+            dut.io.b.poke(1.U)
+            dut.io.c.poke(3.U)
+            cr.step(3)
+            dut.io.c.poke(0.U)
+            cr.sample()
+            cr.step()
+            dut.io.c.expect(0.U)
+        }
+
+        test()
+
+        //Generate report
+        val report = cr.report
+        cr.printReport()
+
+        report.binNHits(1, "timedAB", "ExactlyBoth3") should be (1)
+        report.binNHits(1, "EventuallyTimedAB", "EventuallyBoth1") should be (1)
+        report.binNHits(1, "AlwaysTimedAB", "AlwaysBoth3") should be (1)
+    }
+
     "Coverage" should "get the right amount of hits" in {
         test(new BasicToyDUT(32)){ dut => testGeneric(dut) }
     }
@@ -299,5 +351,9 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
 
     "CoverageWithConditionalBins" should "pass" in {
         test(new BasicToyDUT(32)) { dut => testCond(dut) }
+    }
+
+    "CoverageWithEverything" should "pass" in {
+        test(new TimedToyDUT(32)) {dut => testAll(dut)}
     }
 }

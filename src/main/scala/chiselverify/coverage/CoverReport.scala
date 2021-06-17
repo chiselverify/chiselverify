@@ -262,7 +262,7 @@ object CoverReport {
       */
     case class BinReport(bin: Bins, nHits: BigInt) extends Report {
         private val proportion = nHits.toInt / bin.range.size.toDouble
-        private val percentage = f"${if (proportion > 1) 100 else proportion * 100}%1.2f"
+        private val percentage = f"${if(nHits == 0) 0 else if (proportion > 1) 100 else proportion * 100}%1.2f"
 
         override def report: String = s"BIN ${bin.name} COVERING ${bin.range.toString}" +
             s"${if (bin.condition.name != "$$__def__$$") s" WITH ${bin.condition.report}" else ""}" +
@@ -292,10 +292,16 @@ object CoverReport {
       */
     case class CrossBinReport(crossBin: CrossBin, nHits: BigInt) extends Report {
         private val proportion = nHits.toDouble / crossBin.ranges.map(_.size).foldLeft(0.0)(_*_)
-        private val percentage = f"${if (proportion > 1) 100 else proportion * 100.0}%1.2f"
+        private val percentage = f"${if(nHits == 0) 0 else if (proportion > 1) 100 else proportion * 100.0}%1.2f"
 
-        override def report: String =
-            s"BIN ${crossBin.name} COVERING: ${crossBin.ranges.map(r => s"$r CROSS")} HAS $nHits HIT(S) = $percentage%"
+        override def report: String = {
+            val rep: StringBuilder = new StringBuilder(s"BIN ${crossBin.name} COVERING: CROSS(")
+            crossBin.ranges.foreach(r => rep append s"$r, ")
+            //Remove trailing comma and space
+            rep.delete(rep.size - 2, rep.size)
+            rep append s") HAS $nHits HIT(S) = $percentage%"
+            rep.mkString
+        }
 
         override def equals(that: Any): Boolean = that match {
             case CrossBinReport(c, _) => c == crossBin

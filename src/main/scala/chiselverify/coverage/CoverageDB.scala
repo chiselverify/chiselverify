@@ -17,7 +17,7 @@
 package chiselverify.coverage
 
 import chisel3._
-import chiselverify.coverage.Utils._
+
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
