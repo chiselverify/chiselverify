@@ -288,7 +288,7 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
                 Condition("asuptobAtLeast100", { case Seq(a, b) => a > b }, Some(100))),
             //Declare cross points
             CrossPoint("accuAndTest", dut.io.outA, dut.io.outB)(
-                CrossBin("both1", 1 to 1, 1 to 1)),
+                CrossBin("both1", 1 to 9 by 2, 1 to 1)),
             //Declare timed cross points
             TimedCross("timedAB", dut.io.outA, dut.io.count)(Exactly(3))(
                 CrossBin("ExactlyBoth3", 3 to 3, 3 to 3)),

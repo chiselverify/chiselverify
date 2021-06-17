@@ -35,7 +35,7 @@ package object coverage {
       * @param portName the readable name used by the reporter.
       * @param ports a sequence of ports that are associated to this point.
       */
-    abstract class Cover(val portName: String, val ports: Seq[Data]) {
+    abstract class Cover(val pointName: String, val ports: Seq[Data]) {
         override def toString: String = serialize
 
         /**
@@ -146,9 +146,9 @@ package object coverage {
         extends Cover(pN, p.toList) {
         val conditions: List[Condition] = conds.toList
 
-        override def report(db: CoverageDB): Report = ConditionReport(portName, conditions, db)
+        override def report(db: CoverageDB): Report = ConditionReport(pointName, conditions, db)
 
-        override def serialize: String = s"CoverCondition($ports, $portName)($conds)"
+        override def serialize: String = s"CoverCondition($ports, $pointName)($conds)"
 
         override def sample(db: CoverageDB): Unit = {
             val pointVals = ports.map(_.peek().asUInt().litValue())
@@ -157,10 +157,10 @@ package object coverage {
 
         override def register(db: CoverageDB): Unit = {
             //Register the coverpoint
-            db.registerCoverPoint(portName, this)
+            db.registerCoverPoint(pointName, this)
 
             //Register the conditions
-            db.registerConditions(portName, conditions)
+            db.registerConditions(pointName, conditions)
         }
     }
 
@@ -175,18 +175,18 @@ package object coverage {
         extends Cover(pN, port::Nil) {
         val bins: List[Bins] = if(b.isEmpty) List(DefaultBin(port)) else b.toList
 
-        override def serialize: String = s"CoverPoint($port, $portName)(${bins.map(_.serialize)})"
+        override def serialize: String = s"CoverPoint($port, $pointName)(${bins.map(_.serialize)})"
 
         override def sample(db: CoverageDB): Unit = {
             //Check for the ports & sample all bins
             val pointVal = port.peek().asUInt().litValue().toInt
-            bins.foreach(_.sample(portName, pointVal, db))
+            bins.foreach(_.sample(pointName, pointVal, db))
         }
 
         override def report(db: CoverageDB): Report =
-            PointReport(portName, bins.map(b => BinReport(b, db.getNHits(portName, b.name))))
+            PointReport(pointName, bins.map(b => BinReport(b, db.getNHits(pointName, b.name))))
 
-        override def register(db: CoverageDB): Unit = db.registerCoverPoint(portName, this)
+        override def register(db: CoverageDB): Unit = db.registerCoverPoint(pointName, this)
     }
 
     /**

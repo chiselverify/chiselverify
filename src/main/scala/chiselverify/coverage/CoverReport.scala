@@ -291,7 +291,7 @@ object CoverReport {
       * @param nHits    the number of hits sampled for this cross bin during the test suite
       */
     case class CrossBinReport(crossBin: CrossBin, nHits: BigInt) extends Report {
-        private val proportion = nHits.toDouble / crossBin.ranges.map(_.size).foldLeft(0.0)(_*_)
+        private val proportion = nHits.toDouble / crossBin.ranges.map(_.size).foldLeft(1.0)(_*_)
         private val percentage = f"${if(nHits == 0) 0 else if (proportion > 1) 100 else proportion * 100.0}%1.2f"
 
         override def report: String = {
