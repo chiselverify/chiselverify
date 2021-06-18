@@ -27,7 +27,8 @@ libraryDependencies += "io.github.chiselverify" % "chiselverify" % "0.1"
 Run tests with
 ```
 make
-```
+```  
+This README contains a brief overview of the library and its functionalities. For a more in-depth tutorial, please check-out the [ChiselVerify Wiki](https://github.com/chiselverify/chiselverify/wiki).
 
 **********************************
 
