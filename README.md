@@ -27,7 +27,8 @@ libraryDependencies += "io.github.chiselverify" % "chiselverify" % "0.1"
 Run tests with
 ```
 make
-```
+```  
+This README contains a brief overview of the library and its functionalities. For a more in-depth tutorial, please check-out the [ChiselVerify Wiki](https://github.com/chiselverify/chiselverify/wiki).
 
 **********************************
 
@@ -180,7 +181,7 @@ class Frame extends RandObj(new Model) {
 
 ## Random Objects
 Random objects can be created by extending the RandObj trait. This class accepts one parameter which is a Model. A model
-correspond to a database in which all the random variable and constraint declared inside the RandObj are stored.
+correspond to a database in which all the random variables and constraints declared inside the RandObj are stored.
 ```scala
 class Frame extends RandObj(new Model)
 ```
@@ -198,7 +199,7 @@ Random-cyclic variable can be added by declaring a `Randc` field inside a `RandO
 ```
 
 ### Constraints
-Each variable can have one or multiple constraint. Constraint relations are usually preceded by the `#` symbol.
+Each variable can have one or multiple constraints. Constraint relations are usually preceded by the `#` symbol.
 ```scala
 len #>= 2
 ```
@@ -212,7 +213,7 @@ lenConstraint.disable()
 lenConstraint.enable()
 ```
 
-Constraint can also be grouped together in a `ConstraintGroup` and the group itself can be enabled or disabled.
+Constraints can also be grouped together in a `ConstraintGroup` and the group itself can be enabled or disabled.
 
 ```scala
 val legal: ConstraintGroup = new ConstraintGroup {
@@ -226,10 +227,10 @@ legal.disable()
 legal.enable()
 ```
 
-By default, constraints and constraints groups are enabled when they are declared. 
+By default, constraints and constraint groups are enabled when they are declared. 
 
 
-The list of operator used to construct constraint is the following:
+The list of operator used to construct constraints is the following:
 `#<`, `#<=`, `#>`, `#>=`,`#=`, `div`, `#*`, `mod`, `#+`, `-`, `#\=`, `#^`, `in`, `inside`
 
 It is also possible to declare conditional constraints with constructors like `IfCon` and `IfElseCon`.
