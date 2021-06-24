@@ -18,7 +18,8 @@ package chiselverify
 import chisel3.Data
 import chiseltest.testableData
 import chiselverify.coverage.CoverReport._
-import chiselverify.timing._
+import chiselverify.timing.TimedOp._
+import chiselverify.timing.{DelayType, TimedOp}
 
 package object coverage {
     /**
