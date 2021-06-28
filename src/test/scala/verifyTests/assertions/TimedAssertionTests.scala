@@ -4,6 +4,7 @@ import chisel3._
 import chisel3.tester._
 import chiseltest.ChiselScalatestTester
 import chiselverify.assertions.{AssertTimed, ExpectTimed}
+import chiselverify.timing.TimedOp.Equals
 import chiselverify.timing._
 import org.scalatest.{FlatSpec, Matchers}
 import verifyTests.ToyDUT.AssertionsToyDUT
@@ -54,6 +55,45 @@ class TimedAssertionTests extends FlatSpec with ChiselScalatestTester with Match
         }
     }
 
+    def testGenericEqualsOp[T <: AssertionsToyDUT](dut: T, et : EventType): Unit = {
+
+        /**
+          * Basic test to see if we get the right amount of hits
+          */
+        def testAlways(): Unit = {
+            dut.io.a.poke(10.U)
+            dut.io.b.poke(10.U)
+            dut.clock.step(1)
+            println(s"aEqb is ${dut.io.aEqb.peek().litValue()}")
+            AssertTimed(dut, Equals(dut.io.aEqb, dut.io.isOne), "aEqb timing is wrong")(Always(9)).join()
+        }
+
+        def testEventually(): Unit = {
+            dut.io.a.poke(10.U)
+            dut.io.b.poke(10.U)
+            AssertTimed(dut, Equals(dut.io.outA, dut.io.outC), "a eventually isn't c")(Eventually(11)).join()
+        }
+
+        def testExactly(): Unit = {
+            dut.io.a.poke(6.U)
+            AssertTimed(dut, Equals(dut.io.outA, dut.io.outC), "aEqb expected timing is wrong")(Exactly(6)).join()
+        }
+
+        def testNever(): Unit = {
+            dut.io.a.poke(10.U)
+            dut.io.b.poke(20.U)
+            dut.clock.step(1)
+            AssertTimed(dut, Equals(dut.io.outA, dut.io.outB), "a is equal to b at some point")(Never(10)).join()
+        }
+
+        et match {
+            case Always => testAlways()
+            case Eventually => testEventually()
+            case Exactly => testExactly()
+            case Never => testNever()
+        }
+    }
+
     "Timed Assertions Always" should "pass" in {
         test(new AssertionsToyDUT(32)){ dut => testGeneric(dut, Always) }
     }
@@ -65,5 +105,17 @@ class TimedAssertionTests extends FlatSpec with ChiselScalatestTester with Match
     }
     "Timed Assertions Never" should "pass" in {
         test(new AssertionsToyDUT(32)){ dut => testGeneric(dut, Never) }
+    }
+    "Timed Assertions Always with Equals Op" should "pass" in {
+        test(new AssertionsToyDUT(32)){dut => testGenericEqualsOp(dut, Always)}
+    }
+    "Timed Assertions Eventually with Equals Op" should "pass" in {
+        test(new AssertionsToyDUT(32)){ dut => testGenericEqualsOp(dut, Eventually) }
+    }
+    "Timed Assertions Exactly with Equals Op" should "pass" in {
+        test(new AssertionsToyDUT(32)){ dut => testGenericEqualsOp(dut, Exactly) }
+    }
+    "Timed Assertions Never with Equals Op" should "pass" in {
+        test(new AssertionsToyDUT(32)){ dut => testGenericEqualsOp(dut, Never) }
     }
 }

@@ -19,7 +19,7 @@ import chisel3.Data
 import chiseltest.testableData
 import chiselverify.coverage.CoverReport._
 import chiselverify.timing.TimedOp._
-import chiselverify.timing.{DelayType, TimedOp}
+import chiselverify.timing._
 
 package object coverage {
     /**
