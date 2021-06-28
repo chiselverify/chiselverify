@@ -52,12 +52,15 @@ object ToyDUT {
             val outA = Output(UInt(size.W))
             val outB = Output(UInt(size.W))
             val outC = Output(UInt(size.W))
+            val outCSupB = Output(UInt((size + 1).W))
+            val outCNotSupB = Output(UInt(size.W))
         })
 
         //Create a counter that should eventually reach a
         val c = Counter(size + 10)
         val aWire = RegInit(io.a)
         val aHasEqb = RegInit(0.U)
+        val cSupb = RegInit(0.U)
 
         c.inc()
 
@@ -71,6 +74,10 @@ object ToyDUT {
             aHasEqb := 1.U
         }
 
+        when(c.value > io.b) {
+            cSupb := 1.U
+        }
+
         //Set outputs
         io.aEqb := (aWire === io.b).asUInt()
         io.aNevEqb := (aHasEqb === 0.U).asUInt()
@@ -79,5 +86,7 @@ object ToyDUT {
         io.outA := io.a
         io.outB := io.b
         io.outC := c.value
+        io.outCSupB := io.b + cSupb
+        io.outCNotSupB := io.b - cSupb
     }
 }

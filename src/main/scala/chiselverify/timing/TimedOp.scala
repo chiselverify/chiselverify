@@ -33,4 +33,40 @@ object TimedOp {
     case class Equals(op1: Data, op2: Data) extends TimedOperator(op1, op2) {
         override def compute(value1: BigInt, value2: BigInt): Boolean = value1 == value2
     }
+
+    /**
+      * Greater than timed operator ( op1 > (op2 after x cycles) )
+      * @param op1 the first operand
+      * @param op2 the second operand
+      */
+    case class Gt(op1: Data, op2: Data) extends TimedOperator(op1, op2) {
+        override def compute(value1: BigInt, value2: BigInt): Boolean = value1 > value2
+    }
+
+    /**
+      * Less than timed operator ( op1 < (op2 after x cycles) )
+      * @param op1 the first operand
+      * @param op2 the second operand
+      */
+    case class Lt(op1: Data, op2: Data) extends TimedOperator(op1, op2) {
+        override def compute(value1: BigInt, value2: BigInt): Boolean = value1 < value2
+    }
+
+    /**
+      * Less than or Equal to timed operator ( op1 <= (op2 after x cycles) )
+      * @param op1 the first operand
+      * @param op2 the second operand
+      */
+    case class LtEq(op1: Data, op2: Data) extends TimedOperator(op1, op2) {
+        override def compute(value1: BigInt, value2: BigInt): Boolean = value1 <= value2
+    }
+
+    /**
+      * Greater than or equal to timed operator ( op1 >= (op2 after x cycles) )
+      * @param op1 the first operand
+      * @param op2 the second operand
+      */
+    case class GtEq(op1: Data, op2: Data) extends TimedOperator(op1, op2) {
+        override def compute(value1: BigInt, value2: BigInt): Boolean = value1 >= value2
+    }
 }
