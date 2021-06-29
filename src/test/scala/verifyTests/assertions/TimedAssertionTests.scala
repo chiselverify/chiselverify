@@ -4,7 +4,7 @@ import chisel3._
 import chisel3.tester._
 import chiseltest.ChiselScalatestTester
 import chiselverify.assertions.{AssertTimed, ExpectTimed}
-import chiselverify.timing.TimedOp.{Equals, Gt}
+import chiselverify.timing.TimedOp.{Equals, Gt, GtEq, Lt, LtEq}
 import chiselverify.timing._
 import org.scalatest.{FlatSpec, Matchers}
 import verifyTests.ToyDUT.AssertionsToyDUT
@@ -138,6 +138,138 @@ class TimedAssertionTests extends FlatSpec with ChiselScalatestTester with Match
         }
     }
 
+    def testGenericLtOp[T <: AssertionsToyDUT](dut: T, et : EventType): Unit = {
+
+        /**
+          * Basic test to see if we get the right amount of hits
+          */
+        def testAlways(): Unit = {
+            dut.io.a.poke(10.U)
+            dut.io.b.poke(20.U)
+            dut.clock.step(1)
+            println(s"aEqb is ${dut.io.aEqb.peek().litValue()}")
+            AssertTimed(dut, Lt(dut.io.outA, dut.io.outB), "a isn't always less than one")(Always(9)).join()
+        }
+
+        def testEventually(): Unit = {
+            dut.io.a.poke(4.U)
+            dut.io.b.poke(2.U)
+            dut.clock.step()
+            AssertTimed(dut, Lt(dut.io.outB, dut.io.outCSupB), "c isn't eventually less than b")(Eventually(4)).join()
+        }
+
+        def testExactly(): Unit = {
+            dut.io.a.poke(6.U)
+            dut.io.b.poke(5.U)
+            dut.clock.step(2)
+            println(s"C = ${dut.io.outC.peek().litValue()}")
+
+            AssertTimed(dut, Lt(dut.io.outB, dut.io.outCSupB), "c isn't less than b after 7 cycles")(Exactly(7)).join()
+        }
+
+        def testNever(): Unit = {
+            dut.io.a.poke(10.U)
+            dut.io.b.poke(20.U)
+            dut.clock.step(1)
+            AssertTimed(dut, Lt(dut.io.outB, dut.io.outCNotSupB), "a is never less than c at any point")(Never(10)).join()
+        }
+
+        et match {
+            case Always => testAlways()
+            case Eventually => testEventually()
+            case Exactly => testExactly()
+            case Never => testNever()
+        }
+    }
+
+    def testGenericLtEqOp[T <: AssertionsToyDUT](dut: T, et : EventType): Unit = {
+
+        /**
+          * Basic test to see if we get the right amount of hits
+          */
+        def testAlways(): Unit = {
+            dut.io.a.poke(10.U)
+            dut.io.b.poke(20.U)
+            dut.clock.step(1)
+            println(s"aEqb is ${dut.io.aEqb.peek().litValue()}")
+            AssertTimed(dut, LtEq(dut.io.outA, dut.io.outB), "a isn't always less than one")(Always(9)).join()
+        }
+
+        def testEventually(): Unit = {
+            dut.io.a.poke(4.U)
+            dut.io.b.poke(2.U)
+            dut.clock.step()
+            AssertTimed(dut, LtEq(dut.io.outB, dut.io.outCSupB), "c isn't eventually less than b")(Eventually(4)).join()
+        }
+
+        def testExactly(): Unit = {
+            dut.io.a.poke(6.U)
+            dut.io.b.poke(5.U)
+            dut.clock.step(2)
+            println(s"C = ${dut.io.outC.peek().litValue()}")
+
+            AssertTimed(dut, LtEq(dut.io.outB, dut.io.outCSupB), "c isn't less than b after 7 cycles")(Exactly(7)).join()
+        }
+
+        def testNever(): Unit = {
+            dut.io.a.poke(10.U)
+            dut.io.b.poke(11.U)
+            dut.clock.step(1)
+            AssertTimed(dut, LtEq(dut.io.outB, dut.io.outC), "a is never less than c at any point")(Never(10)).join()
+        }
+
+        et match {
+            case Always => testAlways()
+            case Eventually => testEventually()
+            case Exactly => testExactly()
+            case Never => testNever()
+        }
+    }
+
+    def testGenericGtEqOp[T <: AssertionsToyDUT](dut: T, et : EventType): Unit = {
+
+        /**
+          * Basic test to see if we get the right amount of hits
+          */
+        def testAlways(): Unit = {
+            dut.io.a.poke(10.U)
+            dut.io.b.poke(20.U)
+            dut.clock.step(1)
+            println(s"aEqb is ${dut.io.aEqb.peek().litValue()}")
+            AssertTimed(dut, GtEq(dut.io.outB, dut.io.outA), "a isn't always less than one")(Always(9)).join()
+        }
+
+        def testEventually(): Unit = {
+            dut.io.a.poke(4.U)
+            dut.io.b.poke(2.U)
+            dut.clock.step()
+            AssertTimed(dut, GtEq(dut.io.outB, dut.io.outCNotSupB), "c isn't eventually less than b")(Eventually(4)).join()
+        }
+
+        def testExactly(): Unit = {
+            dut.io.a.poke(6.U)
+            dut.io.b.poke(5.U)
+            dut.clock.step(2)
+            println(s"C = ${dut.io.outC.peek().litValue()}")
+
+            AssertTimed(dut, GtEq(dut.io.outB, dut.io.outCNotSupB), "c isn't less than b after 7 cycles")(Exactly(7)).join()
+        }
+
+        def testNever(): Unit = {
+            dut.io.a.poke(10.U)
+            dut.io.b.poke(0.U)
+            dut.clock.step(1)
+            AssertTimed(dut, GtEq(dut.io.outB, dut.io.outC), "a is never less than c at any point")(Never(10)).join()
+        }
+
+        et match {
+            case Always => testAlways()
+            case Eventually => testEventually()
+            case Exactly => testExactly()
+            case Never => testNever()
+        }
+    }
+
     "Timed Assertions Always" should "pass" in {
         test(new AssertionsToyDUT(32)){ dut => testGeneric(dut, Always) }
     }
@@ -175,5 +307,44 @@ class TimedAssertionTests extends FlatSpec with ChiselScalatestTester with Match
     }
     "Timed Assertions Never with GreaterThan Op" should "pass" in {
         test(new AssertionsToyDUT(32)){ dut => testGenericGtOp(dut, Never) }
+    }
+
+    "Timed Assertions Always with LessThan Op" should "pass" in {
+        test(new AssertionsToyDUT(32)){dut => testGenericLtOp(dut, Always)}
+    }
+    "Timed Assertions Eventually with LessThan Op" should "pass" in {
+        test(new AssertionsToyDUT(32)){ dut => testGenericLtOp(dut, Eventually) }
+    }
+    "Timed Assertions Exactly with LessThan Op" should "pass" in {
+        test(new AssertionsToyDUT(32)){ dut => testGenericLtOp(dut, Exactly) }
+    }
+    "Timed Assertions Never with LessThan Op" should "pass" in {
+        test(new AssertionsToyDUT(32)){ dut => testGenericLtOp(dut, Never) }
+    }
+
+    "Timed Assertions Always with LessThan or Equal to Op" should "pass" in {
+        test(new AssertionsToyDUT(32)){dut => testGenericLtEqOp(dut, Always)}
+    }
+    "Timed Assertions Eventually with LessThan or Equal to Op" should "pass" in {
+        test(new AssertionsToyDUT(32)){ dut => testGenericLtEqOp(dut, Eventually) }
+    }
+    "Timed Assertions Exactly with LessThan or Equal to Op" should "pass" in {
+        test(new AssertionsToyDUT(32)){ dut => testGenericLtEqOp(dut, Exactly) }
+    }
+    "Timed Assertions Never with LessThan or Equal to Op" should "pass" in {
+        test(new AssertionsToyDUT(32)){ dut => testGenericLtEqOp(dut, Never) }
+    }
+
+    "Timed Assertions Always with GreaterThan or Equal to Op" should "pass" in {
+        test(new AssertionsToyDUT(32)){dut => testGenericGtEqOp(dut, Always)}
+    }
+    "Timed Assertions Eventually with GreaterThan or Equal to Op" should "pass" in {
+        test(new AssertionsToyDUT(32)){ dut => testGenericGtEqOp(dut, Eventually) }
+    }
+    "Timed Assertions Exactly with GreaterThan or Equal to Op" should "pass" in {
+        test(new AssertionsToyDUT(32)){ dut => testGenericGtEqOp(dut, Exactly) }
+    }
+    "Timed Assertions Never with GreaterThan or Equal to Op" should "pass" in {
+        test(new AssertionsToyDUT(32)){ dut => testGenericGtEqOp(dut, Never) }
     }
 }
