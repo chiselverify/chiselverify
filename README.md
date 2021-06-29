@@ -28,7 +28,7 @@ Run tests with
 ```
 make
 ```  
-This README contains a brief overview of the library and its functionalities. For a more in-depth tutorial, please check-out the [ChiselVerify Wiki](https://github.com/chiselverify/chiselverify/wiki).
+This README contains a brief overview of the library and its functionalities. For a more in-depth tutorial, please check-out the [ChiselVerify Wiki](https://github.com/chiselverify/chiselverify/wiki). Ohter general documentation, such as technical reports and conference papers, can be found in the [documentation repository](https://github.com/chiselverify/documentation).
 
 **********************************
 
