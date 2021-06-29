@@ -21,16 +21,6 @@ import chiseltest.internal.TesterThreadList
 import chiselverify.timing.TimedOp._
 import chiselverify.timing._
 
-/* Checks for a condition to be valid in the circuit at all times, or within the specified amount of clock cycles.
-  * If the condition evaluates to false, the circuit simulation stops with an error.
-  *
-  * This package is part of the special course "Verification of Digital Designs" on DTU, autumn semester 2020.
-  *
-  * Everytime the assertion is called it must be joined.
-  *
-  * @author Victor Alexander Hansen, s194027@student.dtu.dk
-  * @author Niels Frederik Flemming Holm Frandsen, s194053@student.dtu.dk
-  */
 object AssertTimed {
     def apply[T <: Module](dut: T, op: TimedOperator, message: String)
                           (delayType: DelayType): TesterThreadList = delayType match {
@@ -87,6 +77,16 @@ object AssertTimed {
                 })
             }
     }
+    /* Checks for a condition to be valid in the circuit at all times, or within the specified amount of clock cycles.
+      * If the condition evaluates to false, the circuit simulation stops with an error.
+      *
+      * This package is part of the special course "Verification of Digital Designs" on DTU, autumn semester 2020.
+      *
+      * Everytime the assertion is called it must be joined.
+      *
+      * @author Victor Alexander Hansen, s194027@student.dtu.dk
+      * @author Niels Frederik Flemming Holm Frandsen, s194053@student.dtu.dk
+      */
     def apply[T <: Module](dut: T, cond: () => Boolean, message: String)
                           (delayType: DelayType): TesterThreadList = delayType match {
         //Basic assertion
@@ -111,16 +111,13 @@ object AssertTimed {
          * at least once within the window of cycles
          */
         case Eventually(delay) =>
-            //TODO FIXME_> this breaks the assertion for some reason: assert(!cond(), message)
+            //Sample condition at cycle 0
+            val initRes = cond()
             fork {
-                dut.clock.step(1)
-                for {
-                    i <- 0 until delay
-                    if !cond()
-                } {
-                    if(i == (delay - 1)) assert(cond = false, message)
-                    else dut.clock.step(1)
-                }
+                assert((1 until delay).exists(_ => {
+                    dut.clock.step()
+                    cond()
+                }) || initRes, message)
             }
 
         //Asserts the passed condition after stepping x clock cycles after the fork
