@@ -91,7 +91,7 @@ object CoverReport {
           * @param binName   the name of the bin itself
           * @return
           */
-        def binNHits(groupId: BigInt, pointName: String, bN: Option[String]): BigInt = {
+        def binNHits(groupId: BigInt, pointName: String, bN: Option[String] = None): BigInt = {
             val binName =  bN.getOrElse("NoName")
             //Look for the group
             groups.find(_.id == groupId) match {
@@ -248,9 +248,14 @@ object CoverReport {
         override def report: String = s"${timedCoverOp.serialize} HAS $nHits HIT(S)."
 
         /**
+          * String ID for the current report
+          */
+        override val name: String = timedCoverOp.pointName
+
+        /**
           * Integer ID for the current report
           */
-        override val id: BigInt = name.hashCode
+        override val id: BigInt = timedCoverOp.pointName.hashCode
 
         /**
           * Adds two different reports of the same type together
@@ -261,11 +266,6 @@ object CoverReport {
         override def +(that: Report): Report = that match {
             case TimedOpReport(t, hits) => TimedOpReport(timedCoverOp + t, nHits + hits)
         }
-
-        /**
-          * String ID for the current report
-          */
-        override val name: String = timedCoverOp.pointName
     }
 
     /**

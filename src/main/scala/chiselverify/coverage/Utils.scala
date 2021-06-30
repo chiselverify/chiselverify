@@ -83,4 +83,11 @@ object Utils {
         } yield List(x1, x2, x3, x4)
         case _ => throw new IllegalArgumentException("MAX ARRAY SIZE IN CARTESIAN PRODUCT IS 4")
     }
+
+    /**
+      * Implicit type conversion from string to option to simplify syntax
+      * @param s the string that will be converted
+      * @return an option containing the given string
+      */
+    implicit def stringToOption(s: String): Option[String] = Some(s)
 }

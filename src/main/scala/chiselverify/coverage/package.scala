@@ -210,20 +210,29 @@ package object coverage {
         override def report(db: CoverageDB): Report = {
             def compileHits: Int = {
                 val timingVals = db.getTimingVals
-                val op1Vals = timingVals.filter(_.operandNum == 1).sortBy(_.cycle)
-                val op2Vals = timingVals.filter(_.operandNum == 2).sortBy(_.cycle)
+                val op1Vals = timingVals.filter(_.operandNum == 1)
+                val op2Vals = timingVals.filter(_.operandNum == 2)
 
                 delay match {
-                    case Exactly(delay) => op1Vals.map(p => (p, op2Vals.filter((p.cycle + delay) == _.cycle)))
-                        .map { case (t, ts) => ts.map(t2 => op.compute(t.value, t2.value)).count(_ == true) }.sum
+                    //(op1, List of op2Vals where cycle is delay cycles later) then reduced by applying the operand
+                    case Exactly(delay) => op1Vals.map(p => (p, op2Vals.filter((p.cycle + (delay - 1)) == _.cycle)))
+                        .map { case (t, ts) => ts.map(t2 => op(t.value, t2.value)).count(_ == true) }.sum
 
+                    //(op1, List of op2Vals where cycle is up to delay cycles later) then checked to find at least one
+                    //entry than satisfies the operation
                     case Eventually(delay) => op1Vals.map(p =>
-                        (p, op2Vals.filter(p2 => ((p.cycle + delay) > p2.cycle) && (p.cycle < p2.cycle))))
-                        .map { case (t, ts) => ts.map(t2 => op.compute(t.value, t2.value)).count(_ == true) }.sum
+                        (p, op2Vals.filter(p2 => ((p.cycle + delay) >= p2.cycle) && (p.cycle <= p2.cycle))))
+                        .filter { case (_, ts) => ts.size > delay }
+                        .map { case (t, ts) => if(ts.exists(t2 => op(t.value, t2.value))) 1 else 0 }
+                        .sum
 
-                    case Always(delay) => op1Vals.map(p =>
-                        (p, op2Vals.filter(p2 => ((p.cycle + delay) > p2.cycle) && (p.cycle < p2.cycle))))
-                        .map { case (t, ts) => if(ts.forall(t2 => op.compute(t.value, t2.value))) 1 else 0 }.sum
+                    //(op1, List of op2Vals where cycle is up to delay cycles later) then checked to find out if all
+                    //entries than satisfies the operation
+                    case Always(delay) => val a = op1Vals.map(p =>
+                        (p, op2Vals.filter(p2 => ((p.cycle + delay) >= p2.cycle) && (p.cycle <= p2.cycle))))
+                        .filter { case (_, ts) => ts.size > delay }
+                        .map { case (t, ts) => if(ts.forall(t2 => op(t.value, t2.value))) 1 else 0 }
+                        .sum
 
                     case _ => throw new IllegalArgumentException(s"$delay DelayType not supported")
                 }
@@ -232,8 +241,12 @@ package object coverage {
             TimedOpReport(this, compileHits)
         }
 
+         def +(that: TimedCoverOp): TimedCoverOp = {
+            if(delay != that.delay) throw new IllegalArgumentException("DELAYS MUST BE EQUAL IN ORDER TO SUM")
+            else TimedCoverOp(s"$pointName + ${that.pointName}", op + that.op)(delay)
+        }
 
-        override def serialize: String = s"TIMED_COVER_OP $pointName WITH DELAY ${delay.toString}"
+        override def serialize: String = s"TIMED_COVER_OP $pointName${delay.toString}"
 
         override def sample(db: CoverageDB): Unit = {
             val curCycle = db.getCurCycle

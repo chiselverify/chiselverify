@@ -25,19 +25,19 @@ object AssertTimed {
     def apply[T <: Module](dut: T, op: TimedOperator, message: String)
                           (delayType: DelayType): TesterThreadList = delayType match {
         case NoDelay => fork {
-            assert(op.compute(op.operand1.peek().litValue(), op.operand2.peek().litValue()), message)
+            assert(op(op.operand1.peek().litValue(), op.operand2.peek().litValue()), message)
         }
 
         case Always(delay) =>
             //Sample op1 at cycle 0
             val value1 = op.operand1.peek().litValue()
-            assert(op.compute(value1, op.operand2.peek().litValue()), message)
+            assert(op(value1, op.operand2.peek().litValue()), message)
 
             //Check the same thing at every cycle
             fork {
                 dut.clock.step()
                 (1 until delay) foreach (_ => {
-                    assert(op.compute(value1, op.operand2.peek().litValue()), message)
+                    assert(op(value1, op.operand2.peek().litValue()), message)
                     dut.clock.step()
                 })
             }
@@ -49,30 +49,30 @@ object AssertTimed {
             //Check the same thing in exactly x cycles
             fork {
                 dut.clock.step(delay)
-                assert(op.compute(value1, op.operand2.peek().litValue()), message)
+                assert(op(value1, op.operand2.peek().litValue()), message)
             }
 
         case Eventually(delay) =>
             //Sample operand 1 at cycle 0
             val value1 = op.operand1.peek().litValue()
-            val initRes = op.compute(value1, op.operand2.peek().litValue())
+            val initRes = op(value1, op.operand2.peek().litValue())
             fork {
                 assert((1 until delay).exists(_ => {
                     dut.clock.step()
-                    op.compute(value1, op.operand2.peek().litValue())
+                    op(value1, op.operand2.peek().litValue())
                 }) || initRes, message)
             }
 
         case Never(delay) =>
             //Sample op1 at cycle 0
             val value1 = op.operand1.peek().litValue()
-            assert(!op.compute(value1, op.operand2.peek().litValue()), message)
+            assert(!op(value1, op.operand2.peek().litValue()), message)
 
             //Check the same thing at every cycle
             fork {
                 dut.clock.step()
                 (1 until delay) foreach (_ => {
-                    assert(!op.compute(value1, op.operand2.peek().litValue()), message)
+                    assert(!op(value1, op.operand2.peek().litValue()), message)
                     dut.clock.step()
                 })
             }
