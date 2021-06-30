@@ -1,5 +1,5 @@
 /*
-* Copyright 2020 DTU Compute - Section for Embedded Systems Engineering
+* Copyright 2021 DTU Compute - Section for Embedded Systems Engineering
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -48,6 +48,10 @@ class CoverageDB {
     //(binname) -> List[(value, bin hit cycle)] mapping for timed cross coverage
     private val timedCrossBinHits: mutable.HashMap[String, List[(BigInt, BigInt)]] = new mutable.HashMap[String, List[(BigInt, BigInt)]]()
 
+    //Timed operator mappings
+    private val timedOpVals: mutable.HashMap[String, List[TimingValue]] = new mutable.HashMap[String, List[TimingValue]]()
+    private val registeredTimedOp: mutable.ArrayBuffer[String] = new ArrayBuffer[String]()
+
     //Keep track of the different valid IDs
     private val groupIds: ArrayBuffer[BigInt] = new ArrayBuffer[BigInt]()
 
@@ -65,11 +69,19 @@ class CoverageDB {
         lastCoverGroupId
     }
 
-    def getCurCycle: BigInt = curCycle
-
     def step(cycles: Int = 1): Unit = curCycle += cycles
 
+    def getCurCycle: BigInt = curCycle
+
     def getTimedHits(binName: String): List[(BigInt, BigInt)] = timedCrossBinHits.getOrElse(binName, Nil)
+
+    /**
+      * Retrieved the timing operator values from the database.
+      * @param timedCoverOp the TimedCoverOp whose values we want to retrieve.
+      * @return the list of sampled timing values associated to a given TimedCoverOp.
+      */
+    def getTimingVals(implicit timedCoverOp: TimedCoverOp): List[TimingValue] =
+        timedOpVals.getOrElse(timedCoverOp.pointName, Nil)
 
     /**
       * Retrieves a coverpoint registered in the database
@@ -80,6 +92,83 @@ class CoverageDB {
         case None => throw new IllegalArgumentException(s"$name is not a registered coverpoint!")
         case Some(p) => p
     }
+
+    /**
+      * Gets the number of hits form the DB for a given bin id
+      * @return the number of hits for the given bin
+      */
+    def getNHits(pointName: String, binName: String): BigInt = binIdNumHitsMap getOrElse ((pointName, binName), 0)
+    def getNHits(cross: CrossBin): BigInt = crossBinNumHitsMap getOrElse (cross, 0)
+    def getNHits(conditionalName: String): Int = conditionalHits.getOrElse(conditionalName, Nil).size
+
+    /**
+      * Retrieves a port name given an id
+      * @return a string containing the name of the port
+      */
+    def getPort(portName: String): Data = coverIdPortMap get portName match {
+        case None => throw new IllegalArgumentException(s"$portName is not a registered port name!")
+        case Some(port) => port
+    }
+
+    def getCondSize(condName: String): BigInt = conditionSizes.getOrElse(condName, 0)
+
+    /**
+      * Registers a given coverpoint in the databas
+      * @param name the name of the point we want to register (will be used as it's primary key)
+      * @param coverPoint the point which we want to register
+      */
+    def registerCoverPoint(name: String, coverPoint: Cover) : Unit =
+        if(pointNameToPoint contains name) throw new IllegalArgumentException("CoverPoint Name already taken!")
+        else pointNameToPoint update (name, coverPoint)
+
+    /**
+      * Registers a new condition inside of the database
+      * WARNING: O(pow(W,N)) with N = #ports and W = maxWidth
+      * Complexity use with caution!
+      *
+      * @param condName the unique identifier for the condition
+      * @throws IllegalArgumentException if the name isn't unique
+      */
+    def registerConditions(pointName: String, conds: List[Condition]): Unit = pointNameToPoint.get(pointName) match {
+        case Some(p) => p match {
+            case covCond: CoverCondition =>
+                if(p.ports.length > 3) {
+                    println("WARNING: MORE THAN 3 PORTS IN A COVER_CONDITION MAY LEAD TO EXTREME COMPLEXITY, USE WITH CAUTION")
+                }
+                /* CAUSES HEAP OVERFLOW
+                val ranges = covCond.ports.map(DefaultBin.defaultRange(_).toList)
+                val cartesianRange = cartesian(ranges)
+                */
+
+                //Compute the size of the domain defined by each condition
+                conds foreach {condition =>
+                    if(!registeredConditions.contains(condition.name)) {
+                        registeredConditions += condition.name
+
+                        /* CAUSES HEAP OVERFLOW
+                        val condSize = cartesianRange.count(r => condition(r.map(BigInt(_))))
+                        conditionSizes.update(condition.name, condSize)
+                        */
+
+                    } else throw new IllegalArgumentException(
+                        s"${condition.name} is already taken! Please use a unique ID for each Condition!"
+                    )
+                }
+            case _ => throw new IllegalArgumentException("Requested point must be of type CoverCondition")
+        }
+        case None => throw new IllegalArgumentException(s"$pointName isn't a registered point!")
+    }
+
+    /**
+      * Registers a TimedCoverOp using only its name
+      * @param timedCoverOp the timed cover operator that must be registered
+      * @throws IllegalArgumentException if the name is already taken
+      */
+    def registerTimedCoverOp(implicit timedCoverOp: TimedCoverOp): Unit =
+        if(registeredTimedOp.contains(timedCoverOp.pointName))
+            throw new IllegalArgumentException(s"${timedCoverOp.pointName} IS ALREADY A REGISTERED NAME!")
+        else
+            registeredTimedOp += timedCoverOp.pointName
 
     /**
       * Registers a cross relation in the database
@@ -97,7 +186,16 @@ class CoverageDB {
 
     }
 
-    def getCondSize(condName: String): BigInt = conditionSizes.getOrElse(condName, 0)
+    /**
+      * Adds a sampled timing value for the given TimedCoverOp
+      * @param timedCoverOp the given TimedCoverOp
+      * @param timingValue the value that is to be added to the DB
+      */
+    def addTimingValue(timingValue: TimingValue)(implicit timedCoverOp: TimedCoverOp): Unit = {
+        val newValues = (timedOpVals.getOrElse(timedCoverOp.pointName, Nil) :+ timingValue).distinct
+
+        timedOpVals update (timedCoverOp.pointName, newValues)
+    }
 
     /**
       * Updates the number of hits done in a given bin
@@ -140,68 +238,5 @@ class CoverageDB {
         }
     }
 
-    /**
-      * Registers a given coverpoint in the databas
-      * @param name the name of the point we want to register (will be used as it's primary key)
-      * @param coverPoint the point which we want to register
-      */
-    def registerCoverPoint(name: String, coverPoint: Cover) : Unit =
-        if(pointNameToPoint contains name) throw new IllegalArgumentException("CoverPoint Name already taken!")
-        else pointNameToPoint update (name, coverPoint)
 
-
-    /**
-      * Registers a new condition inside of the database
-      * WARNING: O(pow(W,N)) with N = #ports and W = maxWidth
-      * Complexity use with caution!
-      *
-      * @param condName the unique identifier for the condition
-      * @throws IllegalArgumentException if the name isn't unique
-      */
-    def registerConditions(pointName: String, conds: List[Condition]): Unit = pointNameToPoint.get(pointName) match {
-        case Some(p) => p match {
-            case covCond: CoverCondition =>
-                if(p.ports.length > 3) {
-                    println("WARNING: MORE THAN 3 PORTS IN A COVER_CONDITION MAY LEAD TO EXTREME COMPLEXITY, USE WITH CAUTION")
-                }
-                /* CAUSES HEAP OVERFLOW
-                val ranges = covCond.ports.map(DefaultBin.defaultRange(_).toList)
-                val cartesianRange = cartesian(ranges)
-                */
-
-                //Compute the size of the domain defined by each condition
-                conds foreach {condition =>
-                    if(!registeredConditions.contains(condition.name)) {
-                        registeredConditions += condition.name
-
-                        /* CAUSES HEAP OVERFLOW
-                        val condSize = cartesianRange.count(r => condition(r.map(BigInt(_))))
-                        conditionSizes.update(condition.name, condSize)
-                        */
-
-                    } else throw new IllegalArgumentException(
-                        s"${condition.name} is already taken! Please use a unique ID for each Condition!"
-                    )
-                }
-            case _ => throw new IllegalArgumentException("Requested point must be of type CoverCondition")
-        }
-        case None => throw new IllegalArgumentException(s"$pointName isn't a registered point!")
-    }
-
-    /**
-      * Gets the number of hits form the DB for a given bin id
-      * @return the number of hits for the given bin
-      */
-    def getNHits(pointName: String, binName: String): BigInt = binIdNumHitsMap getOrElse ((pointName, binName), 0)
-    def getNHits(cross: CrossBin): BigInt = crossBinNumHitsMap getOrElse (cross, 0)
-    def getNHits(conditionalName: String): Int = conditionalHits.getOrElse(conditionalName, Nil).size
-
-    /**
-      * Retrieves a port name given an id
-      * @return a string containing the name of the port
-      */
-    def getPort(portName: String): Data = coverIdPortMap get portName match {
-        case None => throw new IllegalArgumentException(s"$portName is not a registered port name!")
-        case Some(port) => port
-    }
 }

@@ -1,6 +1,22 @@
+/*
+* Copyright 2021 DTU Compute - Section for Embedded Systems Engineering
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+* or implied. See the License for the specific language governing
+* permissions and limitations under the License.
+*/
 package chiselverify.timing
 
 import chisel3.Data
+import chisel3.tester.testableData
 
 /**
   * Set of timing operators (only usable if a Timing delay is available)
@@ -11,7 +27,9 @@ object TimedOp {
       * Represents a timed operation
       * @param operands the operands needed for the operation
       */
-    abstract class TimedOperator(val operand1: Data, val operand2: Data) {
+    abstract class TimedOperator(operands: Data*) {
+        val operand1: Data = operands.head
+        val operand2: Data = operands.tail.head
         /**
           * Executes the current operation
           * @param value1 the value of the first operand
@@ -19,6 +37,18 @@ object TimedOp {
           * @return the result of the boolean operation
           */
         def compute(value1: BigInt, value2: BigInt): Boolean
+
+        /**
+          * Defines a new TimedOperator as the sum of two existing ones
+          * @param that the Timed operator that we want to sum to ours
+          * @return an operator that considers a result true if it satisfies both operators
+          */
+        def +(that: TimedOperator): TimedOperator =
+            new TimedOperator(operand1, operand2, that.operand1, that.operand2) {
+                override def compute(value1: BigInt, value2: BigInt): Boolean =
+                    compute(operand1.peek().litValue(), operand2.peek().litValue()) &&
+                        compute(that.operand1.peek().litValue(), that.operand2.peek().litValue())
+            }
     }
 
     case object NoOp extends TimedOperator(null, null) {
