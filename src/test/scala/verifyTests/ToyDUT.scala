@@ -16,15 +16,16 @@ object ToyDUT {
             val count = Output(UInt(size.W))
             val outB = Output(UInt(size.W))
             val outC = Output(UInt(size.W))
+            val outSum = Output(UInt((size + 1).W))
         })
-        val regA = Counter(5)
-
+        val regA: Counter = Counter(size + 10)
         regA.inc()
 
         io.outA := io.a
         io.count := regA.value
         io.outB := io.b
         io.outC := io.c
+        io.outSum := io.a + regA.value
     }
 
     class BasicToyDUT(size: Int) extends Module {

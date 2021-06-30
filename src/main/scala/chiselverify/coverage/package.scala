@@ -1,5 +1,5 @@
 /*
-* Copyright 2020 DTU Compute - Section for Embedded Systems Engineering
+* Copyright 2021 DTU Compute - Section for Embedded Systems Engineering
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -174,7 +174,7 @@ package object coverage {
       */
     case class CoverPoint(pN: String, port: Data)(b: Bins*)
         extends Cover(pN, port::Nil) {
-        val bins: List[Bins] = if(b.isEmpty) List(DefaultBin(port)) else b.toList
+        val bins: List[Bins] = if (b.isEmpty) List(DefaultBin(port)) else b.toList
 
         override def serialize: String = s"CoverPoint($port, $pointName)(${bins.map(_.serialize)})"
 
@@ -191,53 +191,74 @@ package object coverage {
     }
 
     /**
-      * Represents a coverage relation between two different DUT ports
-      *
-      * @param name       the name that will be used to represent the relation in the report
-      * @param pointName1 the first point of the relation
-      * @param pointName2 the other point in the relation
-      * @param bins       the list of value ranges that will be checked for for the given relation
+      * Representation of a sampled timing value. This is used for the TimedCoverOp construct.
+      * @param operandNum either 1 or 2, represents which operand we are working with
+      * @param value, the sampled value of the port
+      * @param cycle, the cycle at which the value was sampled
       */
-    case class CrossPoint(n: String, p: Data*)(b: CrossBin*) extends Cross(n, p)(b.toList) {
+    case class TimingValue(operandNum: Int, value: BigInt, cycle: BigInt) {
+        if(operandNum > 2 || operandNum < 0)
+            throw new IllegalArgumentException(s"operand number can only be 1 or 2!!")
+    }
 
-        //Check that the correct number of ranges was given
-        override val bins: List[CrossBin] =
-            if(b.forall(_.ranges.length == ports.length)) b.toList
-            else throw new IllegalArgumentException(
-                "CrossBins must contain the same number of ranges as the number of ports in the CrossPoint!"
-            )
+    case class TimedCoverOp(pN: String, op: TimedOperator)(val delay: DelayType)
+        extends Cover(pN, Seq(op.operand1, op.operand2)) {
 
-        override def sample(db: CoverageDB): Unit = {
+        //Implicit reference to simplify internal DB function calls
+        implicit val _this: TimedCoverOp = this
 
-            //Sample all of the ports
-            val portVal = ports.map(_.peek().litValue())
+        override def report(db: CoverageDB): Report = {
+            def compileHits: Int = {
+                val timingVals = db.getTimingVals
+                val op1Vals = timingVals.filter(_.operandNum == 1)
+                val op2Vals = timingVals.filter(_.operandNum == 2)
 
-            //Check for hits with each bin
-            bins.foreach { b => if(portVal.zip(b.ranges).forall{ case (v, r) => r contains v })
-                    db.addCrossBinHit(b, portVal)
+                delay match {
+                    //(op1, List of op2Vals where cycle is delay cycles later) then reduced by applying the operand
+                    case Exactly(delay) => op1Vals.map(p => (p, op2Vals.filter((p.cycle + (delay - 1)) == _.cycle)))
+                        .map { case (t, ts) => ts.map(t2 => op(t.value, t2.value)).count(_ == true) }.sum
+
+                    //(op1, List of op2Vals where cycle is up to delay cycles later) then checked to find at least one
+                    //entry than satisfies the operation
+                    case Eventually(delay) => op1Vals.map(p =>
+                        (p, op2Vals.filter(p2 => ((p.cycle + delay) >= p2.cycle) && (p.cycle <= p2.cycle))))
+                        .filter { case (_, ts) => ts.size > delay }
+                        .count { case (t, ts) => ts.exists(t2 => op(t.value, t2.value)) }
+
+                    //(op1, List of op2Vals where cycle is up to delay cycles later) then checked to find out if all
+                    //entries than satisfies the operation
+                    case Always(delay) => op1Vals.map(p =>
+                        (p, op2Vals.filter(p2 => ((p.cycle + delay) >= p2.cycle) && (p.cycle <= p2.cycle))))
+                        .filter { case (_, ts) => ts.size > delay }
+                        .count { case (t, ts) => ts.forall(t2 => op(t.value, t2.value)) }
+
+                    case _ => throw new IllegalArgumentException(s"$delay DelayType not supported")
+                }
             }
+
+            TimedOpReport(this, compileHits)
         }
 
-        override def register(db: CoverageDB): Unit = db.registerCross(this)
+         def +(that: TimedCoverOp): TimedCoverOp = {
+            if(delay != that.delay) throw new IllegalArgumentException("DELAYS MUST BE EQUAL IN ORDER TO SUM")
+            else TimedCoverOp(s"$pointName + ${that.pointName}", op + that.op)(delay)
+        }
 
-        /**
-          * Generates a report in a form that is compatible with the coverage reporter
-          *
-          * @return a Report
-          */
-        override def report(db: CoverageDB): Report =
-            CrossReport(this, bins.map(cb => CrossBinReport(cb, db.getNHits(cb))))
+        override def serialize: String = s"TIMED_COVER_OP $pointName${delay.toString}"
 
-        /**
-          * Converts the current cover construct into a human-readable string
-          *
-          * @return a String representing the cover construct
-          */
-        override def serialize: String = s"CROSS $name"
+        override def sample(db: CoverageDB): Unit = {
+            val curCycle = db.getCurCycle
+
+            //Sample the two operands
+            db.addTimingValue(TimingValue(1, op.operand1.peek().litValue(), curCycle))
+            db.addTimingValue(TimingValue(2, op.operand2.peek().litValue(), curCycle))
+        }
+
+        override def register(db: CoverageDB): Unit = db.registerTimedCoverOp
     }
 
     /**
-      * A timed version of a cross point. This means that, given a delay, point 2 will be sampled a certain amount of 
+      * A timed version of a cross point. This means that, given a delay, point 2 will be sampled a certain amount of
       * cycles after point 1.
       *
       * @param n        the name of the cross, used for the report
@@ -324,7 +345,7 @@ package object coverage {
                                 BigInt(1)
                             else
                                 BigInt(0))
-                        case _ => (cb, BigInt(0))
+                        case _ => (cb, BigInt(0)) //Never isn't supported for coverage
                     }
                 })
             //Sanity check
@@ -338,6 +359,53 @@ package object coverage {
           * @return a String representing the cover construct
           */
         override def serialize: String = s"TIMED CROSS $name WITH DELAY $delay"
+    }
+
+
+    /**
+      * Represents a coverage relation between two different DUT ports
+      *
+      * @param name       the name that will be used to represent the relation in the report
+      * @param pointName1 the first point of the relation
+      * @param pointName2 the other point in the relation
+      * @param bins       the list of value ranges that will be checked for for the given relation
+      */
+    case class CrossPoint(n: String, p: Data*)(b: CrossBin*) extends Cross(n, p)(b.toList) {
+
+        //Check that the correct number of ranges was given
+        override val bins: List[CrossBin] =
+            if(b.forall(_.ranges.length == ports.length)) b.toList
+            else throw new IllegalArgumentException(
+                "CrossBins must contain the same number of ranges as the number of ports in the CrossPoint!"
+            )
+
+        override def sample(db: CoverageDB): Unit = {
+
+            //Sample all of the ports
+            val portVal = ports.map(_.peek().litValue())
+
+            //Check for hits with each bin
+            bins.foreach { b => if(portVal.zip(b.ranges).forall{ case (v, r) => r contains v })
+                    db.addCrossBinHit(b, portVal)
+            }
+        }
+
+        override def register(db: CoverageDB): Unit = db.registerCross(this)
+
+        /**
+          * Generates a report in a form that is compatible with the coverage reporter
+          *
+          * @return a Report
+          */
+        override def report(db: CoverageDB): Report =
+            CrossReport(this, bins.map(cb => CrossBinReport(cb, db.getNHits(cb))))
+
+        /**
+          * Converts the current cover construct into a human-readable string
+          *
+          * @return a String representing the cover construct
+          */
+        override def serialize: String = s"CROSS $name"
     }
 
     /**
