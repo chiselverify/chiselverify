@@ -223,16 +223,14 @@ package object coverage {
                     case Eventually(delay) => op1Vals.map(p =>
                         (p, op2Vals.filter(p2 => ((p.cycle + delay) >= p2.cycle) && (p.cycle <= p2.cycle))))
                         .filter { case (_, ts) => ts.size > delay }
-                        .map { case (t, ts) => if(ts.exists(t2 => op(t.value, t2.value))) 1 else 0 }
-                        .sum
+                        .count { case (t, ts) => ts.exists(t2 => op(t.value, t2.value)) }
 
                     //(op1, List of op2Vals where cycle is up to delay cycles later) then checked to find out if all
                     //entries than satisfies the operation
                     case Always(delay) => op1Vals.map(p =>
                         (p, op2Vals.filter(p2 => ((p.cycle + delay) >= p2.cycle) && (p.cycle <= p2.cycle))))
                         .filter { case (_, ts) => ts.size > delay }
-                        .map { case (t, ts) => if(ts.forall(t2 => op(t.value, t2.value))) 1 else 0 }
-                        .sum
+                        .count { case (t, ts) => ts.forall(t2 => op(t.value, t2.value)) }
 
                     case _ => throw new IllegalArgumentException(s"$delay DelayType not supported")
                 }
