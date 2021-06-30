@@ -163,4 +163,54 @@ object AssertTimed {
 
         case _ => throw new IllegalArgumentException("Delay Type not implemented for assertions")
     }
+
+    /* FANCY SYNTACTIC SUGAR BELOW */
+
+    abstract class DT
+    object Evt extends DT
+    object Alw extends DT
+    object Nvr extends DT
+    object Exct extends DT
+
+    /**
+      * Thread Wrapper
+      */
+    case class TW(t: TesterThreadList) {
+        def cycles: Boolean = {
+            t.join()
+            true
+        }
+
+    }
+
+    implicit def TWtoThreadList(tw: TW): TesterThreadList = tw.t
+
+    def dtToDelayType(dt: DT, delay: Int): DelayType = dt match {
+        case Evt => Eventually(delay)
+        case Alw => Always(delay)
+        case Nvr => Never(delay)
+        case Exct => Exactly(delay)
+    }
+
+    /**
+      * Final Assertion type
+      */
+    case class FA[T <: Module](dut: T, op: TimedOperator, dt: DT) {
+        def delay(ia: IA): TW = {
+            val delayType = dtToDelayType(dt, ia.d)
+            TW(apply(dut, op, s"ASSERTION ${delayType.toString} FAILED")(delayType))
+        }
+    }
+
+    def by(d: Int): IA = IA(d)
+
+    /**
+      * Intermediate assertion type
+      */
+    case class IA(d: Int)
+
+    def eventually[T <: Module](op: TimedOperator)(implicit dut: T): FA[T] = FA(dut, op, Evt)
+    def always[T <: Module](op: TimedOperator)(implicit dut: T): FA[T] = FA(dut, op, Alw)
+    def never[T <: Module](op: TimedOperator)(implicit dut: T): FA[T] = FA(dut, op, Nvr)
+    def exact[T <: Module](op: TimedOperator)(implicit dut: T): FA[T] = FA(dut, op, Exct)
 }
