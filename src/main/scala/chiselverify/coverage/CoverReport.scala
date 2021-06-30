@@ -261,6 +261,11 @@ object CoverReport {
         override def +(that: Report): Report = that match {
             case TimedOpReport(t, hits) => TimedOpReport(timedCoverOp + t, nHits + hits)
         }
+
+        /**
+          * String ID for the current report
+          */
+        override val name: String = timedCoverOp.pointName
     }
 
     /**
