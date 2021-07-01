@@ -218,10 +218,28 @@ object AssertTimed {
       */
     case class IA(d: Int)
 
+    def eventually[T <: Module](d: Int = 100)(op: TimedOperator)(implicit dut: T): Unit =
+        FA(dut, Evt, op) delay by (d) cycles
+    def always[T <: Module](d: Int = 100)(op: TimedOperator)(implicit dut: T): Unit =
+        FA(dut, Alw, op) delay by (d) cycles
+    def never[T <: Module](d: Int = 100)(op: TimedOperator)(implicit dut: T): Unit =
+        FA(dut, Nvr, op) delay by (d) cycles
+    def exact[T <: Module](d: Int = 100)(op: TimedOperator)(implicit dut: T): Unit =
+        FA(dut, Exct, op) delay by (d) cycles
+
     def eventually[T <: Module](op: TimedOperator)(implicit dut: T): FA[T] = FA(dut, Evt, op)
     def always[T <: Module](op: TimedOperator)(implicit dut: T): FA[T] = FA(dut, Alw, op)
     def never[T <: Module](op: TimedOperator)(implicit dut: T): FA[T] = FA(dut, Nvr, op)
     def exact[T <: Module](op: TimedOperator)(implicit dut: T): FA[T] = FA(dut, Exct, op)
+
+    def eventually[T <: Module](d: Int = 100)(cond: () => Boolean)(implicit dut: T): Unit =
+        FA(dut, Evt, cond = cond) delay by (d) cycles
+    def always[T <: Module](d: Int = 100)(cond: () => Boolean)(implicit dut: T): Unit =
+        FA(dut, Alw, cond = cond) delay by (d) cycles
+    def never[T <: Module](d: Int = 100)(cond: () => Boolean)(implicit dut: T): Unit =
+        FA(dut, Nvr, cond = cond) delay by (d) cycles
+    def exact[T <: Module](d: Int = 100)(cond: () => Boolean)(implicit dut: T): Unit =
+        FA(dut, Exct, cond = cond) delay by (d) cycles
 
     def eventually[T <: Module](cond: () => Boolean)(implicit dut: T): FA[T] = FA(dut, Evt, cond = cond)
     def always[T <: Module](cond: () => Boolean)(implicit dut: T): FA[T] = FA(dut, Alw, cond = cond)
