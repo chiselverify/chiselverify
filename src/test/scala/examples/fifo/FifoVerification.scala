@@ -4,14 +4,18 @@ import chisel3._
 import chiseltest.ChiselScalatestTester
 import org.scalatest.FlatSpec
 import chisel.lib.fifo.Fifo
+import chiselverify.assertions.AssertTimed.{always, by}
 import chiselverify.coverage.CoverageReporter
 import chiselverify.coverage._
 import chiselverify.crv.RangeBinder
 import chiselverify.crv.backends.jacop._
+import chiselverify.timing._
+import chiselverify.timing.TimedOp._
 
 class FifoVerification extends FlatSpec with ChiselScalatestTester {
 
     def testFifo[T <: Fifo[UInt]](dut: T): Unit = {
+        implicit val _dut: T = dut
         //Define RandObj for CRV
         class FifoGen(seed: Int) extends RandObj {
             currentModel = new Model(seed)
@@ -38,7 +42,10 @@ class FifoVerification extends FlatSpec with ChiselScalatestTester {
             ),
             CoverPoint("DeqValidCoverage", dut.io.deq.valid)(
                 Bins("validCov", 0 to 1)
-            )
+            ),
+            TimedCoverOp("inEqOut", dut.io.enq ?== dut.io.deq)(Exactly(1))
         )
+
+        always { dut.io.enq ?== dut.io.deq } delay by (1) cycles
     }
 }
