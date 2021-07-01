@@ -106,6 +106,23 @@ AssertTimed(dut,() => dut.io.a.peek() == dut.io.b.peek(), "aEqb expected timing 
 This can also be done more naturally with the `Expect` interface:  
 ```scala
 ExpectTimed(dut,dut.io.a, dut.io.b.peek().litValue(), "aEqb expected timing is wrong")(Exactly(2)).join()
+```  
+
+#### Timed Operators
+`Timed Assertions` can also be used with `TimedOperators`. This allows to check assertions by comparing two ports at different cycles using the currently existing timing delays.   
+
+The list of currently existing timed operations are the following:  
+- `Equals`: Checks if the first operand sampled at cycle 0 is __equal to__ a second operand sampled after a delay.  
+- `Gt`: Checks if the first operand sampled at cycle 0 is __greater than__ a second operand sampled after a delay.  
+- `Lt`: Checks if the first operand sampled at cycle 0 is __less than__ a second operand sampled after a delay.  
+- `GtEq`: Checks if the first operand sampled at cycle 0 is __greater than or equal to__ a second operand sampled after a delay.  
+- `LtEq`: Checks if the first operand sampled at cycle 0 is __less than or equal to__ a second operand sampled after a delay.    
+  
+### Example use case  
+Here is a toy example of how to use the assertion:  
+```scala
+AssertTimed(dut, LtEq(dut.io.outB, dut.io.outA), "a isn't always less than or equal to one")(Always(9)).join()
+AssertTimed(dut, GtEq(dut.io.outB, dut.io.outA), "a isn't always greater than or equal to one")(Always(9)).join()  
 ```
 
 ### Cover Conditions  
