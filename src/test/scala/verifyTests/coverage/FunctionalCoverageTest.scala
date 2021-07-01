@@ -3,9 +3,11 @@ package verifyTests.coverage
 import chisel3._
 import chiseltest._
 import chiselverify.coverage._
+import chiselverify.timing.TimedOp.{Equals, Gt, GtEq, Lt, LtEq}
 import chiselverify.timing._
 import verifyTests.ToyDUT._
 import org.scalatest._
+import chiselverify.coverage.Utils.stringToOption
 
 class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Matchers {
 
@@ -324,6 +326,76 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
         report.binNHits(1, "AlwaysTimedAB", "AlwaysBoth3") should be (1)
     }
 
+    def testTimedOps[T <: TimedToyDUT](dut: T): Unit = {
+        val cr = new CoverageReporter(dut)
+        cr.register(
+            TimedCoverOp("aEqCountAfterNCylces", Equals(dut.io.outA, dut.io.count))(Exactly(5)),
+            TimedCoverOp("aGtCountBeforeNCycles", GtEq(dut.io.outA, dut.io.count))(Always(5)),
+            TimedCoverOp("aLtSumBeforeNCycles", Lt(dut.io.outA, dut.io.outSum))(Eventually(5))
+        )
+
+        def test(): Unit = {
+            dut.io.a.poke(5.U)
+            dut.io.b.poke(1.U)
+            dut.io.c.poke(3.U)
+            cr.step(5)
+            dut.io.c.poke(0.U)
+            cr.step()
+            dut.io.outC.expect(0.U)
+        }
+
+        test()
+
+        //Generate Report
+        val report = cr.report
+        cr.printReport()
+
+        report.binNHits(1, "aEqCountAfterNCylces") should be (1)
+        report.binNHits(1, "aGtCountBeforeNCycles") should be (1)
+        report.binNHits(1, "aLtSumBeforeNCycles") should be (1)
+    }
+
+    def testTimedOpsMultiHits[T <: TimedToyDUT](dut: T): Unit = {
+        val cr = new CoverageReporter(dut)
+        cr.register(
+            TimedCoverOp("aEqCountAfterNCylces", Equals(dut.io.outA, dut.io.count))(Exactly(5)),
+            TimedCoverOp("aGtCountBeforeNCycles", GtEq(dut.io.outA, dut.io.count))(Always(5)),
+            TimedCoverOp("aLtSumBeforeNCycles", Lt(dut.io.outA, dut.io.count))(Eventually(6)),
+            TimedCoverOp("bGtCountFor2Cycles", Gt(dut.io.outB, dut.io.count))(Always(2))
+        )
+
+        def test(): Unit = {
+            dut.io.a.poke(5.U)
+            dut.io.b.poke(3.U)
+            dut.io.c.poke(3.U)
+            cr.step()
+            cr.step()
+            dut.io.a.poke(2.U)
+            cr.step()
+            dut.io.b.poke(0.U)
+            cr.step()
+            dut.io.a.poke(5.U)
+            dut.io.b.poke(7.U)
+            cr.step()
+            dut.io.c.poke(0.U)
+            cr.step()
+            dut.io.outC.expect(0.U)
+            cr.step()
+        }
+
+        test()
+
+        //Generate Report
+        val report = cr.report
+        cr.printReport()
+
+        report.binNHits(1, "aEqCountAfterNCylces") should be (1)
+        report.binNHits(1, "aGtCountBeforeNCycles") should be (1)
+        report.binNHits(1, "aLtSumBeforeNCycles") should be (1)
+        report.binNHits(1, "bGtCountFor2Cycles") should be (2)
+
+    }
+
     "Coverage" should "get the right amount of hits" in {
         test(new BasicToyDUT(32)){ dut => testGeneric(dut) }
     }
@@ -355,6 +427,14 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
 
     "CoverageWithEverything" should "pass" in {
         test(new TimedToyDUT(32)) {dut => testAll(dut)}
+    }
+
+    "CoverageWithTimedOps" should "pass" in {
+        test(new TimedToyDUT(32)) { dut => testTimedOps(dut) }
+    }
+
+    "CoverageWithTimedOpsMultiHits" should "pass" in {
+        test(new TimedToyDUT(32)) { dut => testTimedOpsMultiHits(dut) }
     }
 }
 

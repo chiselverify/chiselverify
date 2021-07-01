@@ -1,5 +1,5 @@
 /*
-* Copyright 2020 DTU Compute - Section for Embedded Systems Engineering
+* Copyright 2021 DTU Compute - Section for Embedded Systems Engineering
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.

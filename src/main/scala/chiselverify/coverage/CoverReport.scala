@@ -1,3 +1,18 @@
+/*
+* Copyright 2021 DTU Compute - Section for Embedded Systems Engineering
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+* or implied. See the License for the specific language governing
+* permissions and limitations under the License.
+*/
 package chiselverify.coverage
 
 import chiselverify.timing.{DelayType, NoDelay}
@@ -76,7 +91,8 @@ object CoverReport {
           * @param binName   the name of the bin itself
           * @return
           */
-        def binNHits(groupId: BigInt, pointName: String, binName: String): BigInt = {
+        def binNHits(groupId: BigInt, pointName: String, bN: Option[String] = None): BigInt = {
+            val binName =  bN.getOrElse("NoName")
             //Look for the group
             groups.find(_.id == groupId) match {
                 case None => throw new IllegalArgumentException(s"No group with ID $groupId!!")
@@ -103,6 +119,7 @@ object CoverReport {
                                             case _ => throw new IllegalStateException("Bin must be reported with a BinReport")
                                         }
                                     }
+                                case TimedOpReport(_, nHits) => nHits
                                 case ConditionReport(_, conds, db) =>
                                     conds.find(_.name == binName) match {
                                         case None => throw new IllegalArgumentException(s"No condition with name $binName!!")
@@ -220,6 +237,35 @@ object CoverReport {
         }
 
         override val id: BigInt = name.hashCode
+    }
+
+    case class TimedOpReport(timedCoverOp: TimedCoverOp, nHits: Int) extends Report {
+        /**
+          * Generates a part of or the entirety of the coverage report
+          *
+          * @return a string containing the coverage report
+          */
+        override def report: String = s"${timedCoverOp.serialize} HAS $nHits HIT(S)."
+
+        /**
+          * String ID for the current report
+          */
+        override val name: String = timedCoverOp.pointName
+
+        /**
+          * Integer ID for the current report
+          */
+        override val id: BigInt = timedCoverOp.pointName.hashCode
+
+        /**
+          * Adds two different reports of the same type together
+          *
+          * @param that an other report of the same type as this one
+          * @return a concatenated version of the two reports
+          */
+        override def +(that: Report): Report = that match {
+            case TimedOpReport(t, hits) => TimedOpReport(timedCoverOp + t, nHits + hits)
+        }
     }
 
     /**
