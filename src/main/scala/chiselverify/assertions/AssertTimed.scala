@@ -192,13 +192,22 @@ object AssertTimed {
         case Exct => Exactly(delay)
     }
 
+    implicit def opToOption(op:TimedOperator): Option[TimedOperator] = Some(op)
+    implicit def condToOption(cond: () => Boolean): Option[() => Boolean] = Some(cond)
+
     /**
       * Final Assertion type
       */
-    case class FA[T <: Module](dut: T, op: TimedOperator, dt: DT) {
+    case class FA[T <: Module](dut: T, dt : DT, op: Option[TimedOperator] = None, cond: Option[() => Boolean] = None) {
         def delay(ia: IA): TW = {
             val delayType = dtToDelayType(dt, ia.d)
-            TW(apply(dut, op, s"ASSERTION ${delayType.toString} FAILED")(delayType))
+            if(op.isDefined) {
+                TW(apply(dut, op.get, s"ASSERTION ${delayType.toString} FAILED")(delayType))
+            } else if(cond.isDefined) {
+                TW(apply(dut, cond.get, s"ASSERTION ${delayType.toString} FAILED")(delayType))
+            } else {
+                throw new IllegalArgumentException("Either op or cond should be defined")
+            }
         }
     }
 
@@ -209,8 +218,13 @@ object AssertTimed {
       */
     case class IA(d: Int)
 
-    def eventually[T <: Module](op: TimedOperator)(implicit dut: T): FA[T] = FA(dut, op, Evt)
-    def always[T <: Module](op: TimedOperator)(implicit dut: T): FA[T] = FA(dut, op, Alw)
-    def never[T <: Module](op: TimedOperator)(implicit dut: T): FA[T] = FA(dut, op, Nvr)
-    def exact[T <: Module](op: TimedOperator)(implicit dut: T): FA[T] = FA(dut, op, Exct)
+    def eventually[T <: Module](op: TimedOperator)(implicit dut: T): FA[T] = FA(dut, Evt, op)
+    def always[T <: Module](op: TimedOperator)(implicit dut: T): FA[T] = FA(dut, Alw, op)
+    def never[T <: Module](op: TimedOperator)(implicit dut: T): FA[T] = FA(dut, Nvr, op)
+    def exact[T <: Module](op: TimedOperator)(implicit dut: T): FA[T] = FA(dut, Exct, op)
+
+    def eventually[T <: Module](cond: () => Boolean)(implicit dut: T): FA[T] = FA(dut, Evt, cond = cond)
+    def always[T <: Module](cond: () => Boolean)(implicit dut: T): FA[T] = FA(dut, Alw, cond = cond)
+    def never[T <: Module](cond: () => Boolean)(implicit dut: T): FA[T] = FA(dut, Nvr, cond = cond)
+    def exact[T <: Module](cond: () => Boolean)(implicit dut: T): FA[T] = FA(dut, Exct, cond = cond)
 }
