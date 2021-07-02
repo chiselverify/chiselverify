@@ -163,7 +163,7 @@ CONDITION asuptobAtLeast100 HAS 95 HITS EXPECTED 100 = 95.0%
 ```
 
 ## Constrained Random Verification
-The CRV package inside this project aims to mimic the functionality of SystemVerilog constraint programming and integrates them into [chisel-tester2](https://github.com/ucb-bar/chisel-testers2).
+The CRV package inside this project aims to mimic the functionality of SystemVerilog constraint programming and integrates them into [ChiselTest](https://github.com/ucb-bar/chisel-testers2).
 The CRV package combines a Constraint Satisfactory Problem Solver, with some helper classes to create and use random objects inside your tests.
 Currently, only the [jacop](https://github.com/radsz/jacop) backend is supported, but in the future other backends can be added.
 
