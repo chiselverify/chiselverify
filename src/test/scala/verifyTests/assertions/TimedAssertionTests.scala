@@ -283,14 +283,15 @@ class TimedAssertionTests extends FlatSpec with ChiselScalatestTester with Match
             dut.io.b.poke(10.U)
             dut.clock.step(1)
             println(s"aEqb is ${dut.io.aEqb.peek().litValue()}")
-            always { dut.io.aEqb ?== dut.io.isOne } delay by (9) cycles
+            always(9) { dut.io.aEqb ?== dut.io.isOne }
+
         }
 
         def testEventually(): Unit = {
             dut.io.a.poke(4.U)
             dut.io.b.poke(2.U)
             dut.clock.step()
-            eventually { dut.io.outB ?> dut.io.outCNotSupB } delay by (4) cycles
+            eventually(4) { dut.io.outB ?> dut.io.outCNotSupB }
         }
 
         def testExactly(): Unit = {
@@ -298,15 +299,14 @@ class TimedAssertionTests extends FlatSpec with ChiselScalatestTester with Match
             dut.io.b.poke(5.U)
             dut.clock.step(2)
             println(s"C = ${dut.io.outC.peek().litValue()}")
-
-            exact { dut.io.outB ?< dut.io.outCSupB } delay by (7) cycles
+            exact(7) { dut.io.outB ?< dut.io.outCSupB }
         }
 
         def testNever(): Unit = {
             dut.io.a.poke(10.U)
             dut.io.b.poke(0.U)
             dut.clock.step(1)
-            never { dut.io.outB ?>= dut.io.outC } delay by (10) cycles
+            never(10) { dut.io.outB ?>= dut.io.outC }
         }
 
         et match {
