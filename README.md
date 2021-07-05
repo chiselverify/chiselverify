@@ -117,6 +117,8 @@ The list of currently existing timed operations are the following:
 - `Lt`: Checks if the first operand sampled at cycle 0 is __less than__ a second operand sampled after a delay.  
 - `GtEq`: Checks if the first operand sampled at cycle 0 is __greater than or equal to__ a second operand sampled after a delay.  
 - `LtEq`: Checks if the first operand sampled at cycle 0 is __less than or equal to__ a second operand sampled after a delay.    
+
+>Note that these operators can also be used to create special `CoverPoints` using the `TimedCoverOp` construct.  
   
 ### Example use case  
 Here is a toy example of how to use the assertion:  
