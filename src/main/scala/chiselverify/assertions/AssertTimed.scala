@@ -211,23 +211,38 @@ object AssertTimed {
         }
     }
 
+    /**
+      * Intermediate wrapper for expect types
+      */
+    case class IE(data: Data, expected: UInt)
+
+    //Implicit data wrapping
+    implicit def dataToDW(data: Data): DW = DW(data)
+    case class DW(data: Data) {
+        def expected(value: UInt): IE = IE(data, value)
+    }
+
     case class eventually(d: Int = 100, msg: String = s"EVENTUALLY ASSERTION FAILED") {
         def apply[T <: Module](op: TimedOperator)(implicit dut: T): Unit = IA(dut, Evt, msg, op) within d cycles
         def apply[T <: Module](cond: () => Boolean)(implicit dut: T): Unit = IA(dut, Evt, msg, cond = cond) within d cycles
+        def apply[T <: Module](ie: IE)(implicit dut: T): Unit = ExpectTimed(dut, ie.data, ie.expected, msg)(Eventually(d))
     }
 
     case class always(d: Int = 100,  msg: String = s"ALWAYS ASSERTION FAILED") {
         def apply[T <: Module](op: TimedOperator)(implicit dut: T): Unit = IA(dut, Alw, msg, op) within d cycles
         def apply[T <: Module](cond: () => Boolean)(implicit dut: T): Unit = IA(dut, Alw, msg, cond = cond) within d cycles
+        def apply[T <: Module](ie: IE)(implicit dut: T): Unit = ExpectTimed(dut, ie.data, ie.expected, msg)(Always(d))
     }
 
     case class never(d: Int = 100,  msg: String = s"NEVER ASSERTION FAILED") {
         def apply[T <: Module](op: TimedOperator)(implicit dut: T): Unit = IA(dut, Nvr, msg, op) within d cycles
         def apply[T <: Module](cond: () => Boolean)(implicit dut: T): Unit = IA(dut, Nvr, msg, cond = cond) within d cycles
+        def apply[T <: Module](ie: IE)(implicit dut: T): Unit = ExpectTimed(dut, ie.data, ie.expected, msg)(Never(d))
     }
 
     case class exact(d: Int = 100,  msg: String = s"EXACTLY ASSERTION FAILED") {
         def apply[T <: Module](op: TimedOperator)(implicit dut: T): Unit = IA(dut, Exct, msg, op) within d cycles
         def apply[T <: Module](cond: () => Boolean)(implicit dut: T): Unit = IA(dut, Exct, msg, cond = cond) within d cycles
+        def apply[T <: Module](ie: IE)(implicit dut: T): Unit = ExpectTimed(dut, ie.data, ie.expected, msg)(Exactly(d))
     }
 }
