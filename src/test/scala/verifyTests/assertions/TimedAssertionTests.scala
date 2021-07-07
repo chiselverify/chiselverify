@@ -28,13 +28,13 @@ class TimedAssertionTests extends FlatSpec with ChiselScalatestTester with Match
             dut.io.b.poke(10.U)
             dut.clock.step(1)
             println(s"aEqb is ${dut.io.aEqb.peek().litValue()}")
-            AssertTimed(dut, () => dut.io.aEqb.peek().litValue() == 1, "aEqb timing is wrong")(Always(9)).join()
+            AssertTimed(dut, dut.io.aEqb.peek().litValue() == 1, "aEqb timing is wrong")(Always(9)).join()
         }
 
         def testEventually(): Unit = {
             dut.io.a.poke(10.U)
             dut.io.b.poke(10.U)
-            AssertTimed(dut, () => dut.io.aEvEqC.peek().litValue() == 1, "a eventually isn't c")(Eventually(11)).join()
+            AssertTimed(dut, dut.io.aEvEqC.peek().litValue() == 1, "a eventually isn't c")(Eventually(11)).join()
         }
 
         def testExactly(): Unit = {

@@ -87,21 +87,21 @@ object AssertTimed {
       * @author Victor Alexander Hansen, s194027@student.dtu.dk
       * @author Niels Frederik Flemming Holm Frandsen, s194053@student.dtu.dk
       */
-    def apply[T <: Module](dut: T, cond: () => Boolean, message: String)
+    def apply[T <: Module](dut: T, cond: => Boolean, message: String)
                           (delayType: DelayType): TesterThreadList = delayType match {
         //Basic assertion
         case NoDelay => fork {
-            assert(cond(), message)
+            assert(cond, message)
         }
 
         //Checks for the argument condition to be true in the number of cycles passed
         case Always(delay) =>
             // Assertion for single thread clock cycle 0
-            assert(cond(), message)
+            assert(cond, message)
             fork {
                 dut.clock.step(1)
                 (1 until delay) foreach (_ => {
-                    assert(cond(), message)
+                    assert(cond, message)
                     dut.clock.step(1)
                 })
             }
@@ -112,11 +112,11 @@ object AssertTimed {
          */
         case Eventually(delay) =>
             //Sample condition at cycle 0
-            val initRes = cond()
+            val initRes = cond
             fork {
                 assert((1 until delay).exists(_ => {
                     dut.clock.step()
-                    cond()
+                    cond
                 }) || initRes, message)
             }
 
@@ -124,17 +124,17 @@ object AssertTimed {
         case Exactly(delay) =>
             fork {
                 dut.clock.step(delay)
-                assert(cond(), message)
+                assert(cond, message)
             }
 
         //Checks for the argument condition to not be true in the number of cycles passed
         case Never(delay) =>
             // Assertion for single thread clock cycle 0
-            assert(!cond(), message)
+            assert(!cond, message)
             fork {
                 dut.clock.step(1)
                 (1 until delay) foreach (_ => {
-                    assert(!cond(), message)
+                    assert(!cond, message)
                     dut.clock.step(1)
                 })
             }
@@ -147,7 +147,7 @@ object AssertTimed {
         case EventuallyAlways(delay) =>
             fork {
                 var i = 0
-                while (!cond()) {
+                while (!cond) {
                     if (i == delay) {
                         assert(cond = false, message)
                     }
@@ -156,7 +156,7 @@ object AssertTimed {
                 }
 
                 (0 until delay - i) foreach (_ => {
-                    assert(cond(), message)
+                    assert(cond, message)
                     dut.clock.step(1)
                 })
             }
@@ -193,23 +193,6 @@ object AssertTimed {
     }
 
     implicit def opToOption(op:TimedOperator): Option[TimedOperator] = Some(op)
-    implicit def condToOption(cond: () => Boolean): Option[() => Boolean] = Some(cond)
-
-    /**
-      * Intermediary Assertion type
-      */
-    case class IA[T <: Module](dut: T, dt : DT, msg: String, op: Option[TimedOperator] = None, cond: Option[() => Boolean] = None) {
-        def within(d: Int): TW = {
-            val delayType = dtToDelayType(dt, d)
-            if(op.isDefined) {
-                TW(apply(dut, op.get, s"ASSERTION ${delayType.toString} FAILED")(delayType))
-            } else if(cond.isDefined) {
-                TW(apply(dut, cond.get, s"ASSERTION ${delayType.toString} FAILED")(delayType))
-            } else {
-                throw new IllegalArgumentException("Either op or cond should be defined")
-            }
-        }
-    }
 
     /**
       * Intermediate wrapper for expect types
@@ -223,26 +206,38 @@ object AssertTimed {
     }
 
     case class eventually(d: Int = 100, msg: String = s"EVENTUALLY ASSERTION FAILED") {
-        def apply[T <: Module](op: TimedOperator)(implicit dut: T): Unit = IA(dut, Evt, msg, op) within d cycles
-        def apply[T <: Module](cond: () => Boolean)(implicit dut: T): Unit = IA(dut, Evt, msg, cond = cond) within d cycles
-        def apply[T <: Module](ie: IE)(implicit dut: T): Unit = ExpectTimed(dut, ie.data, ie.expected, msg)(Eventually(d))
+        def apply[T <: Module](op: TimedOperator)(implicit dut: T): Unit =
+            AssertTimed(dut, op, msg)(Eventually(d)).join()
+        def apply[T <: Module](cond: => Boolean)(implicit dut: T): Unit =
+            AssertTimed(dut, cond, msg)(Eventually(d)).join()
+        def apply[T <: Module](ie: IE)(implicit dut: T): Unit =
+            ExpectTimed(dut, ie.data, ie.expected, msg)(Eventually(d)).join()
     }
 
     case class always(d: Int = 100,  msg: String = s"ALWAYS ASSERTION FAILED") {
-        def apply[T <: Module](op: TimedOperator)(implicit dut: T): Unit = IA(dut, Alw, msg, op) within d cycles
-        def apply[T <: Module](cond: () => Boolean)(implicit dut: T): Unit = IA(dut, Alw, msg, cond = cond) within d cycles
-        def apply[T <: Module](ie: IE)(implicit dut: T): Unit = ExpectTimed(dut, ie.data, ie.expected, msg)(Always(d))
+        def apply[T <: Module](op: TimedOperator)(implicit dut: T): Unit =
+            AssertTimed(dut, op, msg)(Always(d)).join()
+        def apply[T <: Module](cond: => Boolean)(implicit dut: T): Unit =
+            AssertTimed(dut, cond, msg)(Always(d)).join()
+        def apply[T <: Module](ie: IE)(implicit dut: T): Unit =
+            ExpectTimed(dut, ie.data, ie.expected, msg)(Always(d)).join()
     }
 
     case class never(d: Int = 100,  msg: String = s"NEVER ASSERTION FAILED") {
-        def apply[T <: Module](op: TimedOperator)(implicit dut: T): Unit = IA(dut, Nvr, msg, op) within d cycles
-        def apply[T <: Module](cond: () => Boolean)(implicit dut: T): Unit = IA(dut, Nvr, msg, cond = cond) within d cycles
-        def apply[T <: Module](ie: IE)(implicit dut: T): Unit = ExpectTimed(dut, ie.data, ie.expected, msg)(Never(d))
+        def apply[T <: Module](op: TimedOperator)(implicit dut: T): Unit =
+            AssertTimed(dut, op, msg)(Never(d)).join()
+        def apply[T <: Module](cond: => Boolean)(implicit dut: T): Unit =
+            AssertTimed(dut, cond, msg)(Never(d)).join()
+        def apply[T <: Module](ie: IE)(implicit dut: T): Unit =
+            ExpectTimed(dut, ie.data, ie.expected, msg)(Never(d)).join()
     }
 
     case class exact(d: Int = 100,  msg: String = s"EXACTLY ASSERTION FAILED") {
-        def apply[T <: Module](op: TimedOperator)(implicit dut: T): Unit = IA(dut, Exct, msg, op) within d cycles
-        def apply[T <: Module](cond: () => Boolean)(implicit dut: T): Unit = IA(dut, Exct, msg, cond = cond) within d cycles
-        def apply[T <: Module](ie: IE)(implicit dut: T): Unit = ExpectTimed(dut, ie.data, ie.expected, msg)(Exactly(d))
+        def apply[T <: Module](op: TimedOperator)(implicit dut: T): Unit =
+            AssertTimed(dut, op, msg)(Exactly(d)).join()
+        def apply[T <: Module](cond: => Boolean)(implicit dut: T): Unit =
+            AssertTimed(dut, cond, msg)(Exactly(d)).join()
+        def apply[T <: Module](ie: IE)(implicit dut: T): Unit =
+            ExpectTimed(dut, ie.data, ie.expected, msg)(Exactly(d)).join()
     }
 }
