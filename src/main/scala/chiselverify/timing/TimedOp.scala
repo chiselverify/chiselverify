@@ -101,4 +101,19 @@ object TimedOp {
     case class GtEq(op1: Data, op2: Data) extends TimedOperator(op1, op2) {
         override def apply(value1: BigInt, value2: BigInt): Boolean = value1 >= value2
     }
+
+    /* MORE FANCY SYNTACTIC SUGAR BELOW */
+
+    /**
+      * Internal data wrapper
+      */
+    case class ID(data: Data) {
+        def ?==(that: Data): Equals = Equals(data, that)
+        def ?<(that: Data): Lt = Lt(data, that)
+        def ?<=(that: Data): LtEq = LtEq(data, that)
+        def ?>(that: Data): Gt = Gt(data, that)
+        def ?>=(that: Data): GtEq = GtEq(data, that)
+    }
+
+    implicit def dataToID(data: Data): ID = ID(data)
 }

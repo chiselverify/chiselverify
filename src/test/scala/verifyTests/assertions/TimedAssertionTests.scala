@@ -3,11 +3,14 @@ package verifyTests.assertions
 import chisel3._
 import chisel3.tester._
 import chiseltest.ChiselScalatestTester
+import chiselverify.assertions.AssertTimed._
 import chiselverify.assertions.{AssertTimed, ExpectTimed}
-import chiselverify.timing.TimedOp.{Equals, Gt, GtEq, Lt, LtEq}
+import chiselverify.timing.TimedOp.{Equals, Gt, GtEq, Lt, LtEq, dataToID}
 import chiselverify.timing._
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{FlatSpec, Matchers, concurrent}
 import verifyTests.ToyDUT.AssertionsToyDUT
+
+import scala.language.postfixOps
 
 class TimedAssertionTests extends FlatSpec with ChiselScalatestTester with Matchers {
     def toUInt(i: Int): UInt = (BigInt(i) & 0x00ffffffffL).asUInt(32.W)
@@ -25,13 +28,13 @@ class TimedAssertionTests extends FlatSpec with ChiselScalatestTester with Match
             dut.io.b.poke(10.U)
             dut.clock.step(1)
             println(s"aEqb is ${dut.io.aEqb.peek().litValue()}")
-            AssertTimed(dut, () => dut.io.aEqb.peek().litValue() == 1, "aEqb timing is wrong")(Always(9)).join()
+            AssertTimed(dut, dut.io.aEqb.peek().litValue() == 1, "aEqb timing is wrong")(Always(9)).join()
         }
 
         def testEventually(): Unit = {
             dut.io.a.poke(10.U)
             dut.io.b.poke(10.U)
-            AssertTimed(dut, () => dut.io.aEvEqC.peek().litValue() == 1, "a eventually isn't c")(Eventually(11)).join()
+            AssertTimed(dut, dut.io.aEvEqC.peek().litValue() == 1, "a eventually isn't c")(Eventually(11)).join()
         }
 
         def testExactly(): Unit = {
@@ -270,6 +273,50 @@ class TimedAssertionTests extends FlatSpec with ChiselScalatestTester with Match
         }
     }
 
+    def testGenericSugarOp[T <: AssertionsToyDUT](dut: T, et : EventType): Unit = {
+        implicit val _dut: T = dut
+        /**
+          * Basic test to see if we get the right amount of hits
+          */
+        def testAlways(): Unit = {
+            dut.io.a.poke(10.U)
+            dut.io.b.poke(10.U)
+            dut.clock.step(1)
+            println(s"aEqb is ${dut.io.aEqb.peek().litValue()}")
+            always(9) { dut.io.aEqb ?== dut.io.isOne }
+
+        }
+
+        def testEventually(): Unit = {
+            dut.io.a.poke(4.U)
+            dut.io.b.poke(2.U)
+            dut.clock.step()
+            eventually(4) { dut.io.outB ?> dut.io.outCNotSupB }
+        }
+
+        def testExactly(): Unit = {
+            dut.io.a.poke(6.U)
+            dut.io.b.poke(5.U)
+            dut.clock.step(2)
+            println(s"C = ${dut.io.outC.peek().litValue()}")
+            exact(7) { dut.io.outB ?< dut.io.outCSupB }
+        }
+
+        def testNever(): Unit = {
+            dut.io.a.poke(10.U)
+            dut.io.b.poke(0.U)
+            dut.clock.step(1)
+            never(10) { dut.io.outB ?>= dut.io.outC }
+        }
+
+        et match {
+            case Always => testAlways()
+            case Eventually => testEventually()
+            case Exactly => testExactly()
+            case Never => testNever()
+        }
+    }
+
     "Timed Assertions Always" should "pass" in {
         test(new AssertionsToyDUT(32)){ dut => testGeneric(dut, Always) }
     }
@@ -347,4 +394,18 @@ class TimedAssertionTests extends FlatSpec with ChiselScalatestTester with Match
     "Timed Assertions Never with GreaterThan or Equal to Op" should "pass" in {
         test(new AssertionsToyDUT(32)){ dut => testGenericGtEqOp(dut, Never) }
     }
+
+    "Timed Assertions Always with sugar" should "pass" in {
+        test(new AssertionsToyDUT(32)){dut => testGenericSugarOp(dut, Always)}
+    }
+    "Timed Assertions Eventually with sugar" should "pass" in {
+        test(new AssertionsToyDUT(32)){ dut => testGenericSugarOp(dut, Eventually) }
+    }
+    "Timed Assertions Exactly with sugar" should "pass" in {
+        test(new AssertionsToyDUT(32)){ dut => testGenericSugarOp(dut, Exactly) }
+    }
+    "Timed Assertions Never with sugar" should "pass" in {
+        test(new AssertionsToyDUT(32)){ dut => testGenericSugarOp(dut, Never) }
+    }
+
 }
