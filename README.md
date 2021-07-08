@@ -135,8 +135,8 @@ The list of currently existing timed operations are the following:
 ### Example use case  
 Here is a toy example of how to use the assertion:  
 ```scala
-AssertTimed(dut, LtEq(dut.io.outB, dut.io.outA), "a isn't always less than or equal to one")(Always(9)).join()
-AssertTimed(dut, GtEq(dut.io.outB, dut.io.outA), "a isn't always greater than or equal to one")(Always(9)).join()  
+always(9, "a isn't always less than or equal to one") { LtEq(dut.io.outB, dut.io.outA) }
+always(9, "a isn't always greater than or equal to one") { GtEq(dut.io.outB, dut.io.outA) }
 ```
 
 ### Cover Conditions  
