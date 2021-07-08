@@ -101,12 +101,24 @@ The current implementation allows for the following special types of timing:
 ### Timed Assertions  
 Delay types can also be used in order to used `Timed Assertions` or `Timed Expect`. These can be used in order to check an assertion, in the form of an arbitrary function, with an added timing argument. We could thus check, for example, that two ports are equal two cycles appart. For example:  
 ```scala
-AssertTimed(dut,() => dut.io.a.peek() == dut.io.b.peek(), "aEqb expected timing is wrong")(Exactly(2)).join()
+AssertTimed(dut, dut.io.a.peek() === dut.io.b.peek(), "aEqb expected timing is wrong")(Exactly(2)).join()
 ```
 This can also be done more naturally with the `Expect` interface:  
 ```scala
 ExpectTimed(dut,dut.io.a, dut.io.b.peek().litValue(), "aEqb expected timing is wrong")(Exactly(2)).join()
 ```  
+These can also be used with a simplyfied syntax, inspired by ScalaTest syntax:  
+```scala
+//For Timed Assertions
+eventually(2, "aEqb expected timing is wrong") { dut.io.a.peek() === dut.io.b.peek() }
+exact(2, "aEqb expected timing is wrong") { dut.io.a.peek() === dut.io.b.peek() }
+always(2, "aEqb expected timing is wrong") { dut.io.a.peek() === dut.io.b.peek() }
+never(2, "aEqb expected timing is wrong") { dut.io.a.peek() === dut.io.b.peek() }
+
+//For exepect
+exact(2, "aEqb expected timing is wrong") { dut.io.aEqb expected 1.U }
+//Same for eventually, always and never
+```
 
 #### Timed Operators
 `Timed Assertions` can also be used with `TimedOperators`. This allows to check assertions by comparing two ports at different cycles using the currently existing timing delays.   
