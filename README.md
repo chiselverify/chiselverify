@@ -114,23 +114,7 @@ eventually(2, "aEqb expected timing is wrong") { dut.io.a.peek() === dut.io.b.pe
 exact(2, "aEqb expected timing is wrong") { dut.io.a.peek() === dut.io.b.peek() }
 always(2, "aEqb expected timing is wrong") { dut.io.a.peek() === dut.io.b.peek() }
 never(2, "aEqb expected timing is wrong") { dut.io.a.peek() === dut.io.b.peek() }
-
-//For exepect
-exact(2, "aEqb expected timing is wrong") { dut.io.aEqb expected 1.U }
-//Same for eventually, always and never
 ```
-
-#### Timed Operators
-`Timed Assertions` can also be used with `TimedOperators`. This allows to check assertions by comparing two ports at different cycles using the currently existing timing delays.   
-
-The list of currently existing timed operations are the following:  
-- `Equals`: Checks if the first operand sampled at cycle 0 is __equal to__ a second operand sampled after a delay.  
-- `Gt`: Checks if the first operand sampled at cycle 0 is __greater than__ a second operand sampled after a delay.  
-- `Lt`: Checks if the first operand sampled at cycle 0 is __less than__ a second operand sampled after a delay.  
-- `GtEq`: Checks if the first operand sampled at cycle 0 is __greater than or equal to__ a second operand sampled after a delay.  
-- `LtEq`: Checks if the first operand sampled at cycle 0 is __less than or equal to__ a second operand sampled after a delay.    
-
->Note that these operators can also be used to create special `CoverPoints` using the `TimedCoverOp` construct.  
   
 ### Example use case  
 Here is a toy example of how to use the assertion:  
