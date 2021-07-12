@@ -15,10 +15,8 @@
 */
 package chiselverify
 
-import chisel3.{Data, Module, UInt}
-import chiseltest.internal.TesterThreadList
-import chiselverify.assertions.{AssertTimed, ExpectTimed}
-import chiselverify.timing.TimedOp.TimedOperator
+import chisel3.Module
+import chiselverify.assertions.AssertTimed
 
 package object timing {
     /**

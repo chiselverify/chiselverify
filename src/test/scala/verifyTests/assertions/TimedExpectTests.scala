@@ -3,7 +3,6 @@ package verifyTests.assertions
 import chisel3._
 import chisel3.tester.{testableClock, testableData}
 import chiseltest.ChiselScalatestTester
-import chiselverify.assertions.AssertTimed.{always, dataToDW, eventually, exact, never}
 import chiselverify.assertions._
 import chiselverify.timing._
 import org.scalatest.{FlatSpec, Matchers}
