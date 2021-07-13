@@ -126,7 +126,7 @@ class CoverageDB {
       * WARNING: O(pow(W,N)) with N = #ports and W = maxWidth
       * Complexity use with caution!
       *
-      * @param condName the unique identifier for the condition
+      * @param pointName the unique identifier for the condition
       * @throws IllegalArgumentException if the name isn't unique
       */
     def registerConditions(pointName: String, conds: List[Condition]): Unit = pointNameToPoint.get(pointName) match {
@@ -219,7 +219,7 @@ class CoverageDB {
 
     /**
       * Keeps track of the cycles at which a bin hit occurred
-      * @param pointName the name of the point we want to record a hit for
+      * @param binName the name of the point we want to record a hit for
       * @param cycle the cycle at which a hit occurred
       */
     def addTimedBinHit(binName: String, value: BigInt, cycle: BigInt): Unit = {
@@ -229,7 +229,6 @@ class CoverageDB {
 
     /**
       * Keeps track of conditional hits that occur
-      * @param pointName the name of the CoverCondition
       * @param condNames the name of the conditions that occured in a hit
       */
     def addConditionalHit(condNames: Seq[String], values: Seq[BigInt]): Unit = {

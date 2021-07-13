@@ -88,7 +88,7 @@ object CoverReport {
           *
           * @param groupId   the id of the group containing the bin
           * @param pointName the name the point that contains the bin
-          * @param binName   the name of the bin itself
+          * @param bN   the name of the bin itself
           * @return
           */
         def binNHits(groupId: BigInt, pointName: String, bN: Option[String] = None): BigInt = {
@@ -148,7 +148,6 @@ object CoverReport {
       *
       * @param id      the id of the group
       * @param points  the list of reports for the coverpoints contained in this group
-      * @param crosses the list of reports for the crosspoints contained in this group
       */
     case class GroupReport(id: BigInt, points: List[Report] = Nil) extends Report {
         override def report: String = {
