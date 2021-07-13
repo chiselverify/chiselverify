@@ -114,7 +114,7 @@ package object coverage {
       * @param ports the ports associated to the cross relation.
       * @param bins the set of bins associated to the relation.
       */
-    protected[chiselverify] abstract class Cross(val name: String, ports: Seq[Data])(val bins: List[CrossBin])
+    private[chiselverify] abstract class Cross(val name: String, ports: Seq[Data])(val bins: List[CrossBin])
         extends Cover(name, ports) {
         /**
           * Generates a report in a form that is compatible with the coverage reporter
@@ -183,7 +183,7 @@ package object coverage {
       * @param p a variable number of associated ports.
       * @param conds a variable number of conditions associated to the set of ports.
       */
-    protected[chiselverify] case class CoverCondition(pN: String, p: Seq[Data])(conds: Seq[Condition])
+    private[chiselverify] case class CoverCondition(pN: String, p: Seq[Data])(conds: Seq[Condition])
         extends Cover(pN, p.toList) {
         val conditions: List[Condition] = conds.toList
 
@@ -212,7 +212,7 @@ package object coverage {
       * @param pN   the name that will be used to represent the point in the report
       * @param b    the list of value ranges that will be checked for for the given port
       */
-    protected[chiselverify] case class CoverPoint(pN: String, port: Data)(b: Seq[Bin])
+    private[chiselverify] case class CoverPoint(pN: String, port: Data)(b: Seq[Bin])
         extends Cover(pN, Seq(port)) {
         val bins: List[Bin] = if (b.isEmpty) List(DefaultBin(port)) else b.toList
 
@@ -236,12 +236,12 @@ package object coverage {
       * @param value, the sampled value of the port
       * @param cycle, the cycle at which the value was sampled
       */
-    protected[chiselverify] case class TimingValue(operandNum: Int, value: BigInt, cycle: BigInt) {
+    private[chiselverify] case class TimingValue(operandNum: Int, value: BigInt, cycle: BigInt) {
         if(operandNum > 2 || operandNum < 0)
             throw new IllegalArgumentException(s"operand number can only be 1 or 2!!")
     }
 
-    protected[chiselverify] case class TimedCoverOp(pN: String, op: TimedOperator)(val delay: DelayType)
+    private[chiselverify] case class TimedCoverOp(pN: String, op: TimedOperator)(val delay: DelayType)
         extends Cover(pN, Seq(op.operand1, op.operand2)) {
 
         //Implicit reference to simplify internal DB function calls
@@ -307,7 +307,7 @@ package object coverage {
       * @param p2       the second port that will be sampled
       * @param b      the first list of value ranges that will be checked for for the given relation
       */
-    protected[chiselverify] case class TimedCross(n: String, p1: Data, p2: Data)(val delay: DelayType)(b: Seq[CrossBin])
+    private[chiselverify] case class TimedCross(n: String, p1: Data, p2: Data)(val delay: DelayType)(b: Seq[CrossBin])
         extends Cross(n, Seq(p1, p2))(b.toList) {
 
         //Check that the correct number of ranges was given
@@ -409,7 +409,7 @@ package object coverage {
       * @param p       the points of the relation
       * @param b       the list of value ranges that will be checked for for the given relation
       */
-    protected[chiselverify] case class CrossPoint(n: String, p: Seq[Data])(b: Seq[CrossBin]) extends Cross(n, p)(b.toList) {
+    private[chiselverify] case class CrossPoint(n: String, p: Seq[Data])(b: Seq[CrossBin]) extends Cross(n, p)(b.toList) {
 
         //Check that the correct number of ranges was given
         override val bins: List[CrossBin] =
@@ -454,7 +454,7 @@ package object coverage {
       * @param ranges     the actual scala range
       * @param conditionOpt an extra condition that can be used to consider a hit
       */
-    protected[chiselverify] class Bin(val name: String, val ranges : Seq[Range] = Seq.empty,
+    private[chiselverify] class Bin(val name: String, val ranges : Seq[Range] = Seq.empty,
                                       conditionOpt: Option[Seq[BigInt] => Boolean] = None, val expectedHits: Option[BigInt] = None) {
 
         val condition : Seq[BigInt] => Boolean = conditionOpt.getOrElse((_: Seq[BigInt]) => true)
@@ -494,6 +494,12 @@ package object coverage {
     implicit def condToOption(cond: Seq[BigInt] => Boolean): Option[Seq[BigInt] => Boolean] = Some(cond)
     implicit def rangeToSeqRangeOpt(r: Range): Option[Seq[Range]] = Some(Seq(r))
     implicit def binsToCrossBins(bins: Seq[Bin]): Seq[CrossBin] = bins.map(b => CrossBin(b.name, b.expectedHits)(b.ranges))
+    /**
+      * Implicit type conversion from range to option to simplify syntax
+      * @param r the range that will be converted
+      * @return an option containing the given range
+      */
+    implicit def rangeToOption(r: Range): Option[Range] = Some(r)
 
     /**
       * A range relation between two different ranges
@@ -501,7 +507,7 @@ package object coverage {
       * @param cname   the name of the relation, used for the report
       * @param cranges the ranges that will be sampled for each point of the relation
       */
-    protected[chiselverify] case class CrossBin(cname: String, expectedH: Option[BigInt] = None)(cranges: Seq[Range])
+    private[chiselverify] case class CrossBin(cname: String, expectedH: Option[BigInt] = None)(cranges: Seq[Range])
         extends Bin(cname, cranges, expectedHits = expectedH) {
         val binNames: List[String] = ranges.indices.map(i => s"${name}_$i").toList
 
@@ -520,7 +526,7 @@ package object coverage {
           * @param port the port for which the bin will be generated
           * @return a bin covering all possible values for a given port
           */
-        def apply(port: Data): Bin = bin("default", Utils.rangeToOption(defaultRange(port)))
+        def apply(port: Data): Bin = bin("default", defaultRange(port))
 
         /**
           * Generates a default bin for given cross point ports

@@ -3,7 +3,7 @@ package examples.heappriorityqueue
 import chisel3.util.log2Ceil
 import chisel3._
 import chiseltest._
-import chiselverify.coverage.{Bin, CoverPoint, CoverageReporter, Cross, CrossBin, CrossPoint}
+import chiselverify.coverage._
 import examples.heappriorityqueue.Helpers._
 import examples.heappriorityqueue.modules.QueueControl
 import org.scalatest._
@@ -47,28 +47,28 @@ class QueueControlTest extends FreeSpec with ChiselScalatestTester {
 
         val cr = new CoverageReporter(c)
         cr.register(
-            CoverPoint("operation", c.io.cmd.op)(
-                Bin("insertion", 0 to 0),
-                Bin("removal", 1 to 1)),
-            CoverPoint("cmd.prio.cycl", c.io.cmd.prio.superCycle)(
-                Bin("cyclic", 0 to 3)),
-            CoverPoint("cmd.prio.norm", c.io.cmd.prio.cycle)(
-                Bin("lower half", 0 to (Math.pow(2, cycleWidth) / 2 - 1).toInt),
-                Bin("upper half", (Math.pow(2, cycleWidth) / 2 - 1).toInt to (Math.pow(2, cycleWidth) - 1).toInt)),
-            CoverPoint("head.prio.cycl", c.io.head.prio.superCycle)(
-                Bin("cyclic", 0 to 3)),
-            CoverPoint("head.prio.norm", c.io.head.prio.cycle)(
-                Bin("lower half", 0 to (Math.pow(2, cycleWidth) / 2 - 1).toInt),
-                Bin("upper half", (Math.pow(2, cycleWidth) / 2 - 1).toInt to (Math.pow(2, cycleWidth) - 1).toInt)),
+            cover("operation", c.io.cmd.op)(
+                bin("insertion", 0 to 0),
+                bin("removal", 1 to 1)),
+            cover("cmd.prio.cycl", c.io.cmd.prio.superCycle)(
+                bin("cyclic", 0 to 3)),
+            cover("cmd.prio.norm", c.io.cmd.prio.cycle)(
+                bin("lower half", 0 to (Math.pow(2, cycleWidth) / 2 - 1).toInt),
+                bin("upper half", (Math.pow(2, cycleWidth) / 2 - 1).toInt to (Math.pow(2, cycleWidth) - 1).toInt)),
+            cover("head.prio.cycl", c.io.head.prio.superCycle)(
+                bin("cyclic", 0 to 3)),
+            cover("head.prio.norm", c.io.head.prio.cycle)(
+                bin("lower half", 0 to (Math.pow(2, cycleWidth) / 2 - 1).toInt),
+                bin("upper half", (Math.pow(2, cycleWidth) / 2 - 1).toInt to (Math.pow(2, cycleWidth) - 1).toInt)),
             //Declare cross points
-            CrossPoint("cyclics at ops", c.io.cmd.op, c.io.cmd.prio.cycle)(
-                CrossBin("insertion", 0 to 0, 0 to 3),
-                CrossBin("removal", 1 to 1, 0 to 3)),
-            CrossPoint("normals at ops", c.io.cmd.op, c.io.head.prio.cycle)(
-                CrossBin("insertion lower half", 0 to 0, 0 to (Math.pow(2, cycleWidth) / 2 - 1).toInt),
-                CrossBin("insertion upper half", 0 to 0, (Math.pow(2, cycleWidth) / 2 - 1).toInt to (Math.pow(2, cycleWidth) - 1).toInt),
-                CrossBin("removal lower half", 1 to 1, 0 to (Math.pow(2, cycleWidth) / 2 - 1).toInt),
-                CrossBin("removal upper half", 1 to 1, (Math.pow(2, cycleWidth) / 2 - 1).toInt to (Math.pow(2, cycleWidth) - 1).toInt))
+            cover("cyclics at ops", c.io.cmd.op, c.io.cmd.prio.cycle)(
+                cross("insertion", Seq(0 to 0, 0 to 3)),
+                cross("removal", Seq(1 to 1, 0 to 3))),
+            cover("normals at ops", c.io.cmd.op, c.io.head.prio.cycle)(
+                cross("insertion lower half", Seq(0 to 0, 0 to (Math.pow(2, cycleWidth) / 2 - 1).toInt)),
+                cross("insertion upper half", Seq(0 to 0, (Math.pow(2, cycleWidth) / 2 - 1).toInt to (Math.pow(2, cycleWidth) - 1).toInt)),
+                cross("removal lower half", Seq(1 to 1, 0 to (Math.pow(2, cycleWidth) / 2 - 1).toInt)),
+                cross("removal upper half", Seq(1 to 1, (Math.pow(2, cycleWidth) / 2 - 1).toInt to (Math.pow(2, cycleWidth) - 1).toInt)))
         )
 
         ////////////////////////////////////////////////helper functions////////////////////////////////////////////////////

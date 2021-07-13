@@ -97,11 +97,4 @@ object Utils {
       * @return an option containing the given int
       */
     implicit def bigIntToOption(i: BigInt): Option[BigInt] = Some(i)
-
-    /**
-      * Implicit type conversion from range to option to simplify syntax
-      * @param r the range that will be converted
-      * @return an option containing the given range
-      */
-    implicit def rangeToOption(r: Range): Option[Range] = Some(r)
 }
