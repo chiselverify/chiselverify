@@ -4,7 +4,7 @@ import chisel3._
 import chisel3.experimental.BundleLiterals.AddBundleLiteralConstructor
 import chisel3.tester._
 import chiseltest.ChiselScalatestTester
-import chiselverify.coverage.{Bins, CoverPoint, CoverageReporter, CrossBin, CrossPoint}
+import chiselverify.coverage.{Bin, CoverPoint, CoverageReporter, CrossBin, CrossPoint}
 import chiselverify.coverage.CoverReport._
 import chiselverify.crv.{RangeBinder, ValueBinder}
 import chiselverify.crv.backends.jacop._
@@ -111,21 +111,21 @@ trait AluBehavior {
                 val cr = new CoverageReporter(dut)
                 cr.register(
                     CoverPoint("op", dut.input.op)(
-                        Bins("nop", 0 to 0), Bins("add", 1 to 1),
-                        Bins("sub", 2 to 2), Bins("and", 3 to 3),
-                        Bins("or", 4 to 4), Bins("xor", 5 to 5),
-                        Bins("ld", 6 to 6), Bins("shr", 7 to 7)),
+                        Bin("nop", 0 to 0), Bin("add", 1 to 1),
+                        Bin("sub", 2 to 2), Bin("and", 3 to 3),
+                        Bin("or", 4 to 4), Bin("xor", 5 to 5),
+                        Bin("ld", 6 to 6), Bin("shr", 7 to 7)),
                     CoverPoint("din", dut.input.din)(
-                        Bins("0xF", 0 to 0xF), Bins("0xFF", 0xF to 0xFF),
-                        Bins("0xFFF", 0xFF to 0xFFF), Bins("0xFFFF", 0xFFF to 0xFFFF),
+                        Bin("0xF", 0 to 0xF), Bin("0xFF", 0xF to 0xFF),
+                        Bin("0xFFF", 0xFF to 0xFFF), Bin("0xFFFF", 0xFFF to 0xFFFF),
                     ),
                     CoverPoint("accu", dut.output.accu)(
-                        Bins("0xF", 0 to 0xF), Bins("0xFF", 0xF to 0xFF),
-                        Bins("0xFFF", 0xFF to 0xFFF), Bins("0xFFFF", 0xFFF to 0xFFFF),
+                        Bin("0xF", 0 to 0xF), Bin("0xFF", 0xF to 0xFF),
+                        Bin("0xFFF", 0xFF to 0xFFF), Bin("0xFFFF", 0xFFF to 0xFFFF),
                     ),
                     CoverPoint("ena", dut.input.ena)(
-                        Bins("disabled", 0 to 0),
-                        Bins("enabled", 1 to 1)
+                        Bin("disabled", 0 to 0),
+                        Bin("enabled", 1 to 1)
                     ),
                     CrossPoint("operations cross enable", dut.input.op, dut.input.ena)(
                         CrossBin("operation enable", 0 to 7, 1 to 1),

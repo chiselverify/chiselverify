@@ -25,17 +25,17 @@ class PriorityQueueTest extends FreeSpec with ChiselScalatestTester {
             val cr = new CoverageReporter(dut)
             cr.register(
                 CoverPoint("operation", dut.io.cmd.op)(
-                    Bins("insertion", 0 to 0), Bins("removal", 1 to 1)),
+                    Bin("insertion", 0 to 0), Bin("removal", 1 to 1)),
                 CoverPoint("cmd.prio.cycl", dut.io.cmd.prio.superCycle)(
-                    Bins("cyclic", 0 to 3)),
+                    Bin("cyclic", 0 to 3)),
                 CoverPoint("cmd.prio.norm", dut.io.cmd.prio.cycle)(
-                    Bins("lower half", 0 to (Math.pow(2, nWid) / 2 - 1).toInt),
-                    Bins("upper half", (Math.pow(2, nWid) / 2 - 1).toInt to (Math.pow(2, nWid) - 1).toInt)),
+                    Bin("lower half", 0 to (Math.pow(2, nWid) / 2 - 1).toInt),
+                    Bin("upper half", (Math.pow(2, nWid) / 2 - 1).toInt to (Math.pow(2, nWid) - 1).toInt)),
                 CoverPoint("head.prio.cycl", dut.io.head.prio.superCycle)(
-                    Bins("cyclic", 0 to 3)),
+                    Bin("cyclic", 0 to 3)),
                 CoverPoint("head.prio.norm", dut.io.head.prio.cycle)(
-                    Bins("lower half", 0 to (Math.pow(2, nWid) / 2 - 1).toInt),
-                    Bins("upper half", (Math.pow(2, nWid) / 2 - 1).toInt to (Math.pow(2, nWid) - 1).toInt)),
+                    Bin("lower half", 0 to (Math.pow(2, nWid) / 2 - 1).toInt),
+                    Bin("upper half", (Math.pow(2, nWid) / 2 - 1).toInt to (Math.pow(2, nWid) - 1).toInt)),
                 //Declare cross points
                 CrossPoint("cyclics at ops", dut.io.cmd.op, dut.io.cmd.prio.cycle)(
                     CrossBin("insertion", 0 to 0, 0 to 3),

@@ -306,12 +306,11 @@ object CoverReport {
       * @param bin   a reference to the bin for which we are generating a report
       * @param nHits the number of hits sampled for this bin during the test suite
       */
-    case class BinReport(bin: Bins, nHits: BigInt) extends Report {
+    case class BinReport(bin: Bin, nHits: BigInt) extends Report {
         private val proportion = nHits.toInt / bin.range.size.toDouble
         private val percentage = f"${if(nHits == 0) 0 else if (proportion > 1) 100 else proportion * 100}%1.2f"
 
         override def report: String = s"BIN ${bin.name} COVERING ${bin.range.toString}" +
-            s"${if (bin.condition.name != "$$__def__$$") s" WITH ${bin.condition.report}" else ""}" +
             s" HAS $nHits HIT(S) = $percentage%"
 
         override def equals(that: Any): Boolean = that match {

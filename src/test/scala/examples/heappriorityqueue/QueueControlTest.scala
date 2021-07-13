@@ -3,7 +3,7 @@ package examples.heappriorityqueue
 import chisel3.util.log2Ceil
 import chisel3._
 import chiseltest._
-import chiselverify.coverage.{Bins, CoverPoint, CoverageReporter, Cross, CrossBin, CrossPoint}
+import chiselverify.coverage.{Bin, CoverPoint, CoverageReporter, Cross, CrossBin, CrossPoint}
 import examples.heappriorityqueue.Helpers._
 import examples.heappriorityqueue.modules.QueueControl
 import org.scalatest._
@@ -48,18 +48,18 @@ class QueueControlTest extends FreeSpec with ChiselScalatestTester {
         val cr = new CoverageReporter(c)
         cr.register(
             CoverPoint("operation", c.io.cmd.op)(
-                Bins("insertion", 0 to 0),
-                Bins("removal", 1 to 1)),
+                Bin("insertion", 0 to 0),
+                Bin("removal", 1 to 1)),
             CoverPoint("cmd.prio.cycl", c.io.cmd.prio.superCycle)(
-                Bins("cyclic", 0 to 3)),
+                Bin("cyclic", 0 to 3)),
             CoverPoint("cmd.prio.norm", c.io.cmd.prio.cycle)(
-                Bins("lower half", 0 to (Math.pow(2, cycleWidth) / 2 - 1).toInt),
-                Bins("upper half", (Math.pow(2, cycleWidth) / 2 - 1).toInt to (Math.pow(2, cycleWidth) - 1).toInt)),
+                Bin("lower half", 0 to (Math.pow(2, cycleWidth) / 2 - 1).toInt),
+                Bin("upper half", (Math.pow(2, cycleWidth) / 2 - 1).toInt to (Math.pow(2, cycleWidth) - 1).toInt)),
             CoverPoint("head.prio.cycl", c.io.head.prio.superCycle)(
-                Bins("cyclic", 0 to 3)),
+                Bin("cyclic", 0 to 3)),
             CoverPoint("head.prio.norm", c.io.head.prio.cycle)(
-                Bins("lower half", 0 to (Math.pow(2, cycleWidth) / 2 - 1).toInt),
-                Bins("upper half", (Math.pow(2, cycleWidth) / 2 - 1).toInt to (Math.pow(2, cycleWidth) - 1).toInt)),
+                Bin("lower half", 0 to (Math.pow(2, cycleWidth) / 2 - 1).toInt),
+                Bin("upper half", (Math.pow(2, cycleWidth) / 2 - 1).toInt to (Math.pow(2, cycleWidth) - 1).toInt)),
             //Declare cross points
             CrossPoint("cyclics at ops", c.io.cmd.op, c.io.cmd.prio.cycle)(
                 CrossBin("insertion", 0 to 0, 0 to 3),
