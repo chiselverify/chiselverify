@@ -485,8 +485,12 @@ package object coverage {
     /**
       * Shorthand to simplify the Bin's API
       */
-    def bin(name: String, range: Option[Range] = None, condition: Option[Seq[BigInt] => Boolean] = None, expectedHits: BigInt = 0): Bin =
-            new Bin(name, if(range.isDefined) Seq(range.get) else Seq.empty, condition, if(expectedHits == 0) None else Some(expectedHits))
+    case object bin {
+        def apply(name: String, range: Option[Range] = None, condition: Option[Seq[BigInt] => Boolean] = None, expectedHits: BigInt = 0): Bin =
+            new Bin(name, if (range.isDefined) Seq(range.get) else Seq.empty, condition, if (expectedHits == 0) None else Some(expectedHits))
+        def apply(name: String, condition: Seq[BigInt] => Boolean, expectedHits: BigInt = 0): Condition =
+            Condition(name, condition, if(expectedHits == 0) None else Some(expectedHits))
+    }
 
     def cross(name: String, ranges: Seq[Range], expectedHits: BigInt = 0): CrossBin =
         CrossBin(name, if(expectedHits == 0) None else Some(expectedHits))(ranges)
