@@ -72,11 +72,11 @@ We want to verify that the above case was tested. This can be done by defining a
 val cr = new CoverageReporter(dut)
 cr.register(
       //Declare CoverPoints
-      CoverPoint("a", dut.io.a)()),
-      CoverPoint("b", dut.io.b)()),
+      cover("a", dut.io.a)(DefaultBin(dut.io.a))),
+      cover("b", dut.io.b)(DefaultBin(dut.io.b))),
       //Declare timed cross point with a delay of 1 cycle
-      TimedCross("timedAB", dut.io.a, dut.io.b)(Exactly(1))(
-            CrossBin("both1", 1 to 1, 1 to 1)
+      cover("timedAB", dut.io.a, dut.io.b)(Exactly(1))(
+            cross("both1", Seq(1 to 1, 1 to 1))
       )
 )
 ```  
@@ -126,17 +126,17 @@ always(9, "a isn't always greater than or equal to one") { GtEq(dut.io.outB, dut
 ### Cover Conditions  
 __Idea__: A type of coverpoint that can apply arbitrary hit conditions to an arbitrary number of ports.  
 ```scala
-CoverCondition(readableName: String, ports: Data*)(conditions: Condition*)
-//where a condition is
-Condition(name: String, func : Seq[BigInt] => Boolean)
+cover(readableName: String, ports: Data*)(conditions: Condition*)
+//where a condition is declared using the bin function without a range
+bin(name: String, func : Seq[BigInt] => Boolean)
 ```
 __Example__:
 ```scala
 val cr = new CoverageReporter(dut)
 cr.register(
   //Declare CoverPoints
-  CoverCondition("aAndB", dut.io.outA, dut.io.outB)(
-    Condition("aeqb", { case Seq(a, b) => a == b })
+  cover("aAndB", dut.io.outA, dut.io.outB)(
+    bin("aeqb", { case Seq(a, b) => a == b })
 ))
 ```
 Bins are thus defined using arbitrary functions of the type `List[BigInt] => Boolean` which represent different hit conditions.
@@ -145,8 +145,8 @@ No coverage percentage is given due to cartesian product complexity. Instead we 
 val cr = new CoverageReporter(dut)
 cr.register(
   //Declare CoverPoints
-  CoverCondition("aAndB", dut.io.outA, dut.io.outB)(
-    Condition("asuptobAtLeast100Times", { case Seq(a, b) => a > b }, Some(100))
+  cover("aAndB", dut.io.outA, dut.io.outB)(
+    bin("asuptobAtLeast100Times", condition = { case Seq(a, b) => a > b }, expectedHits = 100)
 ))
 ```
 The above example results in the following coverage report:
