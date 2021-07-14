@@ -37,7 +37,7 @@ class CoverageDB {
     private val crossBinNumHitsMap: mutable.HashMap[CrossBin, BigInt] = new mutable.HashMap[CrossBin, BigInt]()
 
     //Mappings for cross coverage
-    private val pointNameToPoint: mutable.HashMap[String, Cover] = new mutable.HashMap[String, Cover]()
+    private val pointNameToPoint: mutable.HashMap[String, CoverConst] = new mutable.HashMap[String, CoverConst]()
     private val registeredCrossBins: mutable.ArrayBuffer[String] = new mutable.ArrayBuffer[String]()
 
     //Mappings for conditional coverage that hit
@@ -88,7 +88,7 @@ class CoverageDB {
       * @param name the name of the point we want to retrieve
       * @return the coverpoint with the given name
       */
-    def getPoint(name: String): Cover = pointNameToPoint get name match {
+    def getPoint(name: String): CoverConst = pointNameToPoint get name match {
         case None => throw new IllegalArgumentException(s"$name is not a registered coverpoint!")
         case Some(p) => p
     }
@@ -117,7 +117,7 @@ class CoverageDB {
       * @param name the name of the point we want to register (will be used as it's primary key)
       * @param coverPoint the point which we want to register
       */
-    def registerCoverPoint(name: String, coverPoint: Cover) : Unit =
+    def registerCoverPoint(name: String, coverPoint: CoverConst) : Unit =
         if(pointNameToPoint contains name) throw new IllegalArgumentException("CoverPoint Name already taken!")
         else pointNameToPoint update (name, coverPoint)
 
@@ -174,9 +174,9 @@ class CoverageDB {
       * Registers a cross relation in the database
       * @param cross the relation which we want to register
       */
-    def registerCross(cross: Cross) : Unit = {
+    def registerCross(cross: CrossConst) : Unit = {
         cross.bins.foreach {
-            case CrossBin(name, _@_*) =>
+            case CrossBin(name, _) =>
                 if (registeredCrossBins contains name)
                     throw new IllegalArgumentException(s"CrossBins must have unique names, $name is already taken!")
                 else

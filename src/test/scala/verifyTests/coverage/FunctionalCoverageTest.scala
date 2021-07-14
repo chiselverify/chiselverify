@@ -96,8 +96,8 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
         cr.register(
             //Declare CoverPoints
             cover("aAndB", dut.io.outA, dut.io.outB)(
-                bin("aeqb", (x: Seq[BigInt]) => x.head == x(1)),
-                bin("asuptobAtLeast100", (x: Seq[BigInt]) => x.head > x(1), 100)
+                bin("aeqb", condition = (x: Seq[BigInt]) => x.head == x(1)),
+                bin("asuptobAtLeast100", condition = (x: Seq[BigInt]) => x.head > x(1), expectedHits = 100)
             )
         )
 
@@ -285,8 +285,8 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
                 bin("testLo10", 0 until 10)),
             //Declare CoverConditions
             cover("aAndB",dut.io.outA, dut.io.outB)(
-                bin("aeqb", (x: Seq[BigInt]) => x.head == x(1)),
-                bin("asuptobAtLeast100", (x: Seq[BigInt]) => x.head > x(1), 100)),
+                bin("aeqb", condition = (x: Seq[BigInt]) => x.head == x(1)),
+                bin("asuptobAtLeast100", condition = (x: Seq[BigInt]) => x.head > x(1), expectedHits = 100)),
             //Declare cross points
             cover("accuAndTest", dut.io.outA, dut.io.outB)(
                 cross("both1", Seq(1 to 9 by 2, 1 to 1))),

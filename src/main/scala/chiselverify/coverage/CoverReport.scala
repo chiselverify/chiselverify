@@ -273,7 +273,7 @@ object CoverReport {
       * @param cross a reference to the cross point for which we are generating a report
       * @param bins  the list of reports related to the bins of the current cross point
       */
-    case class CrossReport(cross: Cross, bins: List[Report], delay: DelayType = NoDelay) extends Report {
+    case class CrossReport(cross: CrossConst, bins: List[Report], delay: DelayType = NoDelay) extends Report {
         override def report: String = {
             val rep = new StringBuilder(s"CROSS_POINT ${cross.name}")
             rep append delay.toString
