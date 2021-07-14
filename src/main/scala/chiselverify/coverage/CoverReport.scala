@@ -88,7 +88,7 @@ object CoverReport {
           *
           * @param groupId   the id of the group containing the bin
           * @param pointName the name the point that contains the bin
-          * @param binName   the name of the bin itself
+          * @param bN   the name of the bin itself
           * @return
           */
         def binNHits(groupId: BigInt, pointName: String, bN: Option[String] = None): BigInt = {
@@ -148,7 +148,6 @@ object CoverReport {
       *
       * @param id      the id of the group
       * @param points  the list of reports for the coverpoints contained in this group
-      * @param crosses the list of reports for the crosspoints contained in this group
       */
     case class GroupReport(id: BigInt, points: List[Report] = Nil) extends Report {
         override def report: String = {
@@ -274,7 +273,7 @@ object CoverReport {
       * @param cross a reference to the cross point for which we are generating a report
       * @param bins  the list of reports related to the bins of the current cross point
       */
-    case class CrossReport(cross: Cross, bins: List[Report], delay: DelayType = NoDelay) extends Report {
+    case class CrossReport(cross: CrossConst, bins: List[Report], delay: DelayType = NoDelay) extends Report {
         override def report: String = {
             val rep = new StringBuilder(s"CROSS_POINT ${cross.name}")
             rep append delay.toString
@@ -306,12 +305,11 @@ object CoverReport {
       * @param bin   a reference to the bin for which we are generating a report
       * @param nHits the number of hits sampled for this bin during the test suite
       */
-    case class BinReport(bin: Bins, nHits: BigInt) extends Report {
+    case class BinReport(bin: Bin, nHits: BigInt) extends Report {
         private val proportion = nHits.toInt / bin.range.size.toDouble
         private val percentage = f"${if(nHits == 0) 0 else if (proportion > 1) 100 else proportion * 100}%1.2f"
 
         override def report: String = s"BIN ${bin.name} COVERING ${bin.range.toString}" +
-            s"${if (bin.condition.name != "$$__def__$$") s" WITH ${bin.condition.report}" else ""}" +
             s" HAS $nHits HIT(S) = $percentage%"
 
         override def equals(that: Any): Boolean = that match {

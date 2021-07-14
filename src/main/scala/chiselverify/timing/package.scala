@@ -15,6 +15,9 @@
 */
 package chiselverify
 
+import chisel3.Module
+import chiselverify.assertions.AssertTimed
+
 package object timing {
     /**
       * Defines a type of delay that can be applied to timed constructs
@@ -72,34 +75,69 @@ package object timing {
         override def toString: String = s" WITH EVENTUALLY AN ALWAYS DELAY OF $delay CYCLES"
     }
 
-    /**
-      * Defines the way we should consider an event
-      */
-    abstract class EventType
+    abstract class DT
+    object Evt extends DT
+    object Alw extends DT
+    object Nvr extends DT
+    object Exct extends DT
+
+    def dtToDelayType(dt: DT, delay: Int): DelayType = dt match {
+        case Evt => Eventually(delay)
+        case Alw => Always(delay)
+        case Nvr => Never(delay)
+        case Exct => Exactly(delay)
+    }
 
     /**
-      * Considers events that always happens when the requirements are met
+      * Computes an Eventually Timed Assertion using the given condition on the currently implicit DUT
+      * @param d the delay (default is 100 cycles)
+      * @param msg the error message in case the assertion doesn't pass
+      * @param cond the condition itself
+      * @param dut an implicit DUT (defined in test function)
+      * @tparam T the implicit DUT's type (also defined in test function)
       */
-    case object Always extends EventType
+    def eventually[T <: Module](d: Int = 100, msg: String = s"EVENTUALLY ASSERTION FAILED")
+                               (cond: => Boolean)(implicit dut: T) : Unit =
+            AssertTimed(dut, cond, msg)(Eventually(d)).join()
+
 
     /**
-      * Considers events that happen at least once when the requirements are met
+      * Computes an Always Timed Assertion using the given condition on the currently implicit DUT
+      * @param d the delay (default is 100 cycles)
+      * @param msg the error message in case the assertion doesn't pass
+      * @param cond the condition itself
+      * @param dut an implicit DUT (defined in test function)
+      * @tparam T the implicit DUT's type (also defined in test function)
       */
-    case object Eventually extends EventType
+    def always[T <: Module](d: Int = 100,  msg: String = s"ALWAYS ASSERTION FAILED")
+                     (cond: => Boolean)(implicit dut: T): Unit =
+            AssertTimed(dut, cond, msg)(Always(d)).join()
+
 
     /**
-      * Considers events that happen exactly once when the requirements are first met
+      * Computes a Never Timed Assertion using the given condition on the currently implicit DUT
+      * @param d the delay (default is 100 cycles)
+      * @param msg the error message in case the assertion doesn't pass
+      * @param cond the condition itself
+      * @param dut an implicit DUT (defined in test function)
+      * @tparam T the implicit DUT's type (also defined in test function)
       */
-    case object Exactly extends EventType
+    def never[T <: Module](d: Int = 100,  msg: String = s"NEVER ASSERTION FAILED")
+                          (cond: => Boolean)(implicit dut: T): Unit =
+            AssertTimed(dut, cond, msg)(Never(d)).join()
+
 
     /**
-      * Considers events that never happen when the requirements are met
+      * Computes an Exactly Timed Assertion using the given condition on the currently implicit DUT
+      * @param d the delay, which in this case is mandatory
+      * @param msg the error message in case the assertion doesn't pass
+      * @param cond the condition itself
+      * @param dut an implicit DUT (defined in test function)
+      * @tparam T the implicit DUT's type (also defined in test function)
       */
-    case object Never extends EventType
+    def exact[T <: Module](d: Int,  msg: String = s"EXACTLY ASSERTION FAILED")
+                                 (cond: => Boolean)(implicit dut: T): Unit =
+            AssertTimed(dut, cond, msg)(Exactly(d)).join()
 
-    /**
-      * Considers events that, once they first happen, always happen until the requirements are no longer met
-      */
-    case object EventuallyAlways extends EventType
 
 }

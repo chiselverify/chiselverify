@@ -24,27 +24,28 @@ class PriorityQueueTest extends FreeSpec with ChiselScalatestTester {
 
             val cr = new CoverageReporter(dut)
             cr.register(
-                CoverPoint("operation", dut.io.cmd.op)(
-                    Bins("insertion", 0 to 0), Bins("removal", 1 to 1)),
-                CoverPoint("cmd.prio.cycl", dut.io.cmd.prio.superCycle)(
-                    Bins("cyclic", 0 to 3)),
-                CoverPoint("cmd.prio.norm", dut.io.cmd.prio.cycle)(
-                    Bins("lower half", 0 to (Math.pow(2, nWid) / 2 - 1).toInt),
-                    Bins("upper half", (Math.pow(2, nWid) / 2 - 1).toInt to (Math.pow(2, nWid) - 1).toInt)),
-                CoverPoint("head.prio.cycl", dut.io.head.prio.superCycle)(
-                    Bins("cyclic", 0 to 3)),
-                CoverPoint("head.prio.norm", dut.io.head.prio.cycle)(
-                    Bins("lower half", 0 to (Math.pow(2, nWid) / 2 - 1).toInt),
-                    Bins("upper half", (Math.pow(2, nWid) / 2 - 1).toInt to (Math.pow(2, nWid) - 1).toInt)),
+                cover("operation", dut.io.cmd.op)(
+                    bin("insertion", 0 to 0),
+                    bin("removal", 1 to 1)),
+                cover("cmd.prio.cycl", dut.io.cmd.prio.superCycle)(
+                    bin("cyclic", 0 to 3)),
+                cover("cmd.prio.norm", dut.io.cmd.prio.cycle)(
+                    bin("lower half", 0 to (Math.pow(2, nWid) / 2 - 1).toInt),
+                    bin("upper half", (Math.pow(2, nWid) / 2 - 1).toInt to (Math.pow(2, nWid) - 1).toInt)),
+                cover("head.prio.cycl", dut.io.head.prio.superCycle)(
+                    bin("cyclic", 0 to 3)),
+                cover("head.prio.norm", dut.io.head.prio.cycle)(
+                    bin("lower half", 0 to (Math.pow(2, nWid) / 2 - 1).toInt),
+                    bin("upper half", (Math.pow(2, nWid) / 2 - 1).toInt to (Math.pow(2, nWid) - 1).toInt)),
                 //Declare cross points
-                CrossPoint("cyclics at ops", dut.io.cmd.op, dut.io.cmd.prio.cycle)(
-                    CrossBin("insertion", 0 to 0, 0 to 3),
-                    CrossBin("removal", 1 to 1, 0 to 3)),
-                CrossPoint("normals at ops", dut.io.cmd.op, dut.io.head.prio.cycle)(
-                    CrossBin("insertion lower half", 0 to 0, 0 to (Math.pow(2, nWid) / 2 - 1).toInt),
-                    CrossBin("insertion upper half", 0 to 0, (Math.pow(2, nWid) / 2 - 1).toInt to (Math.pow(2, nWid) - 1).toInt),
-                    CrossBin("removal lower half", 1 to 1, 0 to (Math.pow(2, nWid) / 2 - 1).toInt),
-                    CrossBin("removal upper half", 1 to 1, (Math.pow(2, nWid) / 2 - 1).toInt to (Math.pow(2, nWid) - 1).toInt))
+                cover("cyclics at ops", dut.io.cmd.op, dut.io.cmd.prio.cycle)(
+                    cross("insertion", Seq(0 to 0, 0 to 3)),
+                    cross("removal", Seq(1 to 1, 0 to 3))),
+                cover("normals at ops", dut.io.cmd.op, dut.io.head.prio.cycle)(
+                    cross("insertion lower half", Seq(0 to 0, 0 to (Math.pow(2, nWid) / 2 - 1).toInt)),
+                    cross("insertion upper half", Seq(0 to 0, (Math.pow(2, nWid) / 2 - 1).toInt to (Math.pow(2, nWid) - 1).toInt)),
+                    cross("removal lower half", Seq(1 to 1, 0 to (Math.pow(2, nWid) / 2 - 1).toInt)),
+                    cross("removal upper half", Seq(1 to 1, (Math.pow(2, nWid) / 2 - 1).toInt to (Math.pow(2, nWid) - 1).toInt)))
             )
 
             dut.clock.setTimeout(0)

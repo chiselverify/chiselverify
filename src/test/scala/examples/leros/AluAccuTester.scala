@@ -6,7 +6,7 @@ import org.scalatest._
 import chiseltest.experimental.TestOptionBuilder._
 import chiseltest.internal.VerilatorBackendAnnotation
 import chiselverify.coverage.CoverageReporter
-import chiselverify.coverage.{CoverPoint, Bins}
+import chiselverify.coverage._
 import examples.leros.Types._
 
 class AluAccuTester extends FlatSpec with ChiselScalatestTester with Matchers {
@@ -16,9 +16,9 @@ class AluAccuTester extends FlatSpec with ChiselScalatestTester with Matchers {
         val cr = new CoverageReporter(dut)
         cr.register(
             //Declare CoverPoints
-            CoverPoint("accu", dut.io.accu)( //CoverPoint 1
-                Bins("lo10", 0 to 10),
-                Bins("First100", 0 to 100)
+            cover("accu", dut.io.accu)( //CoverPoint 1
+                bin("lo10", 0 to 10),
+                bin("First100", 0 to 100)
             )
                 // CoverPoint(dut.io.test, "test", //CoverPoint 2
                 //     Bins("testLo10", 0 to 10)::Nil)::

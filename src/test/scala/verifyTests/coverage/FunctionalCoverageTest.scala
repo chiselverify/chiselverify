@@ -20,14 +20,13 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
 
         val cr = new CoverageReporter(dut)
         cr.register(
-            //Declare CoverPoints
-            CoverPoint("accu", dut.io.outA)( //CoverPoint 1
-                Bins("lo10", 0 until 10), Bins("First100", 0 until 100)),
-            CoverPoint("test", dut.io.outB)( //CoverPoint 2
-                 Bins("testLo10", 0 until 10)),
+            cover("accu", dut.io.outA)( //CoverPoint 1
+                bin("lo10", 0 until 10), bin("First100", 0 until 100)),
+            cover("test", dut.io.outB)( //CoverPoint 2
+                 bin("testLo10", 0 until 10)),
             //Declare cross points
-            CrossPoint("accuAndTest", dut.io.outA, dut.io.outB)(
-                CrossBin("both1", 1 to 1, 1 to 1))
+            cover("accuAndTest", dut.io.outA, dut.io.outB)(
+                cross("both1", Seq(1 to 1, 1 to 1)))
         )
 
         /**
@@ -60,11 +59,11 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
         val cr = new CoverageReporter(dut)
         cr.register(
             //Declare CoverPoints
-            CoverPoint("accu", dut.io.outA)( //CoverPoint 1
-                Bins("lo10even", 0 until 10, Condition("onlyEven", { case Seq(x) => x % 2 == 0 })),
-                Bins("First100odd", 0 until 100, Condition("onlyOdd",{ case Seq(x) => x % 2 != 0 }))),
-            CoverPoint("test", dut.io.outB)( //CoverPoint 2
-                Bins("testLo10", 0 until 10))
+            cover("accu", dut.io.outA)( //CoverPoint 1
+                bin("lo10even", 0 until 10, (x : Seq[BigInt]) => x.head % 2 == 0),
+                bin("First100odd", 0 until 100, (x: Seq[BigInt]) => x.head % 2 != 0 )),
+            cover("test", dut.io.outB)( //CoverPoint 2
+                bin("testLo10", 0 until 10))
         )
 
         /**
@@ -96,9 +95,9 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
         val cr = new CoverageReporter(dut)
         cr.register(
             //Declare CoverPoints
-            CoverCondition("aAndB",dut.io.outA, dut.io.outB)(
-                Condition("aeqb", { case Seq(a, b) => a == b }),
-                Condition("asuptobAtLeast100", { case Seq(a, b) => a > b }, Some(100))
+            cover("aAndB", dut.io.outA, dut.io.outB)(
+                bin("aeqb", condition = (x: Seq[BigInt]) => x.head == x(1)),
+                bin("asuptobAtLeast100", condition = (x: Seq[BigInt]) => x.head > x(1), expectedHits = 100)
             )
         )
 
@@ -134,9 +133,9 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
         val cr = new CoverageReporter(dut)
         cr.register(
             //Declare CoverPoints with default bins
-            CoverPoint("a", dut.io.outA)(),
-            CoverPoint("b", dut.io.outB)(),
-            CoverPoint("aplusb", dut.io.outAB)()
+            cover("a", dut.io.outA)(DefaultBin(dut.io.outA)),
+            cover("b", dut.io.outB)(DefaultBin(dut.io.outB)),
+            cover("aplusb", dut.io.outAB)(DefaultBin(dut.io.outAB))
         )
 
         /**
@@ -199,23 +198,23 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
         val cr = new CoverageReporter(dut)
         cr.register(
             //Declare CoverPoints
-            CoverPoint("a", dut.io.outA)( //CoverPoint 1
-                Bins("lo10", 0 until 10)),
-            CoverPoint("count", dut.io.count)( //CoverPoint 2
-                Bins("testLo10", 0 until 10)),
-            CoverPoint("b", dut.io.outB)(
-                Bins("test10", 0 until 10)
+            cover("a", dut.io.outA)( //CoverPoint 1
+                bin("lo10", 0 until 10)),
+            cover("count", dut.io.count)( //CoverPoint 2
+                bin("testLo10", 0 until 10)),
+            cover("b", dut.io.outB)(
+                bin("test10", 0 until 10)
             ),
-            CoverPoint("c", dut.io.outC)(
-                Bins("test5", 0 until 5)
+            cover("c", dut.io.outC)(
+                bin("test5", 0 until 5)
             ),
             //Declare timed cross points
-            TimedCross("timedAB", dut.io.outA, dut.io.count)(Exactly(3))(
-                CrossBin("ExactlyBoth3", 3 to 3, 3 to 3)),
-            TimedCross("EventuallyTimedAB", dut.io.outB, dut.io.count)(Eventually(3))(
-                CrossBin("both1", 1 to 1, 1 to 1)),
-            TimedCross("AlwaysTimedAB", dut.io.outC, dut.io.outA)(Always(3))(
-                CrossBin("AlwaysBoth3", 3 to 3, 3 to 3)
+            cover("timedAB", dut.io.outA, dut.io.count)(Exactly(3))(
+                cross("ExactlyBoth3", Seq(3 to 3, 3 to 3))),
+            cover("EventuallyTimedAB", dut.io.outB, dut.io.count)(Eventually(3))(
+                cross("both1", Seq(1 to 1, 1 to 1))),
+            cover("AlwaysTimedAB", dut.io.outC, dut.io.outA)(Always(3))(
+                cross("AlwaysBoth3", Seq(3 to 3, 3 to 3))
             )
         )
 
@@ -250,13 +249,13 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
         val cr = new CoverageReporter(dut)
         cr.register(
             //Declare CoverPoints
-            CoverPoint("a", dut.io.outA)( //CoverPoint 1
-                Bins("lo10", 0 until 10)),
-            CoverPoint("b", dut.io.outB)( //CoverPoint 2
-                Bins("testLo10", 0 until 10)),
+            cover("a", dut.io.outA)( //CoverPoint 1
+                bin("lo10", 0 until 10)),
+            cover("b", dut.io.outB)( //CoverPoint 2
+                bin("testLo10", 0 until 10)),
             //Declare timed cross points
-            TimedCross("timedAB", dut.io.outA, dut.io.outB)(Exactly(3))(
-                CrossBin("both1", 3 to 3, 3 to 3))
+            cover("timedAB", dut.io.outA, dut.io.outB)(Exactly(3))(
+                cross("both1", Seq(3 to 3, 3 to 3)))
         )
 
         /**
@@ -278,26 +277,26 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
         val cr = new CoverageReporter(dut)
         cr.register(
             //Declare CoverPoints with conditional bins
-            CoverPoint("accu", dut.io.outA)(
-                Bins("lo10even", 0 until 10, Condition("onlyEven", { case Seq(x) => x % 2 == 0 })),
-                Bins("First100odd", 0 until 100, Condition("onlyOdd",{ case Seq(x) => x % 2 != 0 }))),
+            cover("accu", dut.io.outA)(
+                bin("lo10even", 0 until 10, (x: Seq[BigInt]) => x.head % 2 == 0),
+                bin("First100odd", 0 until 100, (x: Seq[BigInt]) => x.head % 2 != 0)),
             //Declare CoverPoints without conditional bins
-            CoverPoint("test", dut.io.outB)(
-                Bins("testLo10", 0 until 10)),
+            cover("test", dut.io.outB)(
+                bin("testLo10", 0 until 10)),
             //Declare CoverConditions
-            CoverCondition("aAndB",dut.io.outA, dut.io.outB)(
-                Condition("aeqb", { case Seq(a, b) => a == b }),
-                Condition("asuptobAtLeast100", { case Seq(a, b) => a > b }, Some(100))),
+            cover("aAndB",dut.io.outA, dut.io.outB)(
+                bin("aeqb", condition = (x: Seq[BigInt]) => x.head == x(1)),
+                bin("asuptobAtLeast100", condition = (x: Seq[BigInt]) => x.head > x(1), expectedHits = 100)),
             //Declare cross points
-            CrossPoint("accuAndTest", dut.io.outA, dut.io.outB)(
-                CrossBin("both1", 1 to 9 by 2, 1 to 1)),
+            cover("accuAndTest", dut.io.outA, dut.io.outB)(
+                cross("both1", Seq(1 to 9 by 2, 1 to 1))),
             //Declare timed cross points
-            TimedCross("timedAB", dut.io.outA, dut.io.count)(Exactly(3))(
-                CrossBin("ExactlyBoth3", 3 to 3, 3 to 3)),
-            TimedCross("EventuallyTimedAB", dut.io.outB, dut.io.count)(Eventually(3))(
-                CrossBin("EventuallyBoth1", 1 to 1, 1 to 1)),
-            TimedCross("AlwaysTimedAB", dut.io.outC, dut.io.outA)(Always(3))(
-                CrossBin("AlwaysBoth3", 3 to 3, 3 to 3))
+            cover("timedAB", dut.io.outA, dut.io.count)(Exactly(3))(
+                cross("ExactlyBoth3", Seq(3 to 3, 3 to 3))),
+            cover("EventuallyTimedAB", dut.io.outB, dut.io.count)(Eventually(3))(
+                cross("EventuallyBoth1", Seq(1 to 1, 1 to 1))),
+            cover("AlwaysTimedAB", dut.io.outC, dut.io.outA)(Always(3))(
+                cross("AlwaysBoth3", Seq(3 to 3, 3 to 3)))
         )
 
 
@@ -324,76 +323,6 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
         report.binNHits(1, "timedAB", "ExactlyBoth3") should be (1)
         report.binNHits(1, "EventuallyTimedAB", "EventuallyBoth1") should be (1)
         report.binNHits(1, "AlwaysTimedAB", "AlwaysBoth3") should be (1)
-    }
-
-    def testTimedOps[T <: TimedToyDUT](dut: T): Unit = {
-        val cr = new CoverageReporter(dut)
-        cr.register(
-            TimedCoverOp("aEqCountAfterNCylces", Equals(dut.io.outA, dut.io.count))(Exactly(5)),
-            TimedCoverOp("aGtCountBeforeNCycles", GtEq(dut.io.outA, dut.io.count))(Always(5)),
-            TimedCoverOp("aLtSumBeforeNCycles", Lt(dut.io.outA, dut.io.outSum))(Eventually(5))
-        )
-
-        def test(): Unit = {
-            dut.io.a.poke(5.U)
-            dut.io.b.poke(1.U)
-            dut.io.c.poke(3.U)
-            cr.step(5)
-            dut.io.c.poke(0.U)
-            cr.step()
-            dut.io.outC.expect(0.U)
-        }
-
-        test()
-
-        //Generate Report
-        val report = cr.report
-        cr.printReport()
-
-        report.binNHits(1, "aEqCountAfterNCylces") should be (1)
-        report.binNHits(1, "aGtCountBeforeNCycles") should be (1)
-        report.binNHits(1, "aLtSumBeforeNCycles") should be (1)
-    }
-
-    def testTimedOpsMultiHits[T <: TimedToyDUT](dut: T): Unit = {
-        val cr = new CoverageReporter(dut)
-        cr.register(
-            TimedCoverOp("aEqCountAfterNCylces", Equals(dut.io.outA, dut.io.count))(Exactly(5)),
-            TimedCoverOp("aGtCountBeforeNCycles", GtEq(dut.io.outA, dut.io.count))(Always(5)),
-            TimedCoverOp("aLtSumBeforeNCycles", Lt(dut.io.outA, dut.io.count))(Eventually(6)),
-            TimedCoverOp("bGtCountFor2Cycles", Gt(dut.io.outB, dut.io.count))(Always(2))
-        )
-
-        def test(): Unit = {
-            dut.io.a.poke(5.U)
-            dut.io.b.poke(3.U)
-            dut.io.c.poke(3.U)
-            cr.step()
-            cr.step()
-            dut.io.a.poke(2.U)
-            cr.step()
-            dut.io.b.poke(0.U)
-            cr.step()
-            dut.io.a.poke(5.U)
-            dut.io.b.poke(7.U)
-            cr.step()
-            dut.io.c.poke(0.U)
-            cr.step()
-            dut.io.outC.expect(0.U)
-            cr.step()
-        }
-
-        test()
-
-        //Generate Report
-        val report = cr.report
-        cr.printReport()
-
-        report.binNHits(1, "aEqCountAfterNCylces") should be (1)
-        report.binNHits(1, "aGtCountBeforeNCycles") should be (1)
-        report.binNHits(1, "aLtSumBeforeNCycles") should be (1)
-        report.binNHits(1, "bGtCountFor2Cycles") should be (2)
-
     }
 
     "Coverage" should "get the right amount of hits" in {
@@ -427,14 +356,6 @@ class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Ma
 
     "CoverageWithEverything" should "pass" in {
         test(new TimedToyDUT(32)) {dut => testAll(dut)}
-    }
-
-    "CoverageWithTimedOps" should "pass" in {
-        test(new TimedToyDUT(32)) { dut => testTimedOps(dut) }
-    }
-
-    "CoverageWithTimedOpsMultiHits" should "pass" in {
-        test(new TimedToyDUT(32)) { dut => testTimedOpsMultiHits(dut) }
     }
 }
 
