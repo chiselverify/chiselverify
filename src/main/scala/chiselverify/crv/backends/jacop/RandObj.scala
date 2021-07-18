@@ -7,8 +7,6 @@ import scala.collection.mutable
 import scala.util.Random
 
 object RandObj {
-
-
   private val addLabelFun = new ThreadLocal[mutable.Buffer[DepthFirstSearch[_ <: org.jacop.core.Var]]]
 
   private def dfs[A <: Rand]: DepthFirstSearch[A] = {
