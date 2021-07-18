@@ -82,11 +82,11 @@ class AluInputConstraint(size: Int) extends AluInput(size) with RandBundle {
     }
     result
   }
-/*This
+
   // Constraints
-  (a + b) <= 255
-  (a - b) >= 0
-  fn <= 3*/
+  (a #+ b) #<= 255
+  (a #- b) #>= 0
+  fn #<= 3
 }
 
 class AluOutput(val size: Int) extends Bundle {

@@ -486,7 +486,8 @@ package object jacop {
     def rand(min: Int, max: Int, randType: RandType = Normal)(implicit model: Model) : Rand = randType match {
         case Normal =>
             val rand = new Random(model.seed)
-            new Rand(randName(rand.nextInt(), model.seed))
+            val randLength = (rand.nextInt() % 30) + 10
+            new Rand(randName(randLength, model.seed))
 
         case Cyclic => new Randc(min, max)
     }
