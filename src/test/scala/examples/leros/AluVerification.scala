@@ -18,23 +18,23 @@ class AluTransaction(seed: Int, size: Int) extends RandObj {
     currentModel = new Model(seed)
     val max = pow(2, size).toInt
 
-    val op = new Rand("op", 0, 7)
-    val din = new Rand("din", 0, max)
-    val ena = new Rand("ena", 0, 1)
+    val op: RandVar = rand(0, 7)
+    val din: RandVar = rand(0, max)
+    val ena: RandVar = rand(0, 1)
 
-    val values = din dist (
+    val values: DistConstraint = din dist (
         0 to 0xF := 1,
         0xF to 0xFF := 1,
         0xFF to 0xFFF := 1,
         0xFFF to 0xFFFF := 1,
     )
 
-    val onlyHigh = din dist (
+    val onlyHigh: DistConstraint = din dist (
         0xFF to 0xFFF := 1,
         0xFFF to 0xFFFF := 10,
     )
 
-    val enaHigh = ena dist (
+    val enaHigh: DistConstraint = ena dist (
         1 := 99,
         0 := 1
     )

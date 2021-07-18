@@ -8,6 +8,8 @@ import chiselverify.Utils.randName
 import scala.util.Random
 
 package object jacop {
+    type RandVar = Rand
+    type RandCVar = Randc
     private[crv] class Rand(name: String, min: Int, max: Int)(implicit val model: Model)
         extends org.jacop.core.IntVar(model, name, min, max)
             with chiselverify.crv.Rand {
@@ -153,6 +155,8 @@ package object jacop {
             model.crvconstr += crvc
             crvc
         }
+
+        def ==(that: Int): Constraint = ==(BigInt(that))
 
         /** Defines multiplication [[Constraint]] between two [[Rand]].
           *
@@ -438,22 +442,22 @@ package object jacop {
         }
     }
 
-    private[crv] class Randc(min: BigInt, max: BigInt)(implicit model: Model)
-        extends Rand(randName(10 ,model.seed), min.toInt, max.toInt) with chiselverify.crv.Randc {
+    private[crv] class Randc(min: Int, max: Int)(implicit model: Model)
+        extends Rand(randName(10 ,model.seed), min, max) with chiselverify.crv.Randc {
         model.randcVars += this
 
         private val rand = new Random(model.seed)
-        private var currentValue: BigInt = (math.abs(rand.nextInt) % (max - min)) + min
+        private var currentValue: Int = (math.abs(rand.nextInt) % (max - min)) + min
 
         /** Returns the current value of the variable
           * @return return the current value of the variable
           */
-        override def value(): BigInt = currentValue
+        override def value(): Int = currentValue.toInt
 
         /** Gets the next value of the random variable
           * @return return the next value of the variable
           */
-        override def next(): BigInt = {
+        override def next(): Int = {
             currentValue = if (currentValue == max) min else currentValue + 1
             currentValue
         }
@@ -461,7 +465,7 @@ package object jacop {
         /** Set the value of the variable
           * @param that the value to be set
           */
-        override def setVar(that: BigInt): Unit = {
+        override def setVar(that: Int): Unit = {
             currentValue = that
         }
 
@@ -484,7 +488,7 @@ package object jacop {
             val rand = new Random(model.seed)
             new Rand(randName(rand.nextInt(), model.seed))
 
-        case Cyclic => new Randc(BigInt(min), BigInt(max))
+        case Cyclic => new Randc(min, max)
     }
 
 }

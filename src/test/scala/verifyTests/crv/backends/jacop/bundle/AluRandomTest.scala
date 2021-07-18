@@ -5,19 +5,19 @@ import chisel3.experimental.BundleLiterals.AddBundleLiteralConstructor
 import chisel3.tester.{ChiselScalatestTester, testableClock, testableData}
 import chisel3.util._
 import chiselverify.crv.backends.jacop.experimental.RandBundle
-import chiselverify.crv.backends.jacop.{Rand, RandObj}
+import chiselverify.crv.backends.jacop.{Rand, RandObj, rand}
 import org.scalatest.{FlatSpec, Matchers}
 
 
 
 class AluTransaction(val size: Int) extends RandObj {
-  val a = new Rand(0, math.pow(2, size).toInt)
-  val b = new Rand(0, math.pow(2, size).toInt)
-  val fn = new Rand(0, 4)
+  val a = rand(0, math.pow(2, size).toInt)
+  val b = rand(0, math.pow(2, size).toInt)
+  val fn = rand(0, 4)
 
-  a #+ b #<= 255
-  a #- b #>= 0
-  fn #<= 3
+  a + b <= 255
+  a - b >= 0
+  fn <= 3
 
   def expectedResult(): BigInt = {
     if (fn.value == 0) {
@@ -33,13 +33,13 @@ class AluTransaction(val size: Int) extends RandObj {
 }
 
 class AluInputTransaction extends RandObj {
-  val a = new Rand("a", 0, 255)
-  val b = new Rand("b", 0, 255)
-  val fn = new Rand("fn", 0, 4)
+  val a = rand(0, 255)
+  val b = rand(0, 255)
+  val fn = rand(0, 4)
 
-  a #+ b #<= 255
-  a #- b #>= 0
-  fn #<= 3
+  a + b <= 255
+  a - b >= 0
+  fn <= 3
 
   def expectedResult(): AluOutput = {
     var result: BigInt = 0
@@ -82,11 +82,11 @@ class AluInputConstraint(size: Int) extends AluInput(size) with RandBundle {
     }
     result
   }
-
+/*This
   // Constraints
-  (a #+ b) #<= 255
-  (a #- b) #>= 0
-  fn #<= 3
+  (a + b) <= 255
+  (a - b) >= 0
+  fn <= 3*/
 }
 
 class AluOutput(val size: Int) extends Bundle {
