@@ -487,7 +487,7 @@ package object jacop {
         case Normal =>
             val rand = new Random(model.seed)
             val randLength = (rand.nextInt() % 30) + 10
-            new Rand(randName(randLength, model.seed))
+            new Rand(randName(randLength, model.seed), min, max)
 
         case Cyclic => new Randc(min, max)
     }

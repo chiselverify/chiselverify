@@ -158,7 +158,7 @@ class TestRandJacop extends FlatSpec with Matchers {
     assert(myPacket.payload(1).value() == myPacket.len.value % 4)
   }
 
-  /*// TODO: Fixme
+
   it should "be able to constraint the exponential of Rand var" in {
     class Packet extends RandObj {
       currentModel = new Model(6)
@@ -174,7 +174,7 @@ class TestRandJacop extends FlatSpec with Matchers {
     assert(myPacket.randomize)
     //assert(myPacket.payload(0).value() == math.pow(myPacket.len.value.toDouble, myPacket.size.value().toDouble).toInt)
     //assert(myPacket.payload(1).value() == math.pow(myPacket.len.value.toDouble, 3).toInt)
-  }*/
+  }
 
   it should "be able to constraint less or equal then  Rand var" in {
     class Packet extends RandObj {
@@ -314,7 +314,6 @@ class TestRandJacop extends FlatSpec with Matchers {
     assert(myPaket.size.value() == myPaket.nestedPacket.len.value())
   }
 
-  /*// TODO: Fixme
   it should "be able to declare conditional constraint" in {
     class Packet(model: Model) extends RandObj {
       currentModel = new Model(3)
@@ -344,7 +343,7 @@ class TestRandJacop extends FlatSpec with Matchers {
     } else {
       assert(myPacket.c.value() == 70)
     }
-  }*/
+  }
 
   it should "be able to declare ifThenElse constraint" in {
     class Packet(model: Model) extends RandObj {
