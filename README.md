@@ -183,13 +183,13 @@ constraint legal {
 ### CRV / jacop backend
 ```scala
 class Frame extends RandObj(new Model) {
-  val pkType: Rand = new Rand(0, 3)
-  val len: Rand = new Rand(0, 10)
-  val noRepeat: Randc = new Randc(0, 1)
+  val pkType: RandVar = rand(0, 3)
+  val len: RandVar = rand(0, 10)
+  val noRepeat: RandVar = rand(0, 1, Cyclic)
 
   val legal: ConstraintGroup = new ConstraintGroup {
-    len #>= 2
-    len #<= 5
+    len >= 2
+    len <= 5
   }
 }
 ```
@@ -202,26 +202,31 @@ class Frame extends RandObj(new Model)
 ```
 A model can be initialized with a seed `new Model(42)`, which allows the user to create reproducible tests.
 
-### Random Fields
+### Random Fields  
+Random fields are defined using the following function: 
+```scala
+def rand(min: Int, max: Int, randType: RandType = Normal)(implicit model: Model): RandVar
+```  
+
 A random field can be added to a `RandObj` by declaring a Rand variable.
 ```scala
-  val len: Rand = new Rand(0, 10)
+  val len: RandVar = rand(0, 10)
 ```
 
-Random-cyclic variable can be added by declaring a `Randc` field inside a `RandObj`
+Random-cyclic variable can be added by declaring a `Randc` field inside a `RandObj`. This is done using the `Cyclic RandType` parameter.
 ```scala
-  val noRepeat: Randc = Randc(0, 1)
+  val noRepeat: RandVar = rand(0, 1, Cyclic)
 ```
 
 ### Constraints
-Each variable can have one or multiple constraints. Constraint relations are usually preceded by the `#` symbol.
+Each variable can have one or multiple constraints. These are defined using constraint operators.  
 ```scala
-len #>= 2
+len >= 2
 ```
 In the previous block of code we are specifying that the variable `len` can only take values that are grater then 2. 
 Each constraint can be assigned to a variable and  enabled or disabled at any time during the test
 ```scala
-val lenConstraint = len #> 2
+val lenConstraint = len > 2
 [....]
 lenConstraint.disable()
 [....]
@@ -232,9 +237,9 @@ Constraints can also be grouped together in a `ConstraintGroup` and the group it
 
 ```scala
 val legal: ConstraintGroup = new ConstraintGroup {
-  len #>= 2
-  len #<= 5
-  payload.size #= len
+  len >= 2
+  len <= 5
+  payload.size == len
 }
 [...]
 legal.disable()
@@ -246,14 +251,14 @@ By default, constraints and constraint groups are enabled when they are declared
 
 
 The list of operator used to construct constraints is the following:
-`#<`, `#<=`, `#>`, `#>=`,`#=`, `div`, `#*`, `mod`, `#+`, `-`, `#\=`, `#^`, `in`, `inside`
+`<`, `<=`, `>`, `>=`,`==`, `div`, `*`, `mod`, `+`, `-`, `\=`, `^`, `in`, `inside`.
 
 It is also possible to declare conditional constraints with constructors like `IfCon` and `IfElseCon`.
 ```scala
-val constraint1: crv.Constraint = IfCon(len #= 1) {
-        payload.size #= 3
+val constraint1: crv.Constraint = IfCon(len == 1) {
+        payload.size == 3
     } ElseC {
-        payload.size #= 10
+        payload.size == 10
     }
 ```
 
@@ -266,7 +271,7 @@ val myPacket = new Frame(new Model)
 assert(myPacket.randomize)
 ```
 
-Other usage examples can be found in `src/test/scala/backends/jacopsrc/test/scala/verifyTests/crv/backends/jacop/`
+Other usage examples can be found in our [backend tests](src/test/scala/verifyTests/crv/backends/jacop).
 
 ## Example Use Cases
 
