@@ -1,9 +1,5 @@
-/**
-  * Code taken from https://gist.github.com/kylewlacy/38681caaee2b98949dd8
-  * @author Kyle Lacy (username: @kylewlacy)
-  */
+package chiselverify
 
-package chiselverify.coverage
 import scala.reflect.ClassTag
 
 object Utils {
@@ -86,6 +82,7 @@ object Utils {
 
     /**
       * Implicit type conversion from string to option to simplify syntax
+      *
       * @param s the string that will be converted
       * @return an option containing the given string
       */
@@ -93,8 +90,20 @@ object Utils {
 
     /**
       * Implicit type conversion from int to option to simplify syntax
+      *
       * @param i the int that will be converted
       * @return an option containing the given int
       */
     implicit def bigIntToOption(i: BigInt): Option[BigInt] = Some(i)
+
+    def randName(length: Int, seed: Int) : String = {
+        import scala.util.Random
+        val rand = new Random(seed)
+        val res: StringBuilder = new StringBuilder()
+        (0 until length).foreach(_ => {
+            val randNum = rand.nextInt(122 - 48) + 48
+            res += randNum.toChar
+        })
+        res.mkString
+    }
 }

@@ -70,8 +70,8 @@ class DistConstraint(variable: Rand, listOfDistC: List[Weight])(implicit model: 
   private def createWeightedConstraintGroup(rangeAndBucket: (Weight, Bucket)): WConstraintGroup = {
     rangeAndBucket match {
       case (weight, bucket) => weight match {
-        case WeightedRange(range, _) => new WConstraintGroup(bucket, variable #> range.start, variable #<= range.end)
-        case WeightedValue(value, _) => new WConstraintGroup(bucket, variable #= value)
+        case WeightedRange(range, _) => new WConstraintGroup(bucket, variable > range.start, variable <= range.end)
+        case WeightedValue(value, _) => new WConstraintGroup(bucket, variable == value)
       }
     }
   }

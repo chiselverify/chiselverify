@@ -7,7 +7,7 @@ import chiselverify.timing.TimedOp.{Equals, Gt, GtEq, Lt, LtEq}
 import chiselverify.timing._
 import verifyTests.ToyDUT._
 import org.scalatest._
-import chiselverify.coverage.Utils.stringToOption
+import chiselverify.Utils.stringToOption
 
 class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Matchers {
 

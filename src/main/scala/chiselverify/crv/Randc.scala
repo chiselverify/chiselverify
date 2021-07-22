@@ -8,17 +8,17 @@ trait Randc {
   /** Returns the current value of the variable
     * @return return the current value of the variable
     */
-  def value(): BigInt
+  def value(): Int
 
   /** Gets the next value of the random variable
     * @return return the next value of the variable
     */
-  def next(): BigInt
+  def next(): Int
 
   /** Set the value of the variable
     * @param that the value to be set
     */
-  def setVar(that: BigInt): Unit
+  def setVar(that: Int): Unit
 
   override def toString: String = value().toString
 }

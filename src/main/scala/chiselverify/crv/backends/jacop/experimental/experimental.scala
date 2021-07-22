@@ -21,7 +21,7 @@ package object experimental {
       val module = ModuleElaboration.elaborate(() => new RawModuleWrapper[T](bundle))
       val portNames = DataMirror.fullModulePorts(module).drop(1).filter(!_._2.isInstanceOf[Bundle])
       val modelBinding = portNames.zipWithIndex.map { case (name, index) =>
-        new Function1[Bundle, (Data, Data)] {
+        new ((Bundle) => (Data, Data)) {
           def apply(t: Bundle): (Data, Data) = {
             t.getElements(index) -> bundle.currentModel(name._1).value().U
           }
