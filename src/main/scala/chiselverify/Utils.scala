@@ -100,9 +100,10 @@ object Utils {
         import scala.util.Random
         val rand = new Random(seed)
         val res: StringBuilder = new StringBuilder()
-        (0 until length).foreach(_ =>
-            res += rand.nextInt().toChar
-        )
+        (0 until length).foreach(_ => {
+            val randNum = rand.nextInt(122 - 48) + 48
+            res += randNum.toChar
+        })
         res.mkString
     }
 }
