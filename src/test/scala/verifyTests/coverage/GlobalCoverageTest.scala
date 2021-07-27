@@ -37,6 +37,12 @@ class GlobalCoverageTest extends FlatSpec with ChiselScalatestTester with Matche
         coverage.get(dut.io.outA, 50).coverage should be (100)
         coverage.get(dut.io.outB).hits should be(4)
         coverage.get(dut.io.outAB).hits should be(26)
+
+        coverage.get(dut.io.outA, 50).print()
+        coverage.get(dut.io.outB).print()
+        coverage.get(dut.io.outAB).print()
+
+        coverage.printAll()
         //coverage.get(dut.io.outA, range = Some(0 to 1)).hits should be(1)
     }
 

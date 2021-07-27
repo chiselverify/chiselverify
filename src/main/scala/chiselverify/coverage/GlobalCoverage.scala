@@ -151,7 +151,11 @@ object GlobalCoverage {
     }
 
     case class CoverageResult(name: String, valueCycles: List[(BigInt, BigInt)], hits: BigInt, coverage: Double) {
-        val report : String = s"Port $name has $hits hits = ${(coverage * 100000000).toInt / 1000000.0}% coverage."
+        val report : String = s"Port $name has $hits hits${
+            val cov = (coverage * 100).toInt / 100.0
+            if(cov == 0.0) "."
+            else s" = $cov% coverage."
+        }"
         def print(): Unit = println(report)
     }
 
