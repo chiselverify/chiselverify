@@ -2,12 +2,9 @@ package verifyTests.coverage
 
 import chisel3._
 import chiseltest._
-import chiselverify.coverage._
 import chiselverify.coverage.GlobalCoverage._
-import chiselverify.timing._
-import verifyTests.ToyDUT._
 import org.scalatest._
-import chiselverify.Utils.stringToOption
+import verifyTests.ToyDUT._
 
 class GlobalCoverageTest extends FlatSpec with ChiselScalatestTester with Matchers {
 
@@ -43,7 +40,8 @@ class GlobalCoverageTest extends FlatSpec with ChiselScalatestTester with Matche
         coverage.get(dut.io.outAB).print()
 
         coverage.printAll()
-        //coverage.get(dut.io.outA, range = Some(0 to 1)).hits should be(1)
+        coverage.get(dut.io.outA, range = Some(0 to 1)).hits should be(2)
+        coverage.get(dut.io.outA, range = Some(0 to 4)).print()
     }
 
     "Coverage" should "get the right amount of hits" in {

@@ -7,14 +7,15 @@ import chisel3.{Data, MultiIOModule}
 import scala.collection.mutable
 
 object GlobalCoverage {
+    /**
+      * Maintains the coverage data sampled from each port throughout the test suite
+      */
     class QueryableCoverageDB {
         //Contains all of the sampled values for a given port
         private val portToValueCycleMap: mutable.HashMap[String, List[(BigInt, BigInt)]] =
             new mutable.HashMap[String, List[(BigInt, BigInt)]]()
         //Contains the registers range for a given port
         private val portToRangeMap: mutable.HashMap[String, Range] = new mutable.HashMap[String, Range]()
-        //Contains all values that resulted in a hit
-        private val portToHitsMap: mutable.HashMap[String, List[BigInt]] = new mutable.HashMap[String, List[BigInt]]()
         //Stores the names of all ports
         private val portNameToNameMap: mutable.HashMap[String, String] = new mutable.HashMap[String, String]()
 
@@ -51,11 +52,15 @@ object GlobalCoverage {
           * @param id the unique id of the port that was sampled
           * @return the number of hits that were sampled for a given port
           */
-        def getHits(id: String): BigInt = {
-            val r = portToRangeMap.get(id) match {
+        def getHits(id: String, range: Option[Range] = None): BigInt = {
+            //Contains all values that resulted in a hit
+            val portToHitsMap: mutable.HashMap[String, List[BigInt]] = new mutable.HashMap[String, List[BigInt]]()
+
+            //Get range
+            val r = range.getOrElse(portToRangeMap.get(id) match {
                 case None => throw new IllegalArgumentException(s"$id must be registered before use!")
                 case Some(ran) => ran
-            }
+            })
 
             nHitsCache.get((id, r.start, r.end, r.step)) match {
                 case None =>
@@ -94,14 +99,14 @@ object GlobalCoverage {
           * @param id the unique id of the port that was sampled
           * @return the coverage percentage that the given port has obtained
           */
-        def getCoverage(id: String, expected: Option[Int] = None): Double = {
-            val rangeSize = portToRangeMap.get(id) match {
+        def getCoverage(id: String, hits: BigInt, range: Option[Range] = None, expected: Option[Int] = None): Double = {
+            val rangeSize = range.getOrElse(portToRangeMap.get(id) match {
                 case None => throw new IllegalArgumentException(s"$id is not registered")
-                case Some(r) => r.size
-            }
+                case Some(r) => r
+            }).size
+
             coverageCache.get(id, expected.getOrElse(rangeSize)) match {
                 case None =>
-                    val hits = getHits(id)
                     val total = expected.getOrElse(rangeSize)
                     //Sanity check
                     if(hits > rangeSize) throw new IllegalStateException(
@@ -150,8 +155,24 @@ object GlobalCoverage {
         }
     }
 
-    case class CoverageResult(name: String, valueCycles: List[(BigInt, BigInt)], hits: BigInt, coverage: Double) {
-        val report : String = s"Port $name has $hits hits${
+    /**
+      * Case class containing all of the information pertaining to the functional coverage of a given port.
+      * @param name the name of the port
+      * @param valueCycles the list of (value, cycles) mappings that lead to a hit
+      * @param hits the number of hits obtained
+      * @param coverage the amount of coverage obtained
+      * @param range the custom range over which the port was sampled
+      */
+    case class CoverageResult(
+         name: String,
+         valueCycles: List[(BigInt, BigInt)],
+         hits: BigInt,
+         coverage: Double,
+         range: Option[Range] = None
+     ) {
+        val report : String = s"Port $name${
+            if(range.isDefined) s" for ${range.get.toString()}" else ""
+        } has $hits hits${
             val cov = (coverage * 100).toInt / 100.0
             if(cov == 0.0) "."
             else s" = $cov% coverage."
@@ -159,6 +180,11 @@ object GlobalCoverage {
         def print(): Unit = println(report)
     }
 
+    /**
+      * Defines a global verfication plan that covers all ports in a DUT.
+      * @param dut the dut being covered
+      * @tparam T the type of said dut
+      */
     class QueryableCoverage[T <: MultiIOModule](val dut: T) {
         val db = new QueryableCoverageDB
         val ports = (DataMirror.fullModulePorts(dut)).filter(p => p._1 != "clock" && p._1 != "reset" && p._1 != "io")
@@ -169,23 +195,48 @@ object GlobalCoverage {
             db.register(p, DefaultBin.defaultRange(p._2))
         })
 
+        /**
+          * Samples every port in the DUT.
+          */
         def sample(): Unit = ports.foreach(p => db.set(p._1, (p._2.peek().litValue(), cycles)))
 
+        /**
+          * Steps the DUT clock while maintaining our internal one.
+          * @param c the number of cycles by which we want to step
+          */
         def step(c: Int): Unit = {
             dut.clock.step(c)
             cycles = cycles + c
         }
 
+        /**
+          * Getter that allows the user to query the coverage database.
+          * @param port the port that the user wants to know about
+          * @param expected [Optional] the expected number of hits
+          * @param range [Optional] the range over which the port is sampled
+          * @return CoverageResult containing all of the coverage data
+          */
         def get(port: Data, expected: Int = -1, range: Option[Range] = None): CoverageResult = {
             val id = db.name(port.toNamed.name)
+            val hits = db.getHits(id, range)
             CoverageResult(
                 id,
                 db.get(id),
-                db.getHits(id),
-                db.getCoverage(id, if(expected == -1) None else Some(expected)))
+                hits,
+                db.getCoverage(id, hits, range, if(expected == -1) None else Some(expected)),
+                range
+            )
         }
 
+        /**
+          * Queries the database for all of the ports at once.
+          * @return a sequence of CoverageResults (one for each port)
+          */
         def getAll: Seq[CoverageResult] = ports.map(p => get(p._2))
+
+        /**
+          * Prints a full coverage report to the terminal.
+          */
         def printAll(): Unit = {
             println("==================== COVERAGE REPORT ====================")
             getAll.foreach(_.print())
