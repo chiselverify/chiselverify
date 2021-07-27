@@ -1,8 +1,8 @@
 package chiselverify.coverage
 
 import chisel3.experimental.DataMirror
-import chiseltest._
 import chisel3.{Data, MultiIOModule}
+import chiseltest._
 
 import scala.collection.mutable
 
@@ -12,8 +12,8 @@ object GlobalCoverage {
       */
     class QueryableCoverageDB {
         //Contains all of the sampled values for a given port
-        private val portToValueCycleMap: mutable.HashMap[String, List[(BigInt, BigInt)]] =
-            new mutable.HashMap[String, List[(BigInt, BigInt)]]()
+        private val portToValueCycleMap: mutable.ArrayBuffer[(String, (BigInt, BigInt))] =
+            new mutable.ArrayBuffer[(String, (BigInt, BigInt))]()
         //Contains the registers range for a given port
         private val portToRangeMap: mutable.HashMap[String, Range] = new mutable.HashMap[String, Range]()
         //Stores the names of all ports
@@ -41,9 +41,9 @@ object GlobalCoverage {
           * @param id the unique id of the port that was sampled
           * @return the (value, cycle) pairs that were sampled for the given port
           */
-        def get(id: String): List[(BigInt, BigInt)] = portToValueCycleMap.get(id) match {
+        def get(id: String): List[(BigInt, BigInt)] = portToValueCycleMap.groupBy(_._1).find(_._1 == id) match {
             case None => throw new IllegalArgumentException(s"Invalid id: $id")
-            case Some(res: List[(BigInt, BigInt)]) => res
+            case Some(res) => res._2.map(elem => elem._2).toList
         }
 
         /**
@@ -65,26 +65,23 @@ object GlobalCoverage {
             nHitsCache.get((id, r.start, r.end, r.step)) match {
                 case None =>
                     //Compute hits
-                    val hits = portToValueCycleMap.get(id) match {
-                        case None => throw new IllegalArgumentException(s"Can't get hits with the given ID: $id")
-                        case Some(value) =>
-                            value.foldLeft(BigInt(0)) {
-                                case (acc, (v, _)) => acc + (
-                                    if (r contains v) {
-                                        portToHitsMap.get(id) match {
-                                            case None =>
-                                                portToHitsMap.update(id, List(v))
-                                                1
-                                            case Some(lv) =>
-                                                if (lv contains v) 0
-                                                else {
-                                                    portToHitsMap.update(id, lv :+ v)
-                                                    1
-                                                }
+                    val value = get(id)
+                    val hits = value.foldLeft(BigInt(0)) {
+                        case (acc, (v, _)) => acc + (
+                            if (r contains v) {
+                                portToHitsMap.get(id) match {
+                                    case None =>
+                                        portToHitsMap.update(id, List(v))
+                                        1
+                                    case Some(lv) =>
+                                        if (lv contains v) 0
+                                        else {
+                                            portToHitsMap.update(id, lv :+ v)
+                                            1
                                         }
-                                    } else 0
-                                )
-                            }
+                                }
+                            } else 0
+                        )
                     }
                     //Cache Hits
                     nHitsCache.update((id, r.start, r.end, r.step), hits)
@@ -130,13 +127,7 @@ object GlobalCoverage {
           * @param id    the unique id of the port that is being sampled
           * @param value the value that was sampled for the given port
           */
-        def set(id: String, value: (BigInt, BigInt)): Unit = portToRangeMap.get(id) match {
-            case None => throw new IllegalArgumentException(s"ID must be registered before use: $id")
-            case Some(_) => portToValueCycleMap.get(id) match {
-                case None => portToValueCycleMap.update(id, List(value))
-                case Some(v) => portToValueCycleMap.update(id, v :+ value)
-            }
-        }
+        def set(id: String, value: (BigInt, BigInt)): Unit = portToValueCycleMap.+=((id, value))
 
         /**
           * Registers a port in the database by associating a range to it
