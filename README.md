@@ -314,7 +314,7 @@ If you're interested in learning more about the UVM, we recommend that you explo
 * [First steps with UVM](https://www.youtube.com/watch?v=qLr8ayWM_Ww)
 * [UVM Cookbook (requires an account)](https://verificationacademy.com/cookbook/uvm)
 * [ChipVerify.com UVM Tutorials](https://www.chipverify.com/table/uvm/)
-* [Ray Salemi's UVM Primer videos](https://www.youtube.com/watch?v=eeU2zpgXv1A&list=PLigQ6Cc3qFpI_WTgqtDXi_Msk3yRuKGGJ)
+* [Ray Salemi's UVM Primer videos](https://www.youtube.com/watch?v=eeU2zpgXv1A&list=PLigQ6Cc3qFpI_WTgqtDXi_Msk3yRuKGGJ)  
 
 # Documents
 
@@ -325,7 +325,17 @@ Collect pointers to relevant documents.
  * https://github.com/ekiwi/paso
  * https://github.com/TsaiAnson/verif
  * *Layering RTL, SAFL, Handel-C and BluespecConstructs on Chisel HCL*, David J Greaves,
- see http://koo.corpus.cam.ac.uk/drafts/tndjg-008-transactional-modelling-in-chisel.html
+ see http://koo.corpus.cam.ac.uk/drafts/tndjg-008-transactional-modelling-in-chisel.html  
+   
+### Fuzzing 
+Here are a few pointers to some interesting documentation around the topic of mutation-based fuzzing:  
+* [American Fuzzy Lop (AFL)](https://github.com/google/AFL)  
+* [Binary fuzzing strategies: what works, what doesn't](https://lcamtuf.blogspot.com/2014/08/binary-fuzzing-strategies-what-works.html)  
+* [AFL "Whitepaper"](https://lcamtuf.coredump.cx/afl/technical_details.txt)  
+* [A bit more about american fuzzy lop](https://lcamtuf.blogspot.com/2014/08/a-bit-more-about-american-fuzzy-lop.html)  
+* [The fuzzing book - Mutation-Based Fuzzing](https://www.fuzzingbook.org/html/MutationFuzzer.html)  
+* [RFuzz conference paper](https://people.eecs.berkeley.edu/~ksen/papers/rfuzz.pdf)  
+* [RFuzz](https://github.com/ekiwi/rfuzz)
 
 ### CRV
 - [Choco-Solver](https://github.com/chocoteam/choco-solver) Java library for solving CSP problems
