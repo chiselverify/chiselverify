@@ -2,44 +2,45 @@ package chiselverify.assembly
 
 import scala.collection.mutable.ArrayBuffer
 
-class FieldFactory[IF <: InstructionField[T], T](gen: Int => IF) {
-  def apply(width: Int)(implicit record: ArrayBuffer[IF]): IF = {
+trait InstructionFieldType
+object InstructionField {
+  object RegisterField extends InstructionFieldType
+  object ConstantField extends InstructionFieldType
+  object AddressField extends InstructionFieldType
+  object AddressOffsetField extends InstructionFieldType
+  object BranchOffsetField extends InstructionFieldType
+}
+
+class FieldFactory(gen: Int => InstructionField) {
+  def apply(width: Int)(implicit fieldRecord: ArrayBuffer[InstructionField]): InstructionField = {
     val field = gen(width)
-    record.append(field)
+    fieldRecord.append(field)
     return field
   }
 }
 
 case class Domain(lower: BigInt, upper: BigInt) {
-  def randInRange(): BigInt = scala.util.Random.nextInt((upper - lower).toInt) + lower
+  def sample(): BigInt = scala.util.Random.nextInt((upper - lower).toInt) + lower
+  def contains(that: BigInt): Boolean = (lower until upper).contains(that)
 }
 
-abstract class InstructionField[T] {
-  val width: Int
+class InstructionField(val width: Int, val fieldType: InstructionFieldType) {
   val domain: Domain = Domain(0, scala.math.pow(2, width).toInt)
-  var value: Option[T] = None
+  var value: Option[BigInt] = None
+  var string = ""
 
-  def setValue(value: T): Unit = this.value = Some(value)
+  def setValue(value: BigInt): Unit = {
+    if(!domain.contains(value)) throw new Exception("The given value lies outside of the field domain")
+    this.value = Some(value)
+    string = "0x"+this.value.get.toString(16)
+  }
 
-  override def toString: String = s"${value.getOrElse("None")}"
+  override def toString: String = string
 }
 
-class AddressField(val width: Int) extends InstructionField[BigInt]
 
-object AddressField extends FieldFactory[AddressField, BigInt](new AddressField(_))
-
-class RegisterField(val width: Int) extends InstructionField[Register]
-
-object RegisterField extends FieldFactory[RegisterField, Register](new RegisterField(_))
-
-class ConstantField(val width: Int) extends InstructionField[BigInt]
-
-object ConstantField extends FieldFactory[ConstantField, BigInt](new ConstantField(_))
-
-class AddressOffsetField(val width: Int) extends InstructionField[BigInt]
-
-object AddressOffsetField extends FieldFactory[AddressOffsetField, BigInt](new AddressOffsetField(_))
-
-class BranchOffsetField(val width: Int) extends InstructionField[BigInt]
-
-object BranchOffsetField extends FieldFactory[BranchOffsetField, BigInt](new BranchOffsetField(_))
+object RegisterField extends FieldFactory(new InstructionField(_,InstructionField.RegisterField))
+object ConstantField extends FieldFactory(new InstructionField(_,InstructionField.ConstantField))
+object AddressField extends FieldFactory(new InstructionField(_,InstructionField.AddressField))
+object AddressOffsetField extends FieldFactory(new InstructionField(_,InstructionField.AddressOffsetField))
+object BranchOffsetField extends FieldFactory(new InstructionField(_,InstructionField.BranchOffsetField))

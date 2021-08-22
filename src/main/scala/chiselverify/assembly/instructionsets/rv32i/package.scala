@@ -27,7 +27,7 @@ package object rv32i {
 
     abstract class Itype extends RV32Instruction {
       val funct3: Int
-      val imm: InstructionField[BigInt]
+      val imm: InstructionField
       val rd = RegisterField(5)
       val rs1 = RegisterField(5)
 

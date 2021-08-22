@@ -5,11 +5,7 @@ package object assembly {
 
   trait Instruction extends InstructionFactory {
 
-    implicit val addressFields = new ArrayBuffer[AddressField]
-    implicit val registerFields = new ArrayBuffer[RegisterField]
-    implicit val constantFields = new ArrayBuffer[ConstantField]
-    implicit val addressOffsetFields = new ArrayBuffer[AddressOffsetField]
-    implicit val branchOffsetFields = new ArrayBuffer[BranchOffsetField]
+    implicit val fields = new ArrayBuffer[InstructionField]()
 
     val categories: Seq[Category]
 
@@ -26,10 +22,11 @@ package object assembly {
     def toByteArray: Array[Byte] = this.toWordArray.flatMap(word => Array.tabulate(4)(i => (word >> 8 * i) & 0xFF).map(_.toByte))
   }
 
+  // TODO: how to merge instruction sets?
   trait InstructionSet extends DummyEnum[Instruction] {
     type RegisterType <: Register
     type Registers <: RegisterEnum
-    val registers: DummyEnum[Register]
+    val registers: RegisterEnum
     val memoryInstructions: Seq[Instruction]
 
     def memoryAccess(address: BigInt): Seq[Instruction]
