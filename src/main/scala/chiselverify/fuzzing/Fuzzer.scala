@@ -8,6 +8,7 @@ import chiselverify.coverage.CoverageReporter
 
 import java.nio.file.{Files, Paths}
 import java.io._
+import scala.annotation.tailrec
 
 object Fuzzer {
     def apply[T <: MultiIOModule](
@@ -34,12 +35,15 @@ object Fuzzer {
         val ports = (DataMirror.fullModulePorts(dut)).filter(p => p._1 != "clock" && p._1 != "reset" && p._1 != "io")
 
         //Fuzz loop
+        @tailrec
         def fuzzLoop(curCoverage: Int, corpusIdx: BigInt) : Int = {
             if((curCoverage == target) || (corpusIdx == timeout)) curCoverage
             else {
                 //TODO: Start with T from seedCorpus and poke
                 //TODO: When corpusIdx >= seedCorpus.size start mutating with AFL
                 //TODO: Call CR.totalCoverage to update curCoverage
+                //TODO: Compute result by getting bin hit values from coverage DB
+                //TODO: Compare result with existing results. If new write test to corpus.txt
                 ???
             }
         }
