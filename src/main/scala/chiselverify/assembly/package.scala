@@ -3,6 +3,8 @@ import scala.collection.mutable.ArrayBuffer
 
 package object assembly {
 
+  implicit def intDoubleToRangeDouble(x: (Int,Double)): (Range,Double) = (x._1 until x._1, x._2)
+
   trait Instruction extends InstructionFactory {
 
     implicit val fields = new ArrayBuffer[InstructionField]()
@@ -11,15 +13,22 @@ package object assembly {
 
     def toAsm: String
 
-    def toWordArray: Array[Int]
+    def toWords: Seq[Int]
 
-    def toBinaryString: String = this.toByteArray.reverseMap(_.toInt & 0xFF).map(a => "%08d".format(a.toBinaryString.toInt)).mkString("", "_", "")
+    def toBinaryString: String = toBytes.reverseMap(_.toInt & 0xFF).map(a => "%08d".format(a.toBinaryString.toInt)).mkString("", "_", "")
 
     override def toString: String = s"$toAsm [$toHexString]"
 
-    def toHexString: String = this.toByteArray.reverseMap(_.toInt & 0xFF).map(a => "%02X".format(a)).mkString("0x", "_", "")
+    def toHexString: String = toBytes.reverseMap(_.toInt & 0xFF).map(a => "%02X".format(a)).mkString("0x", "_", "")
 
-    def toByteArray: Array[Byte] = this.toWordArray.flatMap(word => Array.tabulate(4)(i => (word >> 8 * i) & 0xFF).map(_.toByte))
+    def toBytes: Seq[Byte] = toWords.flatMap(word => Array.tabulate(4)(i => (word >> 8 * i) & 0xFF).map(_.toByte))
+
+    def setFields(fieldType: InstructionFieldType, values: BigInt*): Unit = {
+      fields.filter(_.fieldType == fieldType).zip(values).foreach{ case (field,value) =>
+        field.setValue(value)
+      }
+    }
+
   }
 
   // TODO: how to merge instruction sets?

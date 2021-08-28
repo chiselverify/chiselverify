@@ -20,7 +20,7 @@ package object rv32i {
       val rs1 = RegisterField(5)
       val rs2 = RegisterField(5)
 
-      def toWordArray: Array[Int] = Array(opcode | (rd.value.get.toInt << 7) | (funct3 << 12) | (rs1.value.get.toInt << 15) | (rs2.value.get.toInt << 20) | (funct7 << 25)).map(_.toInt)
+      def toWords: Seq[Int] = Seq(opcode | (rd.value.get.toInt << 7) | (funct3 << 12) | (rs1.value.get.toInt << 15) | (rs2.value.get.toInt << 20) | (funct7 << 25)).map(_.toInt)
 
       def toAsm: String = s"$mnemonic $rd, $rs1, $rs2"
     }
@@ -31,7 +31,7 @@ package object rv32i {
       val rd = RegisterField(5)
       val rs1 = RegisterField(5)
 
-      def toWordArray: Array[Int] = Array(opcode | (rd.value.get.toInt << 7) | (funct3 << 12) | (rs1.value.get.toInt << 15) | (imm.value.get << 20)).map(_.toInt)
+      def toWords: Seq[Int] = Seq(opcode | (rd.value.get.toInt << 7) | (funct3 << 12) | (rs1.value.get.toInt << 15) | (imm.value.get << 20)).map(_.toInt)
     }
 
     abstract class Stype extends RV32Instruction {
@@ -40,7 +40,7 @@ package object rv32i {
       val rs1 = RegisterField(5)
       val rs2 = RegisterField(5)
 
-      def toWordArray: Array[Int] = Array(opcode | ((imm.value.get & 0x1F) << 7) | (funct3 << 12) | (rs1.value.get.toInt << 15) | (rs2.value.get.toInt << 20) | ((imm.value.get >> 5) << 25)).map(_.toInt)
+      def toWords: Seq[Int] = Seq(opcode | ((imm.value.get & 0x1F) << 7) | (funct3 << 12) | (rs1.value.get.toInt << 15) | (rs2.value.get.toInt << 20) | ((imm.value.get >> 5) << 25)).map(_.toInt)
 
       def toAsm: String = s"$mnemonic $rs1, $imm($rs2)"
     }
@@ -52,7 +52,7 @@ package object rv32i {
       val rs1 = RegisterField(5)
       val rs2 = RegisterField(5)
 
-      def toWordArray: Array[Int] = Array(opcode | ((imm.value.get & 0x800) >> (11 - 7)) | ((imm.value.get & 0x1D) << (8 - 1)) | (funct3 << 12) | (rs1.value.get.toInt << 15) | (rs2.value.get.toInt << 20) | ((imm.value.get & 0x7D0) << (25 - 5)) | ((imm.value.get & 0x1000) << (31 - 12))).map(_.toInt)
+      def toWords: Seq[Int] = Seq(opcode | ((imm.value.get & 0x800) >> (11 - 7)) | ((imm.value.get & 0x1D) << (8 - 1)) | (funct3 << 12) | (rs1.value.get.toInt << 15) | (rs2.value.get.toInt << 20) | ((imm.value.get & 0x7D0) << (25 - 5)) | ((imm.value.get & 0x1000) << (31 - 12))).map(_.toInt)
 
       def toAsm: String = s"$mnemonic $rs1, $rs2, $imm"
     }
@@ -103,7 +103,8 @@ package object rv32i {
     val memoryInstructions = Seq(LW)
 
     def memoryAccess(address: BigInt): Seq[Instruction] = {
-      Seq(ADDI)
+      val regSet = ADDI()
+      regSet.setFields(InstructionField.ConstantField)
     }
 
     object ADD extends ADD
