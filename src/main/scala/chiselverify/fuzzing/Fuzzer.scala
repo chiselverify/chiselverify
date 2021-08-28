@@ -14,10 +14,12 @@ object Fuzzer {
     def apply[T <: MultiIOModule](
         dut: T,
         cr: CoverageReporter[T],
+        goldenModel: List[BigInt] => List[BigInt],
         target : Int = 100,
         timeout : BigInt = BigInt(1000000)
     )(
         result: String,
+        bugResult: String,
         seeds: String*
     ) : Int = {
         //Create a test corpus by reading seed file
@@ -44,7 +46,9 @@ object Fuzzer {
                 //TODO: Call CR.totalCoverage to update curCoverage
                 //TODO: Compute result by getting bin hit values from coverage DB
                 //TODO: Compare result with existing results. If new write test to corpus.txt
+                //TODO: Compare result to golden model result. If different, report bug and save to bug.txt
                 ???
+                fuzzLoop(0, 0)
             }
         }
         fuzzLoop(0, 0)
