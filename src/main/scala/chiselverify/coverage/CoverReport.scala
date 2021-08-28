@@ -42,6 +42,8 @@ object CoverReport {
           */
         val id: BigInt
 
+        val coverage: Double
+
         /**
           * Adds two different reports of the same type together
           *
@@ -174,6 +176,7 @@ object CoverReport {
           * String ID for the current report
           */
         override val name: String = s"$id"
+        override val coverage: Double = points.foldLeft(0.0)((acc, r) => acc + r.coverage)
     }
 
     case class ConditionReport(name: String, conds: List[Condition], db: CoverageDB) extends Report {
@@ -206,6 +209,13 @@ object CoverReport {
         }
 
         override val id: BigInt = name.hashCode
+        override val coverage: Double = conds.foldLeft(0.0)((acc, cond) => {
+            val nHits = db.getNHits(cond.name).toDouble
+            acc + (nHits / (cond.expectedHits match {
+                case None => 0.0
+                case Some(eH) => eH.toDouble
+            }))
+        })
     }
 
     /**
@@ -236,6 +246,7 @@ object CoverReport {
         }
 
         override val id: BigInt = name.hashCode
+        override val coverage: Double = bins.foldLeft(0.0)((acc, r) => acc + r.coverage)
     }
 
     case class TimedOpReport(timedCoverOp: TimedCoverOp, nHits: Int) extends Report {
@@ -265,6 +276,8 @@ object CoverReport {
         override def +(that: Report): Report = that match {
             case TimedOpReport(t, hits) => TimedOpReport(timedCoverOp + t, nHits + hits)
         }
+
+        override val coverage: Double = 0.0
     }
 
     /**
@@ -297,6 +310,7 @@ object CoverReport {
 
         override val name: String = cross.name
         override val id: BigInt = name.hashCode
+        override val coverage: Double = bins.foldLeft(0.0)((acc, r) => acc + r.coverage)
     }
 
     /**
@@ -326,6 +340,7 @@ object CoverReport {
 
         override val name: String = bin.name
         override val id: BigInt = bin.name.hashCode
+        override val coverage: Double = proportion
     }
 
     /**
@@ -361,6 +376,6 @@ object CoverReport {
 
         override val name: String = crossBin.name
         override val id: BigInt = name.hashCode
-
+        override val coverage: Double = proportion
     }
 }

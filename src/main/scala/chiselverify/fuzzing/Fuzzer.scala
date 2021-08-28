@@ -24,12 +24,11 @@ object Fuzzer {
     ) : Int = {
         //Create a test corpus by reading seed file
         //Here we assume that the seeds have a legal format TODO: maybe bad idea?
-        val seedCorpus = seeds.map(path => Files.readAllBytes(Paths.get(path))
-            .map(b => String.format("%8s", Integer.toBinaryString(b & 0xFF)))
-            .foldLeft("")((acc, byte) => acc ++ byte))
+        val seedCorpus = seeds.map(readBitString)
 
         //Create a text corpus that will store all of our data during the fuzzing
-        val pw = new PrintWriter(new File("corpus.txt"))
+        val corpusName = "corpus.txt"
+        val pw = new PrintWriter(new File(corpusName))
         pw.write(seedCorpus.foldLeft("")((acc, seed) => acc ++ seed ++ "\n"))
         pw.close()
 
@@ -38,11 +37,16 @@ object Fuzzer {
 
         //Fuzz loop
         @tailrec
-        def fuzzLoop(curCoverage: Int, corpusIdx: BigInt) : Int = {
+        def fuzzLoop(curCoverage: Int, corpusIdx: Int) : Int = {
             if((curCoverage == target) || (corpusIdx == timeout)) curCoverage
             else {
                 //TODO: Start with T from seedCorpus and poke
-                //TODO: When corpusIdx >= seedCorpus.size start mutating with AFL
+                val t: String = if(corpusIdx < seedCorpus.size) seedCorpus(corpusIdx) else {
+                    val seed = readBitString(corpusName).split("\n")(corpusIdx)
+                    //TODO: When corpusIdx >= seedCorpus.size start mutating with AFL
+                    seed
+                }
+
                 //TODO: Call CR.totalCoverage to update curCoverage
                 //TODO: Compute result by getting bin hit values from coverage DB
                 //TODO: Compare result with existing results. If new write test to corpus.txt
@@ -53,6 +57,11 @@ object Fuzzer {
         }
         fuzzLoop(0, 0)
     }
+
+    def readBitString(fileName: String) : String = Files.readAllBytes(Paths.get(fileName))
+            .map(b => String.format("%8s", Integer.toBinaryString(b & 0xFF)))
+            .foldLeft("")((acc, byte) => acc ++ byte)
+
 
     /**
       * Generic poke that pokes each input individually by:
