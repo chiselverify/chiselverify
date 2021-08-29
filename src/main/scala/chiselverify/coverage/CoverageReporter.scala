@@ -29,6 +29,8 @@ class CoverageReporter[T <: MultiIOModule](private val dut: T) {
     private val coverGroups: ArrayBuffer[CoverGroup] = new ArrayBuffer[CoverGroup]()
     private val coverageDB: CoverageDB = new CoverageDB
 
+    def reset(): Unit = coverageDB.reset()
+
     /**
       * Makes a readable functional coverage report
       * @return the report in string form

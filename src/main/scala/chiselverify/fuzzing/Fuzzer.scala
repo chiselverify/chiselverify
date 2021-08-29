@@ -16,7 +16,7 @@ object Fuzzer {
         cr: CoverageReporter[T],
         goldenModel: List[BigInt] => List[BigInt],
         target : Int = 100,
-        timeout : BigInt = BigInt(1000000)
+        timeout : Int = 1000000
     )(
         result: String,
         bugResult: String,
@@ -47,12 +47,20 @@ object Fuzzer {
                     seed
                 }
 
-                //TODO: Call CR.totalCoverage to update curCoverage
-                //TODO: Compute result by getting bin hit values from coverage DB
+                //reset FC and DUT
+                dut.reset.poke(Reset()) //TODO: Is this really how we reset the DUT?
+                dut.clock.step()
+                cr.reset()
+
+                //Poke
+                poke(dut, ports, t)
+
+                val coverage = (cr.report.coverage * 100).toInt
+                val result = ???//TODO: Compute result by getting bin hit values from coverage DB
                 //TODO: Compare result with existing results. If new write test to corpus.txt
                 //TODO: Compare result to golden model result. If different, report bug and save to bug.txt
-                ???
-                fuzzLoop(0, 0)
+
+                fuzzLoop(if(coverage > curCoverage) coverage else curCoverage, corpusIdx + 1)
             }
         }
         fuzzLoop(0, 0)

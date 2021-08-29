@@ -59,6 +59,15 @@ class CoverageDB {
 
     private var curCycle : BigInt = 0
 
+    def reset(): Unit = {
+        binIdHitValuesMap.clear()
+        binIdNumHitsMap.clear()
+        crossBinHitValuesMap.clear()
+        crossBinNumHitsMap.clear()
+        conditionalHits.clear()
+        timedCrossBinHits.clear()
+    }
+
     /**
       * Adds a coverGroup to the list of valid coverGroups
       * @return the newly generated group id

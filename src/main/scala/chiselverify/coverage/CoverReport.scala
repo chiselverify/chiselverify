@@ -85,6 +85,8 @@ object CoverReport {
             rep.mkString
         }
 
+        val coverage: Double = groups.foldLeft(0.0)((acc, r) => acc + r.coverage) / groups.size.toDouble
+
         /**
           * Traverses the report tree to find the given bin (if any)
           *
@@ -176,7 +178,7 @@ object CoverReport {
           * String ID for the current report
           */
         override val name: String = s"$id"
-        override val coverage: Double = points.foldLeft(0.0)((acc, r) => acc + r.coverage)
+        override val coverage: Double = points.foldLeft(0.0)((acc, r) => acc + r.coverage) / points.size.toDouble
     }
 
     case class ConditionReport(name: String, conds: List[Condition], db: CoverageDB) extends Report {
@@ -215,7 +217,7 @@ object CoverReport {
                 case None => 0.0
                 case Some(eH) => eH.toDouble
             }))
-        })
+        }) / conds.size.toDouble
     }
 
     /**
@@ -246,7 +248,7 @@ object CoverReport {
         }
 
         override val id: BigInt = name.hashCode
-        override val coverage: Double = bins.foldLeft(0.0)((acc, r) => acc + r.coverage)
+        override val coverage: Double = bins.foldLeft(0.0)((acc, r) => acc + r.coverage) / bins.size.toDouble
     }
 
     case class TimedOpReport(timedCoverOp: TimedCoverOp, nHits: Int) extends Report {
@@ -310,7 +312,7 @@ object CoverReport {
 
         override val name: String = cross.name
         override val id: BigInt = name.hashCode
-        override val coverage: Double = bins.foldLeft(0.0)((acc, r) => acc + r.coverage)
+        override val coverage: Double = bins.foldLeft(0.0)((acc, r) => acc + r.coverage) / bins.size.toDouble
     }
 
     /**
