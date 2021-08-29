@@ -37,8 +37,8 @@ object Fuzzer {
 
         //Fuzz loop
         @tailrec
-        def fuzzLoop(curCoverage: Int, corpusIdx: Int) : Int = {
-            if((curCoverage == target) || (corpusIdx == timeout)) curCoverage
+        def fuzzLoop(curCoverage: Int, corpusIdx: Int) : (Int, Int) = {
+            if((curCoverage == target) || (corpusIdx == timeout)) (curCoverage, corpusIdx)
             else {
                 //TODO: Start with T from seedCorpus and poke
                 val t: String = if(corpusIdx < seedCorpus.size) seedCorpus(corpusIdx) else {
@@ -53,17 +53,21 @@ object Fuzzer {
                 cr.reset()
 
                 //Poke
-                poke(dut, ports, t)
+                val inVals = poke(dut, ports, t)
 
                 val coverage = (cr.report.coverage * 100).toInt
-                val result = ???//TODO: Compute result by getting bin hit values from coverage DB
+                val result: Seq[BigInt] = ???//TODO: Compute result by getting bin hit values from coverage DB
+
                 //TODO: Compare result with existing results. If new write test to corpus.txt
-                //TODO: Compare result to golden model result. If different, report bug and save to bug.txt
+
+                if(result != goldenModel(inVals.toList)) {
+                    //TODO: Report bug to bug.txt
+                }
 
                 fuzzLoop(if(coverage > curCoverage) coverage else curCoverage, corpusIdx + 1)
             }
         }
-        fuzzLoop(0, 0)
+        fuzzLoop(0, 0)._1
     }
 
     def readBitString(fileName: String) : String = Files.readAllBytes(Paths.get(fileName))
@@ -79,7 +83,7 @@ object Fuzzer {
       * @param inputs the bit string read from the test corpus.
       * @tparam T the module type of the dut.
       */
-    def poke[T <: MultiIOModule](dut: T, ports: Seq[(String,Data)], inputs: String): Unit = {
+    def poke[T <: MultiIOModule](dut: T, ports: Seq[(String,Data)], inputs: String): Seq[BigInt] = {
         /**
           * Retrieve a wanted input from the set of inputs
           */
@@ -88,7 +92,6 @@ object Fuzzer {
 
         //Get port widths
         val sizes = ports.map(_._2.getWidth)
-        val totalSize = sizes.sum
         val testInputs = sizes.foldLeft((Seq[BigInt](), 0)) {
             case ((result, index), size) =>
                 val in = extractInput(inputs, size, sizes.slice(0, index).sum)
@@ -102,5 +105,6 @@ object Fuzzer {
             }
             dut.clock.step()
         })
+        testInputs
     }
 }
