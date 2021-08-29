@@ -19,52 +19,52 @@ package chiselverify
 import chisel3._
 
 package object axi4 {
-  /** AXI4-Lite master
+  /** AXI4-Lite manager
    * 
-   * An empty class representing an AXI master
+   * An empty class representing an AXI manager
    *
    * @param addrW the width of the address signals in bits
    * @param dataW the width of the data read/write signals in bits
    */
-  abstract class LiteMaster(val addrW: Int, val dataW: Int) extends Module {
-    val io = IO(new MasterInterfaceLite(addrW, dataW))
+  abstract class LiteManager(val addrW: Int, val dataW: Int) extends Module {
+    val io = IO(new ManagerInterfaceLite(addrW, dataW))
   }
 
-  /** AXI4 full master
+  /** AXI4 full manager
    * 
-   * An empty class representing an AXI master
+   * An empty class representing an AXI manager
    *
    * @param addrW the width of the address signals in bits
    * @param dataW the width of the data read/write signals in bits
    * @param idW the width of the ID signals in bits, defaults to 0
    * @param userW the width of the user signals in bits, defaults to 0
    */
-  abstract class Master(val addrW: Int, val dataW: Int, val idW: Int = 0, val userW: Int = 0) extends Module {
-    val io = IO(new MasterInterface(addrW, dataW, idW, userW))
+  abstract class Manager(val addrW: Int, val dataW: Int, val idW: Int = 0, val userW: Int = 0) extends Module {
+    val io = IO(new ManagerInterface(addrW, dataW, idW, userW))
   }
 
-  /** AXI4-Lite slave
+  /** AXI4-Lite subordinate
    * 
-   * An empty class representing an AXI slave
+   * An empty class representing an AXI subordinate
    *
    * @param addrW the width of the address signals in bits
    * @param dataW the width of the data read/write signals in bits
    */
-  abstract class LiteSlave(val addrW: Int, val dataW: Int) extends Module {
-    val io = IO(new SlaveInterfaceLite(addrW, dataW))
+  abstract class LiteSubordinate(val addrW: Int, val dataW: Int) extends Module {
+    val io = IO(new SubordinateInterfaceLite(addrW, dataW))
   }
 
-  /** AXI4 full slave
+  /** AXI4 full subordinate
    * 
-   * An empty class representing an AXI slave
+   * An empty class representing an AXI subordinate
    *
    * @param addrW the width of the address signals in bits
    * @param dataW the width of the data read/write signals in bits
    * @param idW the width of the ID signals in bits, defaults to 0
    * @param userW the width of the user signals in bits, defaults to 0
    */
-  abstract class Slave(val addrW: Int, val dataW: Int, val idW: Int = 0, val userW: Int = 0) extends Module {
-    val io = IO(new SlaveInterface(addrW, dataW, idW, userW))
+  abstract class Subordinate(val addrW: Int, val dataW: Int, val idW: Int = 0, val userW: Int = 0) extends Module {
+    val io = IO(new SubordinateInterface(addrW, dataW, idW, userW))
   }
 
   /** AXI4 burst encodings */

@@ -23,12 +23,12 @@ import chiseltest._
 import chiseltest.internal.TesterThreadList
 import scala.util.Random
 
-/** An AXI4 functional master
+/** An AXI4 functional manager
  * 
- * @param dut a slave DUT
+ * @param dut a subordinate DUT
  * 
  */
-class FunctionalMaster[T <: Slave](dut: T) {
+class FunctionalManager[T <: Subordinate](dut: T) {
   /** DUT information */
   private[this] val idW     = dut.idW
   private[this] val addrW   = dut.addrW
@@ -80,7 +80,7 @@ class FunctionalMaster[T <: Slave](dut: T) {
   // Data read
   rd.ready.poke(false.B)
 
-  // Reset slave device controller
+  // Reset subordinate device controller
   resetn.poke(false.B)
   clk.step()
   resetn.poke(true.B)
@@ -104,12 +104,12 @@ class FunctionalMaster[T <: Slave](dut: T) {
   private[this] def writeAddrHandler(): Unit = {
     println("New write address handler")
 
-    /** Run this thread as long as the master is initialized or more transactions are waiting */
+    /** Run this thread as long as the manager is initialized or more transactions are waiting */
     while (!awaitingWAddr.isEmpty) {
       /** Get the current transaction */
       val head = awaitingWAddr.head
 
-      /** Write address to slave */
+      /** Write address to subordinate */
       wa.valid.poke(true.B)
       wa.bits.pokePartial(head.ctrl)
       while (!wa.ready.peek.litToBoolean) clk.step()
@@ -130,13 +130,13 @@ class FunctionalMaster[T <: Slave](dut: T) {
   private[this] def writeHandler(): Unit = {
     println("New write handler")
 
-    /** Run this thread as long as the master is initialized or more transactions are waiting */
+    /** Run this thread as long as the manager is initialized or more transactions are waiting */
     while (!awaitingWrite.isEmpty) {
       /** Get the current transaction */
       val head = awaitingWrite.head
       while (!head.addrSent) clk.step()
 
-      /** Write data to slave */
+      /** Write data to subordinate */
       wd.valid.poke(true.B)
       while (!head.complete) {
         val nextVal = head.next
@@ -161,7 +161,7 @@ class FunctionalMaster[T <: Slave](dut: T) {
   private[this] def respHandler() = {
     println("New response handler")
 
-    /** Run this thread as long as the master is initialized or more transactions are waiting */
+    /** Run this thread as long as the manager is initialized or more transactions are waiting */
     while (!awaitingResp.isEmpty) {
       /** Get the current transaction */
       val head = awaitingResp.head
@@ -186,12 +186,12 @@ class FunctionalMaster[T <: Slave](dut: T) {
   private[this] def readAddrHandler(): Unit = {
     println("New read address handler")
 
-    /** Run this thread as long as the master is initialized or more transactions are waiting */
+    /** Run this thread as long as the manager is initialized or more transactions are waiting */
     while (!awaitingRAddr.isEmpty) {
       /** Get the current transaction */
       val head = awaitingRAddr.head 
 
-      /** Write address to slave */
+      /** Write address to subordinate */
       ra.valid.poke(true.B)
       ra.bits.pokePartial(head.ctrl)
       while (!ra.ready.peek.litToBoolean) clk.step()
@@ -212,13 +212,13 @@ class FunctionalMaster[T <: Slave](dut: T) {
   private[this] def readHandler(): Unit = {
     println("New read handler")
 
-    /** Run this thread as long as the master is initialized or more transactions are waiting */
+    /** Run this thread as long as the manager is initialized or more transactions are waiting */
     while (!awaitingRead.isEmpty) {
       /** Get the current transaction */
       val head = awaitingRead.head
       while (!head.addrSent) clk.step()
 
-      /** Read data from slave */
+      /** Read data from subordinate */
       rd.ready.poke(true.B)
       while (!head.complete) {
         if (rd.valid.peek.litToBoolean) {
@@ -250,7 +250,7 @@ class FunctionalMaster[T <: Slave](dut: T) {
     if (readT  != null) readT.join()
 
     /** Check for unchecked responses and read data */
-    if (hasRespOrReadData) println(s"WARNING: master had ${responses.length} responses and ${readValues.length} Seq's of read data waiting")
+    if (hasRespOrReadData) println(s"WARNING: manager had ${responses.length} responses and ${readValues.length} Seq's of read data waiting")
   }
 
   /** Start a write transaction to the given address
@@ -268,8 +268,8 @@ class FunctionalMaster[T <: Slave](dut: T) {
    * @param region optional region, defaults to 0
    * @param user optional user, defaults to 0
    * 
-   * @note [[addr]] must fit within the slave DUT's write address width
-   * @note entries in [[data]] must fit within the slave DUT's write data width, and the list can have at most [[len]] entries
+   * @note [[addr]] must fit within the subordinate DUT's write address width
+   * @note entries in [[data]] must fit within the subordinate DUT's write data width, and the list can have at most [[len]] entries
    * @note [[id]] must fit within DUT's ID width, likewise [[size]] cannot be greater than the DUT's write data width
    * @note [[burst]], [[lock]], [[cache]], and [[prot]] should be a set of those defined in Defs.scala
    */
@@ -350,7 +350,7 @@ class FunctionalMaster[T <: Slave](dut: T) {
    * @param region optional region, defaults to 0
    * @param user optional user, defaults to 0
    * 
-   * @note [[addr]] must fit within the slave DUT's write address width
+   * @note [[addr]] must fit within the subordinate DUT's write address width
    * @note [[id]] must fit within DUT's ID width, likewise [[size]] cannot be greater than the DUT's write data width
    * @note [[burst]], [[lock]], [[cache]], and [[prot]] should be a set of those defined in Defs.scala
    */

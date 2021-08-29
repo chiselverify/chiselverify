@@ -19,12 +19,12 @@ package chiselverify.axi4
 import chisel3._
 import chisel3.util.Decoupled
 
-/** AXI4-Lite master interface
+/** AXI4-Lite manager interface
  * 
  * @param addrW the width of the address signals in bits
  * @param dataW the width of the data read/write signals in bits
  */
-class MasterInterfaceLite(val addrW: Int, val dataW: Int) extends Bundle {
+class ManagerInterfaceLite(val addrW: Int, val dataW: Int) extends Bundle {
   /** Fields implementing each of the AXI channels
    * 
    * [[wa]] is the write address channel
@@ -40,14 +40,14 @@ class MasterInterfaceLite(val addrW: Int, val dataW: Int) extends Bundle {
   val rd = Flipped(Decoupled(Output(RDLite(dataW))))
 }
 
-/** AXI4 full master interface
+/** AXI4 full manager interface
  * 
  * @param addrW the width of the address signals in bits
  * @param dataW the width of the data read/write signals in bits
  * @param idW the width of the ID signals in bits, defaults to 0
  * @param userW the width of the user signals in bits, defaults to 0
  */
-class MasterInterface(override val addrW: Int, override val dataW: Int, val idW: Int = 0, val userW: Int = 0) extends MasterInterfaceLite(addrW, dataW) {
+class ManagerInterface(override val addrW: Int, override val dataW: Int, val idW: Int = 0, val userW: Int = 0) extends ManagerInterfaceLite(addrW, dataW) {
   /** Fields implementing each of the AXI channels
    * 
    * [[wa]] is the write address channel
@@ -63,12 +63,12 @@ class MasterInterface(override val addrW: Int, override val dataW: Int, val idW:
   override val rd = Flipped(Decoupled(Output(RD(dataW, idW, userW))))
 }
 
-/** AXI4-Lite slave interface
+/** AXI4-Lite subordinate interface
  * 
  * @param addrW the width of the address signals in bits
  * @param dataW the width of the data read/write signals in bits
  */
-class SlaveInterfaceLite(val addrW: Int, val dataW: Int) extends Bundle {  
+class SubordinateInterfaceLite(val addrW: Int, val dataW: Int) extends Bundle {  
   /** Fields implementing each of the AXI channels
    * 
    * [[wa]] is the write address channel
@@ -84,14 +84,14 @@ class SlaveInterfaceLite(val addrW: Int, val dataW: Int) extends Bundle {
   val rd = Decoupled(Output(RDLite(dataW)))
 }
 
-/** AXI4 full slave interface
+/** AXI4 full subordinate interface
  * 
  * @param addrW the width of the address signals in bits
  * @param dataW the width of the data read/write signals in bits
  * @param idW the width of the ID signals in bits, defaults to 0
  * @param userW the width of the user signals in bits, defaults to 0
  */
-class SlaveInterface(override val addrW: Int, override val dataW: Int, val idW: Int = 0, val userW: Int = 0) extends SlaveInterfaceLite(addrW, dataW) {  
+class SubordinateInterface(override val addrW: Int, override val dataW: Int, val idW: Int = 0, val userW: Int = 0) extends SubordinateInterfaceLite(addrW, dataW) {  
   /** Fields implementing each of the AXI channels
    * 
    * [[wa]] is the write address channel
