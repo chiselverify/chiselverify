@@ -68,6 +68,9 @@ class CoverageDB {
         timedCrossBinHits.clear()
     }
 
+    def results : Seq[(String, List[BigInt])] = binIdHitValuesMap.map{ case ((_, bN), vals) => (bN, vals) }.toSeq ++
+        crossBinHitValuesMap.map{ case (cross, vals) => (cross.cname, vals.flatten)}.toSeq
+
     /**
       * Adds a coverGroup to the list of valid coverGroups
       * @return the newly generated group id

@@ -18,9 +18,9 @@ object Fuzzer {
         target : Int = 100,
         timeout : Int = 1000000
     )(
-        result: String,
-        bugResult: String,
-        seeds: String*
+        result: String, //Without extension
+        bugResult: String, //Without extension
+        seeds: String* //Without extension
     ) : Int = {
         //Create a test corpus by reading seed file
         //Here we assume that the seeds have a legal format TODO: maybe bad idea?
@@ -40,7 +40,6 @@ object Fuzzer {
         def fuzzLoop(curCoverage: Int, corpusIdx: Int) : (Int, Int) = {
             if((curCoverage == target) || (corpusIdx == timeout)) (curCoverage, corpusIdx)
             else {
-                //TODO: Start with T from seedCorpus and poke
                 val t: String = if(corpusIdx < seedCorpus.size) seedCorpus(corpusIdx) else {
                     val seed = readBitString(corpusName).split("\n")(corpusIdx)
                     //TODO: When corpusIdx >= seedCorpus.size start mutating with AFL
@@ -54,14 +53,40 @@ object Fuzzer {
 
                 //Poke
                 val inVals = poke(dut, ports, t)
-
                 val coverage = (cr.report.coverage * 100).toInt
-                val result: Seq[BigInt] = ???//TODO: Compute result by getting bin hit values from coverage DB
 
-                //TODO: Compare result with existing results. If new write test to corpus.txt
+                //Retrieve results from coverage reporter
+                val res: Seq[(String, List[BigInt])] = cr.results
 
-                if(result != goldenModel(inVals.toList)) {
-                    //TODO: Report bug to bug.txt
+                //Result is stored as a csv file
+                val oldResults: Seq[(String, List[BigInt])] = readResultCSV(result)
+
+                //Compare result with existing results. If new write test to corpus.txt
+                //Sorting should ensure that the names are the same
+                val diff = res.sortBy(_._1).zip(oldResults.sortBy(_._1)).map {
+                    case ((name1, vals), (name2, oldvals)) if name1 == name2 => (name1, vals filterNot oldvals.contains)
+                    case _ => throw new IllegalArgumentException("Illegal result state")
+                }
+
+                //Check if the result is interesting and update files
+                if(diff.nonEmpty) {
+                    val corpus = new PrintWriter(new FileOutputStream(new File(corpusName),true))
+                    corpus.write(t)
+                    corpus.close()
+
+                    //Update results file
+                    val resMap = oldResults.toMap
+                    val newRes = diff.map { case (name, vals) => name -> (resMap(name) ++ vals) }
+                    val resFile = new PrintWriter(new FileOutputStream(new File(s"$result.csv"), false))
+                    resFile.write(formatResultCSV(newRes))
+                    resFile.close()
+                }
+
+                //Check for bugs and write to bug file if needed
+                if(res != goldenModel(inVals.toList)) {
+                    val bugFile = new PrintWriter(new FileOutputStream(new File(s"$bugResult.csv"), true))
+                    bugFile.write(t)
+                    bugFile.close()
                 }
 
                 fuzzLoop(if(coverage > curCoverage) coverage else curCoverage, corpusIdx + 1)
@@ -73,6 +98,33 @@ object Fuzzer {
     def readBitString(fileName: String) : String = Files.readAllBytes(Paths.get(fileName))
             .map(b => String.format("%8s", Integer.toBinaryString(b & 0xFF)))
             .foldLeft("")((acc, byte) => acc ++ byte)
+
+    def readResultCSV(fileName: String): Seq[(String, List[BigInt])] = {
+        //Open result stream
+        val bufferedSource = io.Source.fromFile(s"$fileName.csv")
+
+        //Parse CSV to get result
+        val res = bufferedSource.getLines.map(line => {
+            val cols = line.split(",").map(_.trim)
+            // do whatever you want with the columns here
+            (cols.head, cols.tail.map(BigInt(_)).toList)
+        }).toSeq
+
+        //Close stream and return
+        bufferedSource.close
+        res
+    }
+
+    def formatResultCSV(result: Seq[(String, List[BigInt])]): String = {
+        val res = new StringBuilder()
+        result.foreach {
+            case (name, vals) =>
+                res ++ s"$name,${vals.map(v => s"$v,")}"
+                res.deleteCharAt(res.size - 1)
+                res ++ "\n"
+        }
+        res.mkString
+    }
 
 
     /**

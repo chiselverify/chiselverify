@@ -43,6 +43,8 @@ class CoverageReporter[T <: MultiIOModule](private val dut: T) {
       */
     def printReport(): Unit = println(report.serialize)
 
+    def results: Seq[(String, List[BigInt])] = coverageDB.results
+
     /**
       * Advances the clock by one cycle
       * @note Needs to be used in order to enable timed coverage
