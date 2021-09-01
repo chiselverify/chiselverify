@@ -40,10 +40,11 @@ object Fuzzer {
         def fuzzLoop(curCoverage: Int, corpusIdx: Int) : (Int, Int) = {
             if((curCoverage == target) || (corpusIdx == timeout)) (curCoverage, corpusIdx)
             else {
+                implicit val nPasses: Int = 4
+
                 val t: String = if(corpusIdx < seedCorpus.size) seedCorpus(corpusIdx) else {
                     val seed = readBitString(corpusName).split("\n")(corpusIdx)
-                    //TODO: When corpusIdx >= seedCorpus.size start mutating with AFL
-                    seed
+                    mutate(seed)
                 }
 
                 //reset FC and DUT
@@ -125,6 +126,45 @@ object Fuzzer {
         }
         res.mkString
     }
+
+    /**
+      * Mutates a given input bit stream using the following methods:
+      * - Walking bit flips
+      * - Walking byte flips
+      * - Simple arithmetics
+      * - Known integers
+      * @param inputBits the input that will be mutated.
+      * @return a mutated version of inputBits
+      */
+    def mutate(inputBits: String)(implicit nPasses: Int): String = kI(sA(wBF(wbF(inputBits))))
+
+    /**
+      * Walking bit flips mutation
+      * @param inputBits the input that will be mutated.
+      * @return a mutated version of inputBits
+      */
+    def wbF(inputBits: String)(implicit nPasses: Int): String = ???
+
+    /**
+      * Walking byte flips mutation
+      * @param inputBits the input that will be mutated.
+      * @return a mutated version of inputBits
+      */
+    def wBF(inputBits: String)(implicit nPasses: Int): String = ???
+
+    /**
+      * Simple arithmetic mutation technique
+      * @param inputBits the input that will be mutated.
+      * @return a mutated version of inputBits
+      */
+    def sA(inputBits: String)(implicit nPasses: Int): String = ???
+
+    /**
+      * Known integer mutation technique
+      * @param inputBits the input that will be mutated.
+      * @return a mutated version of inputBits
+      */
+    def kI(inputBits: String)(implicit nPasses: Int): String = ???
 
 
     /**
