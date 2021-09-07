@@ -22,6 +22,7 @@ class FieldFactory(gen: Int => InstructionField) {
 case class Domain(lower: BigInt, upper: BigInt) {
   def sample(): BigInt = scala.util.Random.nextInt((upper - lower).toInt) + lower
   def contains(that: BigInt): Boolean = (lower until upper).contains(that)
+  def toRange: Range = lower.toInt until upper.toInt
 }
 
 class InstructionField(val width: Int, val fieldType: InstructionFieldType) {

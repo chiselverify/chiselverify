@@ -4,6 +4,8 @@ import chiselverify.assembly.instructionsets.rv32i.{RV32Category, RV32I2}
 
 import scala.language.implicitConversions
 
+// TODO: if we make instruction types/categories traits, we can force apply methods
+
 object Test extends App {
   val pg = ProgramGenerator(RV32I2) { c =>
 

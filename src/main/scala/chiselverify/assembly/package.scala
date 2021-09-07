@@ -37,6 +37,7 @@ package object assembly {
     type Registers <: RegisterEnum
     val registers: RegisterEnum
     val memoryInstructions: Seq[Instruction]
+    val reachableMemory: Domain
 
     def memoryAccess(address: BigInt): Seq[Instruction]
   }

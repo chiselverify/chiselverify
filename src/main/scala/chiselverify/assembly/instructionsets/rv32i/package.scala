@@ -101,10 +101,13 @@ package object rv32i {
     val registers = RV32Register
     val values = Seq(ADD, SUB, LW, ADDI, SW, BLT, JALR)
     val memoryInstructions = Seq(LW)
+    val reachableMemory = Domain(0,scala.math.pow(2,32).toInt)
 
     def memoryAccess(address: BigInt): Seq[Instruction] = {
       val regSet = ADDI()
+      val offset = 0 // this is a field of a pattern!
       regSet.setFields(InstructionField.ConstantField)
+      Seq(regSet)
     }
 
     object ADD extends ADD
