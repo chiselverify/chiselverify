@@ -84,8 +84,8 @@ object AssertTimed {
       *
       * Everytime the assertion is called it must be joined.
       *
-      * @author Victor Alexander Hansen, s194027@student.dtu.dk
-      * @author Niels Frederik Flemming Holm Frandsen, s194053@student.dtu.dk
+      * @author ***
+      * @author ***
       */
     def apply[T <: Module](dut: T, cond: => Boolean, message: String)
                           (delayType: DelayType): TesterThreadList = delayType match {

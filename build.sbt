@@ -23,7 +23,6 @@ version := "0.1"
 organization := "io.github.chiselverify"
 homepage := Some(url("https://github.com/chiselverify/chiselverify"))
 scmInfo := Some(ScmInfo(url("https://github.com/chiselverify/chiselverify"), "git@github.com: chiselverify/chiselverify.git"))
-developers := List(Developer("schoeberl", "schoeberl", "martin@jopdesign.com", url("https://github.com/schoeberl")))
 licenses += ("BSD-2-Clause", url("https://opensource.org/licenses/BSD-2-Clause"))
 publishMavenStyle := true
 

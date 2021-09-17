@@ -20,7 +20,7 @@
 // Author: John Aynsley, Doulos
 // Date:   1-May-2012
 
-// Modified by: Kasper Juul Hesse Rasmussen, DTU
+// Modified by: ***
 // Summary: Added more comments to further explain the usage
 // Date: 2020/08/14
 
