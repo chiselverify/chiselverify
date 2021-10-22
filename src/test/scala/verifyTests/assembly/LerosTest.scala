@@ -1,8 +1,9 @@
 package verifyTests.assembly
 
+import chiselverify.assembly.RandomHelpers.BigRange
 import chiselverify.assembly.leros.Leros
 import chiselverify.assembly.leros.Leros.{add, read, write}
-import chiselverify.assembly.{Category, CategoryDistribution, Instruction, Label, Pattern, ProgramGenerator}
+import chiselverify.assembly.{Category, CategoryDistribution, IODistribution, Instruction, Label, MemoryDistribution, Pattern, ProgramGenerator}
 
 object LerosTest extends App {
 
@@ -17,18 +18,26 @@ object LerosTest extends App {
       Category.Logical -> 0.2,
       Category.Input -> 0.1,
       Category.Output -> 0.1
+    ),
+    MemoryDistribution(
+      BigRange(100, 200) -> 0.5,
+      BigRange(4000) -> 0.5
+    ),
+    IODistribution(
+      BigRange(20, 30) -> 0.5,
+      BigRange(0xFF) -> 0.5
     )
   )
 
   val program = pg.generate(pattern)
-  println("Program1:\n" + program.map(i => s"%04d: ${i.toAsm}".format(i.getAddress)).mkString("\n"))
+  println("Program1:\n" + program.map(_.toAsm).mkString("\n"))
 
   println(Category.all.map { c =>
     (c.toString, program.count(_.categories.contains(c)))
   }.mkString("Dist: ", ", ", ""))
 
   val program2 = pg.generate(7)
-  println("Program2:\n" + program2.map(i => s"%04d: ${i.toAsm}".format(i.getAddress)).mkString("\n"))
+  println("Program2:\n" + program2.map(_.toAsm).mkString("\n"))
 
   println(Category.all.map { c =>
     (c.toString, program2.count(_.categories.contains(c)))
