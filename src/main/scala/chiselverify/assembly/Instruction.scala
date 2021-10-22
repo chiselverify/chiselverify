@@ -1,6 +1,6 @@
 package chiselverify.assembly
 
-import chiselverify.assembly.Random.randomSelect
+import chiselverify.assembly.RandomHelpers.randomSelect
 
 object Instruction {
   def select(instructions: InstructionFactory*)(implicit context: GeneratorContext): InstructionFactory = {
@@ -21,9 +21,17 @@ object Instruction {
 }
 
 abstract class Instruction(val categories: Category*) extends InstructionFactory with Categorizable {
-  var addr: BigInt = 0
+  private var addr: BigInt = 0
+
+  def getAddress: BigInt = addr
+
+  def setAddress(newAddr: BigInt): Unit =
+    addr = newAddr
+
   def apply(): Instruction
+
   def toAsm: String
+
   override def produce()(implicit context: GeneratorContext): Seq[Instruction] = {
     val instr = apply()
     instr.addr = context.pc.inc()

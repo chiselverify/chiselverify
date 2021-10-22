@@ -1,6 +1,5 @@
 package chiselverify.assembly
 
-import java.io.{File, FileOutputStream, IOException}
 import java.nio.file.{Files, Paths}
 
 class Program(n: String, bin: Array[Int], len: Int) {
@@ -11,16 +10,16 @@ class Program(n: String, bin: Array[Int], len: Int) {
 }
 
 object BinaryLoader {
-  def loadBin(path: String): (Array[Int], Int) = {
-    val bytes = Files.readAllBytes(Paths.get(path)).map(_ & 0xFF).sliding(4, 4).toArray
-    if (bytes(bytes.length - 1).length < 4) bytes(bytes.length - 1) = Array(0, 0, 0, 0)
-    (Array.concat(bytes.flatten, Array.fill(16)(0)), bytes.flatten.length / 4)
-  }
-
   def loadProgram(path: String): Program = {
     val (bin, length) = loadBin(path)
     val split = path.split(Array('/', '\\'))
     val name = split(split.length - 1)
     new Program(name.substring(0, name.length - 4), bin, length)
+  }
+
+  def loadBin(path: String): (Array[Int], Int) = {
+    val bytes = Files.readAllBytes(Paths.get(path)).map(_ & 0xFF).sliding(4, 4).toArray
+    if (bytes(bytes.length - 1).length < 4) bytes(bytes.length - 1) = Array(0, 0, 0, 0)
+    (Array.concat(bytes.flatten, Array.fill(16)(0)), bytes.flatten.length / 4)
   }
 }

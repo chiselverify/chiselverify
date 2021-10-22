@@ -1,8 +1,9 @@
-package chiselverify.assembly.tests
+package verifyTests.assembly
 
+import chiselverify.assembly.RandomHelpers.BigRange
 import chiselverify.assembly.patmos.Patmos.ADD
 import chiselverify.assembly.patmos.{Bundle, Patmos}
-import chiselverify.assembly.{Category, CategoryDistribution, Pattern, ProgramGenerator}
+import chiselverify.assembly.{Category, CategoryDistribution, MemoryDistribution, Pattern, ProgramGenerator}
 
 object PatmosTest extends App {
 
@@ -17,8 +18,8 @@ object PatmosTest extends App {
       Category.Logical -> 0.5
     ),
     MemoryDistribution(
-      (100 until 200) -> 0.5,
-      4000 -> 0.5
+      BigRange(100, 200) -> 0.5,
+      BigRange(4000) -> 0.5
     )
   )
 

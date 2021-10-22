@@ -1,5 +1,5 @@
 package chiselverify.assembly
-import chiselverify.assembly.Random.{pow2, randSplit, randomSelect}
+import chiselverify.assembly.RandomHelpers.{BigRange, pow2, randSplit, randomSelect}
 
 import scala.collection.immutable
 import scala.reflect.runtime.universe.{TypeRef, typeOf}
@@ -49,8 +49,8 @@ package object rv32i {
 
   object RV32I extends InstructionSet {
 
-    override val memoryAddressSpace: Range = 0 until pow2(32)
-    override val inputOutputAddressSpace: Range = 0 until 0
+    override val memoryAddressSpace: BigRange = BigRange(0, pow2(32))
+    override val inputOutputAddressSpace: BigRange = BigRange(0, 0)
 
     val load = Pattern(implicit c => {
       val (base,offset) = randSplit(c.nextMemoryAddress(Seq()).toInt)(Unsigned(32),Signed(12))
@@ -67,7 +67,7 @@ package object rv32i {
     case class ADDI (
                       rdIn: Option[Register] = None,
                       rs1In: Option[Register] = None,
-                      immIn: Option[Int] = None
+                      immIn: Option[BigInt] = None
                     ) extends Instruction(Category.Arithmetic) {
 
       val rd = Register(IntegerRegisterFile)(rdIn)
@@ -81,7 +81,7 @@ package object rv32i {
     case class LW (
                     rdIn: Option[Register] = None,
                     rs1In: Option[Register] = None,
-                    immIn: Option[Int] = None
+                    immIn: Option[BigInt] = None
                   ) extends Instruction(Category.Load) {
       val rd = Register(IntegerRegisterFile)(rdIn)
       val rs1 = Register(IntegerRegisterFile)(rs1In)
@@ -92,7 +92,7 @@ package object rv32i {
 
     case class LI (
                     rdIn: Option[Register] = None,
-                    immIn: Option[Int] = None
+                    immIn: Option[BigInt] = None
                   ) extends Instruction(Category.Load) {
       val rd = Register(IntegerRegisterFile)(rdIn)
       val imm = Constant(Unsigned(32))(immIn)

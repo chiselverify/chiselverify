@@ -1,4 +1,4 @@
-package chiselverify.assembly.tests
+package verifyTests.assembly
 
 import chiselverify.assembly.leros.Leros
 import chiselverify.assembly.leros.Leros.{add, readAccess, writeAccess}
@@ -21,14 +21,14 @@ object LerosTest extends App {
   )
 
   val program = pg.generate(pattern)
-  println("Program1:\n" + program.map(i => s"%04d: ${i.toAsm}".format(i.addr)).mkString("\n"))
+  println("Program1:\n" + program.map(i => s"%04d: ${i.toAsm}".format(i.getAddress)).mkString("\n"))
 
   println(Category.all.map { c =>
     (c.toString, program.count(_.categories.contains(c)))
   }.mkString("Dist: ", ", ", ""))
 
   val program2 = pg.generate(7)
-  println("Program2:\n" + program2.map(i => s"%04d: ${i.toAsm}".format(i.addr)).mkString("\n"))
+  println("Program2:\n" + program2.map(i => s"%04d: ${i.toAsm}".format(i.getAddress)).mkString("\n"))
 
   println(Category.all.map { c =>
     (c.toString, program2.count(_.categories.contains(c)))

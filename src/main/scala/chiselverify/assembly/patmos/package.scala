@@ -1,6 +1,6 @@
 package chiselverify.assembly
 
-import chiselverify.assembly.Random.pow2
+import chiselverify.assembly.RandomHelpers.{BigRange, pow2}
 
 package object patmos {
 
@@ -118,8 +118,8 @@ package object patmos {
       override def toAsm: String = s"($$p$pred) add $$r$rd = $$r$rs1, $$r$rs2"
     }
 
-    override val memoryAddressSpace: Range = 0 until pow2(32)
-    override val inputOutputAddressSpace: Range = 0 until 0
+    override val memoryAddressSpace: BigRange = BigRange(0, pow2(32))
+    override val inputOutputAddressSpace: BigRange = BigRange(0, 0)
   }
 
 }

@@ -1,8 +1,9 @@
-package chiselverify.assembly.tests
+package verifyTests.assembly
 
+import chiselverify.assembly.RandomHelpers.BigRange
 import chiselverify.assembly.rv32i.RV32I
 import chiselverify.assembly.rv32i.RV32I.{LI, load}
-import chiselverify.assembly.{Category, CategoryDistribution, Instruction, Pattern, ProgramGenerator}
+import chiselverify.assembly.{Category, CategoryDistribution, Instruction, MemoryDistribution, Pattern, ProgramGenerator}
 
 object RiscvTest extends App {
 
@@ -18,8 +19,8 @@ object RiscvTest extends App {
       Category.Load -> 0.1
     ),
     MemoryDistribution(
-      (0x100 until 0x1000) -> 0.7,
-      0xFFFF -> 0.3
+      BigRange(0x100, 0x1000) -> 0.7,
+      BigRange(0xFFFF) -> 0.3
     )
   )
 

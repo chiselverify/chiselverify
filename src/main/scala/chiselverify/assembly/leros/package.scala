@@ -1,7 +1,8 @@
 package chiselverify.assembly
 
-import chiselverify.assembly.Random.pow2
+import chiselverify.assembly.RandomHelpers.{BigRange, pow2}
 import chiselverify.assembly.leros.Leros._
+import chiselverify.assembly.intToBigIntOption
 
 package object leros {
 
@@ -15,17 +16,17 @@ package object leros {
 
   object Leros extends InstructionSet {
 
-    override val memoryAddressSpace: Range = 0 until pow2(16)
-    override val inputOutputAddressSpace: Range = 0 until pow2(8)
+    override val memoryAddressSpace: BigRange = BigRange(0, pow2(16))
+    override val inputOutputAddressSpace: BigRange = BigRange(0, pow2(8))
 
 
     val readAccess = Pattern(Category.Load)(implicit c => {
       val address = c.nextMemoryAddress(Seq())
       Seq(
-        loadi((address & 0xFF).toInt),
-        loadhi(((address >> 8) & 0xFF).toInt),
-        loadh2i(((address >> 16) & 0xFF).toInt),
-        loadh3i(((address >> 24) & 0xFF).toInt),
+        loadi((address & 0xFF)),
+        loadhi(((address >> 8) & 0xFF)),
+        loadh2i(((address >> 16) & 0xFF)),
+        loadh3i(((address >> 24) & 0xFF)),
         ldaddr(),
         Instruction.select(ldind(0),ldindbu(0))
       )
@@ -34,10 +35,10 @@ package object leros {
     val writeAccess = Pattern(Category.Store)(implicit c => {
       val address = c.nextMemoryAddress(Seq())
       Seq(
-        loadi((address & 0xFF).toInt),
-        loadhi(((address >> 8) & 0xFF).toInt),
-        loadh2i(((address >> 16) & 0xFF).toInt),
-        loadh3i(((address >> 24) & 0xFF).toInt),
+        loadi((address & 0xFF)),
+        loadhi(((address >> 8) & 0xFF)),
+        loadh2i(((address >> 16) & 0xFF)),
+        loadh3i(((address >> 24) & 0xFF)),
         ldaddr(),
         Instruction.select(stind(0),stindb(0))
       )
@@ -96,7 +97,7 @@ package object leros {
       override def toAsm: String = s"add r$rs"
     }
 
-    case class addi (immIn: Option[Int] = None) extends Instruction(
+    case class addi (immIn: Option[BigInt] = None) extends Instruction(
       Category.Arithmetic
     ) {
       val imm = Constant(Unsigned(8))(immIn)
@@ -112,7 +113,7 @@ package object leros {
       override def toAsm: String = s"sub r$rs"
     }
 
-    case class subi (immIn: Option[Int] = None) extends Instruction(
+    case class subi (immIn: Option[BigInt] = None) extends Instruction(
       Category.Arithmetic
     ) {
       val imm = Constant(Unsigned(8))(immIn)
@@ -136,7 +137,7 @@ package object leros {
       override def toAsm: String = s"load r$rs"
     }
 
-    case class loadi (immIn: Option[Int] = None) extends Instruction(
+    case class loadi (immIn: Option[BigInt] = None) extends Instruction(
       Category.Load
     ) {
       val imm = Constant(Unsigned(8))(immIn)
@@ -144,7 +145,7 @@ package object leros {
       override def toAsm: String = s"loadi $imm"
     }
 
-    case class loadhi (immIn: Option[Int] = None) extends Instruction(
+    case class loadhi (immIn: Option[BigInt] = None) extends Instruction(
       Category.Load
     ) {
       val imm = Constant(Unsigned(8))(immIn)
@@ -152,7 +153,7 @@ package object leros {
       override def toAsm: String = s"loadhi $imm"
     }
 
-    case class loadh2i (immIn: Option[Int] = None) extends Instruction(
+    case class loadh2i (immIn: Option[BigInt] = None) extends Instruction(
       Category.Load
     ) {
       val imm = Constant(Unsigned(8))(immIn)
@@ -160,7 +161,7 @@ package object leros {
       override def toAsm: String = s"loadh2i $imm"
     }
 
-    case class loadh3i (immIn: Option[Int] = None) extends Instruction(
+    case class loadh3i (immIn: Option[BigInt] = None) extends Instruction(
       Category.Load
     ) {
       val imm = Constant(Unsigned(8))(immIn)
@@ -176,7 +177,7 @@ package object leros {
       override def toAsm: String = s"and r$rs"
     }
 
-    case class andi (immIn: Option[Int] = None) extends Instruction(
+    case class andi (immIn: Option[BigInt] = None) extends Instruction(
       Category.Logical
     ) {
       val imm = Constant(Unsigned(8))(immIn)
@@ -192,7 +193,7 @@ package object leros {
       override def toAsm: String = s"or r$rs"
     }
 
-    case class ori (immIn: Option[Int] = None) extends Instruction(
+    case class ori (immIn: Option[BigInt] = None) extends Instruction(
       Category.Logical
     ) {
       val imm = Constant(Unsigned(8))(immIn)
@@ -208,7 +209,7 @@ package object leros {
       override def toAsm: String = s"xor r$rs"
     }
 
-    case class xori (immIn: Option[Int] = None) extends Instruction(
+    case class xori (immIn: Option[BigInt] = None) extends Instruction(
       Category.Logical
     ) {
       val imm = Constant(Unsigned(8))(immIn)
@@ -224,7 +225,7 @@ package object leros {
       override def toAsm: String = s"store r$rs"
     }
 
-    case class in (immIn: Option[Int] = None) extends Instruction(
+    case class in (immIn: Option[BigInt] = None) extends Instruction(
       Category.Input
     ) {
       val imm = Constant(Unsigned(8))(immIn)
@@ -232,7 +233,7 @@ package object leros {
       override def toAsm: String = s"in $imm"
     }
 
-    case class out (immIn: Option[Int] = None) extends Instruction(
+    case class out (immIn: Option[BigInt] = None) extends Instruction(
       Category.Output
     ) {
       val imm = Constant(Unsigned(8))(immIn)
@@ -253,7 +254,7 @@ package object leros {
       override def toAsm = "ldaddr"
     }
 
-    case class ldind (immIn: Option[Int] = None) extends Instruction(
+    case class ldind (immIn: Option[BigInt] = None) extends Instruction(
       Category.Load
     ) {
       val imm = Constant(Unsigned(8))(immIn)
@@ -261,7 +262,7 @@ package object leros {
       override def toAsm: String = s"ldind $imm"
     }
 
-    case class ldindbu (immIn: Option[Int] = None) extends Instruction(
+    case class ldindbu (immIn: Option[BigInt] = None) extends Instruction(
       Category.Load
     ) {
       val imm = Constant(Unsigned(8))(immIn)
@@ -269,7 +270,7 @@ package object leros {
       override def toAsm: String = s"ldindbu $imm"
     }
 
-    case class stind (immIn: Option[Int] = None) extends Instruction(
+    case class stind (immIn: Option[BigInt] = None) extends Instruction(
       Category.Store
     ) {
       val imm = Constant(Unsigned(8))(immIn)
@@ -277,7 +278,7 @@ package object leros {
       override def toAsm: String = s"stind $imm"
     }
 
-    case class stindb (immIn: Option[Int] = None) extends Instruction(
+    case class stindb (immIn: Option[BigInt] = None) extends Instruction(
       Category.Store
     ) {
       val imm = Constant(Unsigned(8))(immIn)
@@ -285,7 +286,7 @@ package object leros {
       override def toAsm: String = s"stindb $imm"
     }
 
-    case class br (immIn: Option[Int] = None) extends Instruction(
+    case class br (immIn: Option[BigInt] = None) extends Instruction(
       Category.Branch
     ) {
       val imm = Constant(Unsigned(12))(immIn)
@@ -293,7 +294,7 @@ package object leros {
       override def toAsm: String = s"br $imm"
     }
 
-    case class brz (immIn: Option[Int] = None) extends Instruction(
+    case class brz (immIn: Option[BigInt] = None) extends Instruction(
       Category.Branch
     ) {
       val imm = Constant(Unsigned(12))(immIn)
@@ -301,7 +302,7 @@ package object leros {
       override def toAsm: String = s"brz $imm"
     }
 
-    case class brnz (immIn: Option[Int] = None) extends Instruction(
+    case class brnz (immIn: Option[BigInt] = None) extends Instruction(
       Category.Branch
     ) {
       val imm = Constant(Unsigned(12))(immIn)
@@ -309,7 +310,7 @@ package object leros {
       override def toAsm: String = s"brnz $imm"
     }
 
-    case class brp (immIn: Option[Int] = None) extends Instruction(
+    case class brp (immIn: Option[BigInt] = None) extends Instruction(
       Category.Branch
     ) {
       val imm = Constant(Unsigned(12))(immIn)
@@ -317,7 +318,7 @@ package object leros {
       override def toAsm: String = s"brp $imm"
     }
 
-    case class brn (immIn: Option[Int] = None) extends Instruction(
+    case class brn (immIn: Option[BigInt] = None) extends Instruction(
       Category.Branch
     ) {
       val imm = Constant(Unsigned(12))(immIn)
