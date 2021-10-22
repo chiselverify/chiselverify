@@ -20,7 +20,7 @@ package object leros {
     override val inputOutputAddressSpace: BigRange = BigRange(0, pow2(8))
 
 
-    val readAccess = Pattern(Category.Load)(implicit c => {
+    val read = Pattern(Category.Load)(implicit c => {
       val address = c.nextMemoryAddress(Seq())
       Seq(
         loadi((address & 0xFF)),
@@ -32,7 +32,7 @@ package object leros {
       )
     })
 
-    val writeAccess = Pattern(Category.Store)(implicit c => {
+    val write = Pattern(Category.Store)(implicit c => {
       val address = c.nextMemoryAddress(Seq())
       Seq(
         loadi((address & 0xFF)),
@@ -72,8 +72,8 @@ package object leros {
       in(),
       jal(),
       ldaddr(),
-      readAccess,
-      writeAccess,
+      read,
+      write,
       br(),
       brz(),
       brnz(),

@@ -1,13 +1,13 @@
 package verifyTests.assembly
 
 import chiselverify.assembly.leros.Leros
-import chiselverify.assembly.leros.Leros.{add, readAccess, writeAccess}
+import chiselverify.assembly.leros.Leros.{add, read, write}
 import chiselverify.assembly.{Category, CategoryDistribution, Instruction, Label, Pattern, ProgramGenerator}
 
 object LerosTest extends App {
 
   val pattern = Pattern(implicit c => Seq(
-    Label("Hello"), add(), Instruction.fill(20), Instruction.fillWithCategory(10)(Category.Logical), readAccess, writeAccess
+    Label("Hello"), add(), Instruction.fill(20), Instruction.fillWithCategory(10)(Category.Logical), read, write
   ))
 
 

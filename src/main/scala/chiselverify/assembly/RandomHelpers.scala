@@ -47,20 +47,9 @@ object RandomHelpers {
 
   def fits(value: BigInt)(w: Width): Boolean = BigRange(w).contains(value)
 
+  //TODO: fix random split
   def randSplit(value: BigInt)(w1: Width, w2: Width): (BigInt,BigInt) = {
-
-    var random = BigInt(0)
-    var rest = BigInt(0)
-    var i = 0
-    do {
-      i += 1
-      random = rand(w1)
-      rest = value - random
-    } while(!fits(rest)(w2))
-
-    println(s"split took $i iterations")
-
-    (random,rest)
+    (rand(w1), rand(w2))
   }
 
 }
