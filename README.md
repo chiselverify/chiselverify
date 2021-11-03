@@ -7,13 +7,15 @@ A technical report describes the library in detail: [Open-Source Verification wi
 When you use this library in a research project, please cite it as:
 
 ```
-@misc{dobis2021opensource,
-      title={Open-Source Verification with Chisel and Scala}, 
-      author={Andrew Dobis and Tjark Petersen and Kasper Juul Hesse Rasmussen and Enrico Tolotto and Hans Jakob Damsgaard and Simon Thye Andersen and Richard Lin and Martin Schoeberl},
-      year={2021},
-      eprint={2102.13460},
-      archivePrefix={arXiv},
-      primaryClass={cs.PL}
+@INPROCEEDINGS{ChiselVerify:2021,
+  author = {Andrew Dobis and Tjark Petersen and Hans Jakob Damsgaard and Kasper
+	Juul Hesse Rasmussen and Enrico Tolotto and Simon Thye Andersen and
+	Richard Lin and Martin Schoeberl},
+  title = {ChiselVerify: An Open-Source Hardware Verification Library for Chisel
+	and Scala},
+  booktitle = {2021 IEEE Nordic Circuits and Systems Conference (NORCAS): NORCHIP
+	and International Symposium of System-on-Chip (SoC)},
+  year = {2021}
 }
 ```
 
