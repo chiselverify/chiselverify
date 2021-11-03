@@ -17,7 +17,7 @@ libraryDependencies += "org.jacop" % "jacop" % "4.7.0"
 name := "chiselverify"
 
 // library version
-version := "0.1"
+version := "0.2.0"
 
 // groupId, SCM, license information
 organization := "io.github.chiselverify"
