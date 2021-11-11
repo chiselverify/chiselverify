@@ -2,7 +2,7 @@ package chiselverify.assembly
 
 import java.nio.file.{Files, Paths}
 
-class Program(n: String, bin: Array[Int], len: Int) {
+class ProgramBinaries(n: String, bin: Array[Int], len: Int) {
   val name = n
   val byteBinaries = bin
   val wordBinaries = bin.map(BigInt(_)).sliding(4, 4).map(a => a(3) << 24 | a(2) << 16 | a(1) << 8 | a(0)).toArray
@@ -10,11 +10,11 @@ class Program(n: String, bin: Array[Int], len: Int) {
 }
 
 object BinaryLoader {
-  def loadProgram(path: String): Program = {
+  def loadProgram(path: String): ProgramBinaries = {
     val (bin, length) = loadBin(path)
     val split = path.split(Array('/', '\\'))
     val name = split(split.length - 1)
-    new Program(name.substring(0, name.length - 4), bin, length)
+    new ProgramBinaries(name.substring(0, name.length - 4), bin, length)
   }
 
   def loadBin(path: String): (Array[Int], Int) = {

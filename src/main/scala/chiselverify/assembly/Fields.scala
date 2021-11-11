@@ -31,7 +31,7 @@ object Register {
     init match {
       case Some(reg) if !registerFile.registers.contains(reg) => throw new Exception("Initializer Register not contained in registerfile")
       case Some(reg) => registerFile.registers.indexOf(reg)
-      case None => rand(BigRange(0,registerFile.registers.length-1))
+      case None => rand(BigRange(0, registerFile.registers.length - 1))
     }
   }
 }

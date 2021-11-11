@@ -24,15 +24,10 @@ object RiscvTest extends App {
     )
   )
 
-  val programs = Seq.fill(2)(pg.generate(pattern))
-
-  val programStrings = programs.map(p => p.map(_.toAsm).mkString("\n") + "\n" + Category.all.map { c =>
-    (c.toString, p.count(_.categories.contains(c)))
-  }.mkString("Dist: ", ", ", ""))
-  println(programStrings.mkString(s"\n${"-" * 20}\n"))
+  println(Seq.fill(2)(pg.generate(pattern).pretty).mkString("\n"))
 
 
-  println(pg.generate(Pattern(implicit c => Seq(Pattern.repeat(10)(load)))).map(_.toAsm).mkString("\n"))
+  println(pg.generate(Pattern(implicit c => Seq(Pattern.repeat(10)(load)))).pretty)
 
 
   /*

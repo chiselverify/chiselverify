@@ -1,26 +1,10 @@
 package chiselverify
 
 import chiselverify.assembly.RandomHelpers._
-import probability_monad.Distribution.{discrete, discreteUniform}
 
 import scala.math._
 
-/*
-TODO:
-  - create a function which given a set of instructions and constraints returns a distribution sampler
-
-
-
-  change randoms to BigInts
-  - need for bigInt ranges
-
-
-
-*/
-
 package object assembly {
-
-  implicit def intToRangeDist(x: (Int, Double)): (Range, Double) = (x._1 until x._1, x._2)
 
   implicit def intToBigIntOption(x: Int): Option[BigInt] = Some(BigInt(x))
 
@@ -77,9 +61,7 @@ package object assembly {
     }
   }
 
-  case class CategoryDistribution(disIn: (Category, Double)*) extends InstructionConstraint with DistributionConstraint[Category] {
-    val dis = fillDistributionGaps(disIn)(Category.all)
-  }
+  case class CategoryDistribution(dis: (Category, Double)*) extends InstructionConstraint with DistributionConstraint[Category]
 
   case class CategoryWhiteList(gr: Category*) extends InstructionConstraint
 
@@ -90,6 +72,7 @@ package object assembly {
   case class IODistribution(dis: (BigRange, Double)*) extends InputOutputConstraint with DistributionConstraint[BigRange]
 
   case class GeneratorContext(
+                               isa: InstructionSet,
                                nextInstruction: Seq[Constraint] => InstructionFactory with Categorizable,
                                nextMemoryAddress: Seq[Constraint] => BigInt,
                                nextIOAddress: Seq[Constraint] => BigInt,
@@ -97,7 +80,7 @@ package object assembly {
                                pc: ProgramCounter
                              )
 
-
+  case class Label(id: String)
 
   //TODO: add pattern for label
   object Label {
@@ -132,8 +115,6 @@ package object assembly {
       }
     }
   }
-
-
 
 
 }

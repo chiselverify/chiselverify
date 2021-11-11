@@ -32,4 +32,8 @@ object Category {
   case object EnvironmentCall extends Category
 
   case object Nop extends Category
+
+  case object Immediate extends Category
+
+  case object Label extends Category
 }
