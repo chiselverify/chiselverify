@@ -1,11 +1,11 @@
-package verifyTests.assembly
+package chiselverify.assembly.examples
 
 import chiselverify.assembly.RandomHelpers.BigRange
 import chiselverify.assembly.rv32i.RV32I
 import chiselverify.assembly.rv32i.RV32I.{LI, load}
 import chiselverify.assembly.{Category, CategoryDistribution, Instruction, MemoryDistribution, Pattern, ProgramGenerator}
 
-object RiscvTest extends App {
+object RiscvExample extends App {
 
 
   val pattern = Pattern(implicit c => Seq(

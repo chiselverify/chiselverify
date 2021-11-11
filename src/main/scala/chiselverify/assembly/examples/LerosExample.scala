@@ -1,13 +1,12 @@
-package verifyTests.assembly
+package chiselverify.assembly.examples
 
 import chiselverify.assembly.RandomHelpers.BigRange
-import chiselverify.assembly.intToBigIntOption
 import chiselverify.assembly.leros.Leros
 import chiselverify.assembly.leros.Leros.{add, in, read, write}
-import chiselverify.assembly.{Category, CategoryDistribution, IODistribution, Instruction, Label, MemoryDistribution, Pattern, ProgramGenerator}
+import chiselverify.assembly.{Category, CategoryDistribution, IODistribution, Instruction, Label, MemoryDistribution, Pattern, ProgramGenerator, intToBigIntOption}
 
 
-object LerosTest extends App {
+object LerosExample extends App {
 
   val pg = ProgramGenerator(Leros)()
 
@@ -15,7 +14,7 @@ object LerosTest extends App {
   println(program.pretty)
 }
 
-object LerosTestPatternBased extends App {
+object LerosExamplePatternBased extends App {
 
   val pattern = Pattern(implicit c => Seq(
     Label("Hello"), add(), in(20), Instruction.fill(20), Instruction.fillWithCategory(10)(Category.Logical), read, write
