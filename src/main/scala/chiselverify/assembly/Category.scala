@@ -1,5 +1,9 @@
 package chiselverify.assembly
 
+/**
+  * Trait common to all instruction like objects which can be categorized using the category model.
+  * Comes with category membership utility functions
+  */
 trait Categorizable {
   val categories: Seq[Category]
 
@@ -10,8 +14,11 @@ trait Categorizable {
 
 trait Category
 
+/**
+  * The common category container
+  */
 object Category {
-  val all = Seq(Arithmetic, Logical, Load, Store, Input, Output, Jump, Branch, EnvironmentCall, Nop)
+  val all = Seq(Arithmetic, Logical, Load, Store, Input, Output, JumpAndLink, Branch, EnvironmentCall, Nop, Label)
 
   case object Arithmetic extends Category
 
@@ -25,7 +32,7 @@ object Category {
 
   case object Output extends Category
 
-  case object Jump extends Category
+  case object JumpAndLink extends Category
 
   case object Branch extends Category
 

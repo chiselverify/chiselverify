@@ -49,10 +49,13 @@ package object rv32i {
 
   object RV32I extends InstructionSet {
 
+    // riscv has full 32-bit addressing
     override val memoryAddressSpace: BigRange = BigRange(0, pow2(32))
+    // riscv has no dedicated IO port space
     override val inputOutputAddressSpace: BigRange = BigRange(0, 0)
 
-    val load = Pattern(implicit c => {
+    // the load pattern generates a new address, splits it, sets a register to the base address and the executes the load
+    val load = Pattern(Category.Load)(implicit c => {
       val (base,offset) = randSplit(c.nextMemoryAddress(Seq()).toInt)(Unsigned(32),Signed(12))
       val reg = randomSelect(rv32i.IntegerRegisterFile.registers)
       Seq(
@@ -60,7 +63,8 @@ package object rv32i {
       )
     })
 
-    override val instructions = Seq(ADDI(),load.giveCategory(Category.Load),LI())
+    // all instructions
+    override val instructions = Seq(ADDI(),load,LI())
 
 
 

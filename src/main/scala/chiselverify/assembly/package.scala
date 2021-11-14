@@ -1,13 +1,25 @@
 package chiselverify
 
 import chiselverify.assembly.RandomHelpers._
+import probability_monad.Distributions
 
+import scala.language.implicitConversions
 import scala.math._
 
 package object assembly {
 
+  /**
+    * possible expansions:
+    *   - create a randomly initialized static data memory segment
+    *   - wrap the generated program with a ELF file format
+    */
+
+  // makes the passing of int initializers in patterns less verbose by converting
+  // an int directly to a BigInt option
   implicit def intToBigIntOption(x: Int): Option[BigInt] = Some(BigInt(x))
 
+  // makes the passing of other initializers in patterns less verbose
+  // Everything else than None can be seen as Some
   implicit def someToOption[T](t: T): Option[T] = {
     t match {
       case None => None
@@ -15,11 +27,31 @@ package object assembly {
     }
   }
 
-  def fillDistributionGaps[T](dis: Seq[(T, Double)])(domain: Seq[T]): Seq[(T, Double)] = {
-    val totalPercentage = dis.map(_._2).sum
-    val newElements = domain.filter(!dis.map(_._1).contains(_))
-    dis ++ newElements.map(c => c -> (1 - totalPercentage) / newElements.length)
+
+  object AssemblyDistributions extends Distributions(scala.util.Random)
+
+  /**
+    * This class has to be extended by any instruction set.
+    * The instruction sequence field needs to be overwritten manually
+    */
+  abstract class InstructionSet {
+    val instructions: Seq[InstructionFactory with Categorizable]
+    val memoryAddressSpace: BigRange
+    val inputOutputAddressSpace: BigRange
   }
+
+  class Counter {
+    private var value = BigInt(0)
+
+    def get: BigInt = value
+
+    def inc(): BigInt = {
+      val old = value
+      value += 1
+      old
+    }
+  }
+
 
   trait Constraint
 
@@ -31,34 +63,6 @@ package object assembly {
 
   trait DistributionConstraint[T] {
     val dis: Seq[(T, Double)]
-
-    def merge(that: DistributionConstraint[T]): Seq[(T, Double)] = {
-      val coll = dis ++ that.dis
-      val norm = coll.map(_._2).sum
-      coll.map { case (cat, d) => (cat, d / norm) }
-    }
-  }
-
-  trait InstructionFactory {
-    def produce()(implicit context: GeneratorContext): Seq[Instruction]
-  }
-
-  abstract class InstructionSet {
-    val instructions: Seq[InstructionFactory with Categorizable]
-    val memoryAddressSpace: BigRange
-    val inputOutputAddressSpace: BigRange
-  }
-
-  class ProgramCounter {
-    private var pc = BigInt(0)
-
-    def get: BigInt = pc
-
-    def inc(): BigInt = {
-      val old = pc
-      pc += 1
-      old
-    }
   }
 
   case class CategoryDistribution(dis: (Category, Double)*) extends InstructionConstraint with DistributionConstraint[Category]
@@ -71,44 +75,17 @@ package object assembly {
 
   case class IODistribution(dis: (BigRange, Double)*) extends InputOutputConstraint with DistributionConstraint[BigRange]
 
-  case class GeneratorContext(
-                               isa: InstructionSet,
-                               nextInstruction: Seq[Constraint] => InstructionFactory with Categorizable,
-                               nextMemoryAddress: Seq[Constraint] => BigInt,
-                               nextIOAddress: Seq[Constraint] => BigInt,
-                               nextJumpTarget: () => BigInt,
-                               pc: ProgramCounter
-                             )
-
-  case class Label(id: String)
-
-  //TODO: add pattern for label
-  object Label {
-    def apply()(implicit context: GeneratorContext): Pattern = {
-      Pattern(implicit c => {
-        Seq()
-      })
-    }
-
-    def apply(id: Int): Instruction = {
-      new Instruction() {
-        override def apply(): Instruction = Label(id)
-
-        override def toAsm: String = s"L$id:"
-      }
-    }
-
-    def apply(id: String): Instruction = {
-      new Instruction() {
-        override def apply(): Instruction = Label(id)
-
-        override def toAsm: String = s"$id:"
-      }
-    }
-
+  /**
+    * All nodes in a program template call tree are instruction factories
+    * At generation time the [[produce()]] function invokes the transformation into a flat
+    * instruction sequence
+    */
+  trait InstructionFactory {
+    def produce()(implicit context: GeneratorContext): Seq[Instruction]
   }
 
   object InstructionFactory {
+    // create a new anonymous instruction factory
     def apply(fun: GeneratorContext => Seq[InstructionFactory with Categorizable]): InstructionFactory = {
       new InstructionFactory {
         override def produce()(implicit context: GeneratorContext): Seq[Instruction] = fun(context).flatMap(_.produce())

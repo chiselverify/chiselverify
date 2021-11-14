@@ -7,9 +7,8 @@ import chiselverify.assembly.{Category, CategoryDistribution, Instruction, Memor
 
 object RiscvExample extends App {
 
-
   val pattern = Pattern(implicit c => Seq(
-    Instruction.ofCategory(Category.Arithmetic), Instruction.fill(4), LI(), Instruction.ofCategory(Category.Load)
+    Instruction.ofCategory(Category.Arithmetic), Instruction.fill(4), LI(), Instruction.ofCategory(Category.Load), load
   ))
 
 
