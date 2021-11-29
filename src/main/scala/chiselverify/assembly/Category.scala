@@ -7,7 +7,7 @@ package chiselverify.assembly
 trait Categorizable {
   val categories: Seq[Category]
 
-  def isOfOneOfCategories(cats: Seq[Category]): Boolean = cats.map(isOfCategory).reduce(_ || _)
+  def isOfOneOfCategories(cats: Seq[Category]): Boolean = cats.nonEmpty && cats.map(isOfCategory).reduce(_ || _)
 
   def isOfCategory(cat: Category): Boolean = categories.contains(cat)
 }
@@ -18,7 +18,7 @@ trait Category
   * The common category container
   */
 object Category {
-  val all = Seq(Arithmetic, Logical, Load, Store, Input, Output, JumpAndLink, Branch, EnvironmentCall, Nop, Label)
+  val all = Seq(Arithmetic, Logical, Load, Store, Input, Output, JumpAndLink, Branch, EnvironmentCall, Nop, Immediate, Label, Compare, StateRegister, Synchronization)
 
   case object Arithmetic extends Category
 
@@ -43,4 +43,10 @@ object Category {
   case object Immediate extends Category
 
   case object Label extends Category
+
+  case object Compare extends Category
+
+  case object StateRegister extends Category
+
+  case object Synchronization extends Category
 }

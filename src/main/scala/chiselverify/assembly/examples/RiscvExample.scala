@@ -1,15 +1,30 @@
 package chiselverify.assembly.examples
 
-import chiselverify.assembly.RandomHelpers.BigRange
+import chiselverify.assembly.Label.LabelRecord
+import chiselverify.assembly.RandomHelpers.{BigRange}
+import chiselverify.assembly.rv32i.IntegerRegister.{t1, t2}
 import chiselverify.assembly.rv32i.RV32I
-import chiselverify.assembly.rv32i.RV32I.{LI, load}
-import chiselverify.assembly.{Category, CategoryDistribution, Instruction, MemoryDistribution, Pattern, ProgramGenerator}
+import chiselverify.assembly.rv32i.RV32I.{ADDI, BLT, LI, load}
+import chiselverify.assembly.{Category, CategoryBlackList, CategoryDistribution, Instruction, Label, MemoryDistribution, Pattern, ProgramGenerator, someToOption, intToBigIntOption}
+
+
 
 object RiscvExample extends App {
+
 
   val pattern = Pattern(implicit c => Seq(
     Instruction.ofCategory(Category.Arithmetic), Instruction.fill(4), LI(), Instruction.ofCategory(Category.Load), load
   ))
+
+  val forLoop = Pattern(implicit c => Seq(
+      LI(t1,0),
+      LI(t2),
+      Label("ForLoopStart"),
+      Instruction.fillWithCategory(10)(Category.Arithmetic),
+      ADDI(t1,t1,1),
+      BLT(t1,t2,LabelRecord("ForLoopStart")),
+      Instruction.fill(10)
+    ))
 
 
   val pg = ProgramGenerator(RV32I)(
@@ -27,6 +42,12 @@ object RiscvExample extends App {
 
 
   println(pg.generate(Pattern(implicit c => Seq(Pattern.repeat(10)(load)))).pretty)
+
+  println(pg.generate(forLoop).pretty)
+
+  println(ProgramGenerator(RV32I)(
+    CategoryBlackList(Category.Synchronization,Category.StateRegister,Category.EnvironmentCall,Category.JumpAndLink)
+  ).generate(400).pretty)
 
 
   /*

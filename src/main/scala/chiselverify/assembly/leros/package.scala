@@ -27,6 +27,9 @@ package object leros {
       )
     })
 
+    def simulationWrapper(body: InstructionFactory): Pattern = Pattern(implicit c => Seq(body,scall(0)))
+    def simulationWrapper(n: Int): Pattern = Pattern(implicit c => Seq(Instruction.fill(n),scall(0)))
+
     // the write pattern sets the accumulator to a random address and executes the store with offset
     val write = Pattern(Category.Store)(implicit c => {
       val address = c.nextMemoryAddress(Seq())

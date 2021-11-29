@@ -58,6 +58,8 @@ object GeneratorContext {
       case (cats, _) => cats
     }
 
+    val blacklisted = allCons.collect { case CategoryBlackList(bl@_*) => bl}.flatten
+
     // find all distribution constraints
     val distConstraints = allCons.collect { case x: CategoryDistribution => x }.flatMap(_.dis)
 
@@ -70,7 +72,8 @@ object GeneratorContext {
 
       // create uniform distributions with all applicable instructions for each category
       val distributionConstraints = withLabel.map { case (c, d) =>
-        ((isa.instructions ++ Seq(Label())).filter(_.isOfCategory(c)), d)
+        val instructions = (isa.instructions ++ Seq(Label())).filter(i => i.isOfCategory(c) && !i.isOfOneOfCategories(blacklisted))
+        (instructions, d)
       }.filter(_._1.nonEmpty).map { case (instr, d) =>
         (discreteUniform(instr).sample(1).head, d)
       }
@@ -79,7 +82,7 @@ object GeneratorContext {
       discrete(distributionConstraints: _*).sample(1).head
     } else {
       // no distribution was supplied and all allowed instructions are distributed uniformly
-      randomSelect((isa.instructions ++ Seq(Label())).filter(_.isOfOneOfCategories(allowedCategories)))
+      randomSelect((isa.instructions ++ Seq(Label())).filter(i => i.isOfOneOfCategories(allowedCategories) && !i.isOfOneOfCategories(blacklisted)))
     }
 
 
@@ -145,7 +148,7 @@ case class Program(instructions: Seq[Instruction], isa: InstructionSet) {
       .map(_.toAsm.split(" ").head)
       .filter(!_.contains(':'))
       .distinct.map { instr =>
-        instr -> instructions.count(_.toAsm.split(" ").head == instr)
+      instr -> instructions.count(_.toAsm.split(" ").head == instr)
     }
   }
 
