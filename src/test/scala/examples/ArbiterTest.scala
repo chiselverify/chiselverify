@@ -114,6 +114,7 @@ class ArbiterTest extends FlatSpec with ChiselScalatestTester {
       cr.step(10)
       // disable for now to avoid Travis issue.
       dut.io.out.bits.expect(2.U)
+      cr.printReport()
     }
   }
 
