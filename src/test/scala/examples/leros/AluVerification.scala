@@ -159,8 +159,11 @@ trait AluBehavior {
 class AluVerification extends FlatSpec with AluBehavior with ChiselScalatestTester with BeforeAndAfterAll {
     behavior of "AluAccumulator"
     val size = 16
-    val tnumber = 5000
-    val seeds = List(30, 104 , 60, 90, 200, 50, 22, 2000, 40, 900, 70, 23)
+    val IsUnitTest = true // set to false to generate a lot more transactions
+    val tnumber = if(IsUnitTest) { 10 } else { 5000 }
+    val seeds = if(IsUnitTest) { List(30, 104) } else {
+        List(30, 104, 60, 90, 200, 50, 22, 2000, 40, 900, 70, 23)
+    }
 
     println(s"Testing ALU with ${tnumber * seeds.size * 2} random transactions")
     // General test
