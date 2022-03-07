@@ -49,7 +49,7 @@ object ExpectTimed {
                 dut.clock.step(1)
                 for {
                     i <- 0 until delay
-                    if (port.peek().asUInt().litValue() != expectedVal.litValue())
+                    if (port.peek().asUInt().litValue != expectedVal.litValue)
                 } {
                     if(i == (delay - 1)) sys error message
                     else dut.clock.step(1)
@@ -66,11 +66,11 @@ object ExpectTimed {
         //Checks for the argument condition to not be true in the number of cycles passed
         case Never(delay) =>
             // Assertion for single thread clock cycle 0
-            if(port.peek().asUInt().litValue() == expectedVal.litValue()) sys error message
+            if(port.peek().asUInt().litValue == expectedVal.litValue) sys error message
             fork {
                 dut.clock.step(1)
                 (1 until delay) foreach (_ => {
-                    if(port.peek().asUInt().litValue() == expectedVal.litValue()) sys error message
+                    if(port.peek().asUInt().litValue == expectedVal.litValue) sys error message
                     dut.clock.step(1)
                 })
             }

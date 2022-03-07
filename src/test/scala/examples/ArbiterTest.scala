@@ -1,15 +1,14 @@
 package examples
 
-import chisel3._
 import chisel3.util.DecoupledIO
 import chiseltest._
-import org.scalatest.FlatSpec
-import chiseltest.experimental.TestOptionBuilder._
-import chiseltest.internal.WriteVcdAnnotation
 import chiselverify.coverage._
+import chiselverify.coverage.{cover => ccover}
 import chiselverify.timing._
+import chisel3._
+import org.scalatest.flatspec.AnyFlatSpec
 
-class ArbiterTest extends FlatSpec with ChiselScalatestTester {
+class ArbiterTest extends AnyFlatSpec with ChiselScalatestTester {
 
   behavior of "Arbiter"
 
@@ -70,32 +69,32 @@ class ArbiterTest extends FlatSpec with ChiselScalatestTester {
       val cr = new CoverageReporter(dut)
       //Register output covers
       cr.register(
-        cover("out.ready", dut.io.out.ready)(
+        ccover("out.ready", dut.io.out.ready)(
           bin("ReadyStates", 0 to 1)),
-        cover("out.valid", dut.io.out.valid)(
+        ccover("out.valid", dut.io.out.valid)(
           bin("ValidStates", 0 to 1)),
-        cover("out.ready.transitions", dut.io.out.ready, dut.io.out.ready)(Exactly(1))(
+        ccover("out.ready.transitions", dut.io.out.ready, dut.io.out.ready)(Exactly(1))(
           cross("ready0to1", Seq(0 to 0, 1 to 1), 1),
           cross("ready1to0", Seq(1 to 1, 0 to 0), 1)),
-        cover("out.valid.transitions", dut.io.out.valid, dut.io.out.valid)(Exactly(1))(
+        ccover("out.valid.transitions", dut.io.out.valid, dut.io.out.valid)(Exactly(1))(
           cross("valid0to1", Seq(0 to 0, 1 to 1), 1),
           cross("valid1to0", Seq(1 to 1, 0 to 0), 1)),
-        cover("out.bits", dut.io.out.bits)(DefaultBin(dut.io.out.bits))
+        ccover("out.bits", dut.io.out.bits)(DefaultBin(dut.io.out.bits))
       )
       //Register input covers
       dut.io.in.foreach((input: DecoupledIO[UInt]) => {
         cr.register(
-          cover(s"in${input.hashCode()}.ready", input.ready)(
+          ccover(s"in${input.hashCode()}.ready", input.ready)(
             bin("ReadyStates", 0 to 1)),
-          cover(s"in${input.hashCode()}.valid", input.valid)(
+          ccover(s"in${input.hashCode()}.valid", input.valid)(
             bin("ValidStates", 0 to 1)),
-          cover(s"in${input.hashCode()}.ready.transitions", input.ready, input.ready)(Exactly(1))(
+          ccover(s"in${input.hashCode()}.ready.transitions", input.ready, input.ready)(Exactly(1))(
             cross("ready0to1", Seq(0 to 0, 1 to 1), 1),
             cross("ready1to0", Seq(1 to 1, 0 to 0), 1)),
-          cover(s"in${input.hashCode()}.valid.transitions", input.valid, input.valid)(Exactly(1))(
+          ccover(s"in${input.hashCode()}.valid.transitions", input.valid, input.valid)(Exactly(1))(
             cross("valid0to1", Seq(0 to 0, 1 to 1), 1),
             cross("valid1to0", Seq(1 to 1, 0 to 0), 1)),
-          cover(s"in${input.hashCode()}.bits", input.bits)(DefaultBin(input.bits))
+          ccover(s"in${input.hashCode()}.bits", input.bits)(DefaultBin(input.bits))
         )
       })
 
@@ -130,7 +129,7 @@ class ArbiterTest extends FlatSpec with ChiselScalatestTester {
       dut.clock.step()
       for (i <- 0 until 40) {
         if (dut.io.out.valid.peek().litToBoolean) {
-          println(dut.io.out.bits.peek().litValue())
+          println(dut.io.out.bits.peek().litValue)
         }
         dut.clock.step()
       }

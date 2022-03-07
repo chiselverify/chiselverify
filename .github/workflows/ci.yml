@@ -1,4 +1,4 @@
-name: PChisel Verify Tests
+name: Chisel Verify Tests
 
 on: [push, pull_request]
 
