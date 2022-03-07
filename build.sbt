@@ -9,7 +9,6 @@ scalacOptions ++= Seq(
 
 // Chisel 3.5
 libraryDependencies += "edu.berkeley.cs" %% "chiseltest" % "0.5.1"
-libraryDependencies += "edu.berkeley.cs" %% "chisel-iotesters" % "2.5.1"
 addCompilerPlugin("edu.berkeley.cs" % "chisel3-plugin" % "3.5.1" cross CrossVersion.full)
 
 libraryDependencies += "org.jacop" % "jacop" % "4.7.0"
