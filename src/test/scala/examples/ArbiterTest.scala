@@ -74,11 +74,11 @@ class ArbiterTest extends AnyFlatSpec with ChiselScalatestTester {
         ccover("out.valid", dut.io.out.valid)(
           bin("ValidStates", 0 to 1)),
         ccover("out.ready.transitions", dut.io.out.ready, dut.io.out.ready)(Exactly(1))(
-          cross("ready0to1", Seq(0 to 0, 1 to 1), 1),
-          cross("ready1to0", Seq(1 to 1, 0 to 0), 1)),
+          cross("outready0to1", Seq(0 to 0, 1 to 1), 1),
+          cross("outready1to0", Seq(1 to 1, 0 to 0), 1)),
         ccover("out.valid.transitions", dut.io.out.valid, dut.io.out.valid)(Exactly(1))(
-          cross("valid0to1", Seq(0 to 0, 1 to 1), 1),
-          cross("valid1to0", Seq(1 to 1, 0 to 0), 1)),
+          cross("outvalid0to1", Seq(0 to 0, 1 to 1), 1),
+          cross("outvalid1to0", Seq(1 to 1, 0 to 0), 1)),
         ccover("out.bits", dut.io.out.bits)(DefaultBin(dut.io.out.bits))
       )
       //Register input covers
@@ -89,11 +89,11 @@ class ArbiterTest extends AnyFlatSpec with ChiselScalatestTester {
           ccover(s"in${input.hashCode()}.valid", input.valid)(
             bin("ValidStates", 0 to 1)),
           ccover(s"in${input.hashCode()}.ready.transitions", input.ready, input.ready)(Exactly(1))(
-            cross("ready0to1", Seq(0 to 0, 1 to 1), 1),
-            cross("ready1to0", Seq(1 to 1, 0 to 0), 1)),
+            cross(s"in${input.hashCode()}ready0to1", Seq(0 to 0, 1 to 1), 1),
+            cross(s"in${input.hashCode()}ready1to0", Seq(1 to 1, 0 to 0), 1)),
           ccover(s"in${input.hashCode()}.valid.transitions", input.valid, input.valid)(Exactly(1))(
-            cross("valid0to1", Seq(0 to 0, 1 to 1), 1),
-            cross("valid1to0", Seq(1 to 1, 0 to 0), 1)),
+            cross(s"in${input.hashCode()}valid0to1", Seq(0 to 0, 1 to 1), 1),
+            cross(s"in${input.hashCode()}valid1to0", Seq(1 to 1, 0 to 0), 1)),
           ccover(s"in${input.hashCode()}.bits", input.bits)(DefaultBin(input.bits))
         )
       })
