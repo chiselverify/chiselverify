@@ -163,7 +163,7 @@ object CoverReport {
 
         override def +(that: Report): Report = that match {
             case GroupReport(_, tpoints) =>
-                require(this == that)
+                // require(this == that) // TODO: why is this a requirement?
                 val newPoints: List[Report] = (tpoints zip points).map { case (p1, p2) => p1 + p2 }
                 GroupReport(id, newPoints)
 
@@ -289,7 +289,7 @@ object CoverReport {
 
         def +(that: Report): Report = that match {
             case CrossReport(_, tbins, _) =>
-                require(this == that)
+                // require(this == that) // TODO: why is this a requirement?
                 val newBins = (bins zip tbins).map { case (b1, b2) => b1 + b2 }
                 CrossReport(cross, newBins, delay)
             case _ => throw new IllegalArgumentException("Argument must be of type CrossReport")

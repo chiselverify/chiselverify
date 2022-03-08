@@ -25,7 +25,7 @@ import scala.collection.mutable.ArrayBuffer
 /**
   * Handles everything related to functional coverage
   */
-class CoverageReporter[T <: MultiIOModule](private val dut: T) {
+class CoverageReporter[T <: Module](private val dut: T) {
     private val coverGroups: ArrayBuffer[CoverGroup] = new ArrayBuffer[CoverGroup]()
     private val coverageDB: CoverageDB = new CoverageDB
 

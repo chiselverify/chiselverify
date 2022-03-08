@@ -3,6 +3,7 @@ package examples.heappriorityqueue
 import chisel3._
 import chiseltest._
 import chiselverify.coverage._
+import chiselverify.coverage.{cover => ccover}
 import examples.heappriorityqueue.Helpers._
 import examples.heappriorityqueue.LocalHelpers._
 import org.scalatest._
@@ -24,24 +25,24 @@ class PriorityQueueTest extends FreeSpec with ChiselScalatestTester {
 
             val cr = new CoverageReporter(dut)
             cr.register(
-                cover("operation", dut.io.cmd.op)(
+                ccover("operation", dut.io.cmd.op)(
                     bin("insertion", 0 to 0),
                     bin("removal", 1 to 1)),
-                cover("cmd.prio.cycl", dut.io.cmd.prio.superCycle)(
+                ccover("cmd.prio.cycl", dut.io.cmd.prio.superCycle)(
                     bin("cyclic", 0 to 3)),
-                cover("cmd.prio.norm", dut.io.cmd.prio.cycle)(
+                ccover("cmd.prio.norm", dut.io.cmd.prio.cycle)(
                     bin("lower half", 0 to (Math.pow(2, nWid) / 2 - 1).toInt),
                     bin("upper half", (Math.pow(2, nWid) / 2 - 1).toInt to (Math.pow(2, nWid) - 1).toInt)),
-                cover("head.prio.cycl", dut.io.head.prio.superCycle)(
+                ccover("head.prio.cycl", dut.io.head.prio.superCycle)(
                     bin("cyclic", 0 to 3)),
-                cover("head.prio.norm", dut.io.head.prio.cycle)(
+                ccover("head.prio.norm", dut.io.head.prio.cycle)(
                     bin("lower half", 0 to (Math.pow(2, nWid) / 2 - 1).toInt),
                     bin("upper half", (Math.pow(2, nWid) / 2 - 1).toInt to (Math.pow(2, nWid) - 1).toInt)),
                 //Declare cross points
-                cover("cyclics at ops", dut.io.cmd.op, dut.io.cmd.prio.cycle)(
+                ccover("cyclics at ops", dut.io.cmd.op, dut.io.cmd.prio.cycle)(
                     cross("insertion", Seq(0 to 0, 0 to 3)),
                     cross("removal", Seq(1 to 1, 0 to 3))),
-                cover("normals at ops", dut.io.cmd.op, dut.io.head.prio.cycle)(
+                ccover("normals at ops", dut.io.cmd.op, dut.io.head.prio.cycle)(
                     cross("insertion lower half", Seq(0 to 0, 0 to (Math.pow(2, nWid) / 2 - 1).toInt)),
                     cross("insertion upper half", Seq(0 to 0, (Math.pow(2, nWid) / 2 - 1).toInt to (Math.pow(2, nWid) - 1).toInt)),
                     cross("removal lower half", Seq(1 to 1, 0 to (Math.pow(2, nWid) / 2 - 1).toInt)),

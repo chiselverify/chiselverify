@@ -1,9 +1,10 @@
 package examples.heappriorityqueue
 
-import chisel3.iotesters.PeekPokeTester
+import chiseltest._
+import chiseltest.iotesters.PeekPokeTester
 import examples.heappriorityqueue.Behavioural._
 import examples.heappriorityqueue.modules.Heapifier
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.FlatSpec
 
 
 /**
@@ -11,12 +12,11 @@ import org.scalatest.{FlatSpec, Matchers}
   *  - one tests the heapify up functionality on random memory states from random start positions
   *  - the other does the same for the heapify down functionality
   */
-class HeapifierTest extends FlatSpec with Matchers {
+class HeapifierTest extends FlatSpec with ChiselScalatestTester {
     implicit val paramters = PriorityQueueParameters(17,4,2,8,4)
     val debugLvl = 0
     "Heapifier" should "heapify up" in {
-        chisel3.iotesters.Driver(() => new Heapifier) {
-            c => {
+        test(new Heapifier).runPeekPoke { c => {
                 import paramters._
                 val dut = new HeapifierWrapper(c, paramters.size, order, debugLvl)(superCycleWidth, cycleWidth, referenceIdWidth)
 
@@ -45,10 +45,10 @@ class HeapifierTest extends FlatSpec with Matchers {
                 }
                 dut
             }
-        } should be(true)
+        }
     }
     "Heapifier" should "heapify down" in {
-        chisel3.iotesters.Driver(() => new Heapifier) {
+        test(new Heapifier).runPeekPoke {
             c => {
                 import paramters._
                 val dut = new HeapifierWrapper(c, paramters.size, order, debugLvl)(superCycleWidth, cycleWidth, referenceIdWidth)
@@ -78,7 +78,7 @@ class HeapifierTest extends FlatSpec with Matchers {
                 }
                 dut
             }
-        } should be(true)
+        }
     }
 
 }

@@ -6,6 +6,7 @@ import chisel3.tester._
 import chiseltest.ChiselScalatestTester
 import chiselverify.coverage._
 import chiselverify.coverage.CoverReport._
+import chiselverify.coverage.{cover => ccover}
 import chiselverify.crv.{RangeBinder, ValueBinder}
 import chiselverify.crv.backends.jacop._
 import org.scalatest.{BeforeAndAfterAll, FlatSpec}
@@ -110,7 +111,7 @@ trait AluBehavior {
             test(new AluAccuMultiChisel(size)) { dut =>
                 val cr = new CoverageReporter(dut)
                 cr.register(
-                    cover("op", dut.input.op)(
+                    ccover("op", dut.input.op)(
                         bin("nop", 0 to 0),
                         bin("add", 1 to 1),
                         bin("sub", 2 to 2),
@@ -119,23 +120,23 @@ trait AluBehavior {
                         bin("xor", 5 to 5),
                         bin("ld", 6 to 6),
                         bin("shr", 7 to 7)),
-                    cover("din", dut.input.din)(
+                    ccover("din", dut.input.din)(
                         bin("0xF", 0 to 0xF),
                         bin("0xFF", 0xF to 0xFF),
                         bin("0xFFF", 0xFF to 0xFFF),
                         bin("0xFFFF", 0xFFF to 0xFFFF),
                     ),
-                    cover("accu", dut.output.accu)(
+                    ccover("accu", dut.output.accu)(
                         bin("0xF", 0 to 0xF),
                         bin("0xFF", 0xF to 0xFF),
                         bin("0xFFF", 0xFF to 0xFFF),
                         bin("0xFFFF", 0xFFF to 0xFFFF),
                     ),
-                    cover("ena", dut.input.ena)(
+                    ccover("ena", dut.input.ena)(
                         bin("disabled", 0 to 0),
                         bin("enabled", 1 to 1)
                     ),
-                    cover("operations cross enable", dut.input.op, dut.input.ena)(
+                    ccover("operations cross enable", dut.input.op, dut.input.ena)(
                         cross("operation enable", Seq(0 to 7, 1 to 1)),
                         cross("operation disabled", Seq(0 to 7, 0 to 0))
                     )
@@ -159,8 +160,11 @@ trait AluBehavior {
 class AluVerification extends FlatSpec with AluBehavior with ChiselScalatestTester with BeforeAndAfterAll {
     behavior of "AluAccumulator"
     val size = 16
-    val tnumber = 5000
-    val seeds = List(30, 104 , 60, 90, 200, 50, 22, 2000, 40, 900, 70, 23)
+    val IsUnitTest = true // set to false to generate a lot more transactions
+    val tnumber = if(IsUnitTest) { 10 } else { 5000 }
+    val seeds = if(IsUnitTest) { List(30, 104) } else {
+        List(30, 104, 60, 90, 200, 50, 22, 2000, 40, 900, 70, 23)
+    }
 
     println(s"Testing ALU with ${tnumber * seeds.size * 2} random transactions")
     // General test

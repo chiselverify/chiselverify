@@ -4,6 +4,7 @@ import chisel3.util.log2Ceil
 import chisel3._
 import chiseltest._
 import chiselverify.coverage._
+import chiselverify.coverage.{cover => ccover}
 import examples.heappriorityqueue.Helpers._
 import examples.heappriorityqueue.modules.QueueControl
 import org.scalatest._
@@ -47,24 +48,24 @@ class QueueControlTest extends FreeSpec with ChiselScalatestTester {
 
         val cr = new CoverageReporter(c)
         cr.register(
-            cover("operation", c.io.cmd.op)(
+            ccover("operation", c.io.cmd.op)(
                 bin("insertion", 0 to 0),
                 bin("removal", 1 to 1)),
-            cover("cmd.prio.cycl", c.io.cmd.prio.superCycle)(
+            ccover("cmd.prio.cycl", c.io.cmd.prio.superCycle)(
                 bin("cyclic", 0 to 3)),
-            cover("cmd.prio.norm", c.io.cmd.prio.cycle)(
+            ccover("cmd.prio.norm", c.io.cmd.prio.cycle)(
                 bin("lower half", 0 to (Math.pow(2, cycleWidth) / 2 - 1).toInt),
                 bin("upper half", (Math.pow(2, cycleWidth) / 2 - 1).toInt to (Math.pow(2, cycleWidth) - 1).toInt)),
-            cover("head.prio.cycl", c.io.head.prio.superCycle)(
+            ccover("head.prio.cycl", c.io.head.prio.superCycle)(
                 bin("cyclic", 0 to 3)),
-            cover("head.prio.norm", c.io.head.prio.cycle)(
+            ccover("head.prio.norm", c.io.head.prio.cycle)(
                 bin("lower half", 0 to (Math.pow(2, cycleWidth) / 2 - 1).toInt),
                 bin("upper half", (Math.pow(2, cycleWidth) / 2 - 1).toInt to (Math.pow(2, cycleWidth) - 1).toInt)),
             //Declare cross points
-            cover("cyclics at ops", c.io.cmd.op, c.io.cmd.prio.cycle)(
+            ccover("cyclics at ops", c.io.cmd.op, c.io.cmd.prio.cycle)(
                 cross("insertion", Seq(0 to 0, 0 to 3)),
                 cross("removal", Seq(1 to 1, 0 to 3))),
-            cover("normals at ops", c.io.cmd.op, c.io.head.prio.cycle)(
+            ccover("normals at ops", c.io.cmd.op, c.io.head.prio.cycle)(
                 cross("insertion lower half", Seq(0 to 0, 0 to (Math.pow(2, cycleWidth) / 2 - 1).toInt)),
                 cross("insertion upper half", Seq(0 to 0, (Math.pow(2, cycleWidth) / 2 - 1).toInt to (Math.pow(2, cycleWidth) - 1).toInt)),
                 cross("removal lower half", Seq(1 to 1, 0 to (Math.pow(2, cycleWidth) / 2 - 1).toInt)),
