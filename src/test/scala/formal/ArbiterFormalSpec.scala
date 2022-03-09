@@ -11,12 +11,18 @@ class ArbiterFormalSpec extends AnyFlatSpec with ChiselScalatestTester with Form
   behavior of "Arbiter"
 
   it should "maintain data integrity" in {
-    verify(new ArbiterDataIntegrityCheck(new Arbiter(3, UInt(8.W)), true), Seq(BoundedCheck(4)))
+    val e = intercept[FailedBoundedCheckException] {
+      verify(new ArbiterDataIntegrityCheck(new Arbiter(3, UInt(8.W)), true), Seq(BoundedCheck(4)))
+    }
+    assert(e.failAt == 3, s"expected check to fail at step 3 not $e")
   }
 
   it should s"answer request within a certain time frame" in {
     val ports = 3
-    verify(new ArbiterFormalFairnessCheck(new Arbiter(ports, UInt(8.W)), true), Seq(BoundedCheck(2 * ports + 4)))
+    val e = intercept[FailedBoundedCheckException] {
+      verify(new ArbiterFormalFairnessCheck(new Arbiter(ports, UInt(8.W)), true), Seq(BoundedCheck(2 * ports + 4)))
+    }
+    assert(e.failAt == 7, s"expected check to fail at step 7 not $e")
   }
 }
 
