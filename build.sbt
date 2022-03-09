@@ -2,6 +2,7 @@ scalaVersion := "2.12.15"
 
 scalacOptions ++= Seq(
   "-language:reflectiveCalls",
+  "-language:implicitConversions", // silences all warnings about implicit conversions
   "-deprecation",
   "-feature",
   "-Xcheckinit",

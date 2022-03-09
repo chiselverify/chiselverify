@@ -183,7 +183,7 @@ package object coverage {
         override def serialize: String = s"CoverCondition($ports, $pointName)($conds)"
 
         override def sample(db: CoverageDB): Unit = {
-            val pointVals = ports.map(_.peek().asUInt().litValue())
+            val pointVals = ports.map(_.peek().asUInt().litValue)
             db.addConditionalHit(conditions.filter(c => c(pointVals)).map(_.name), pointVals)
         }
 
@@ -211,7 +211,7 @@ package object coverage {
 
         override def sample(db: CoverageDB): Unit = {
             //Check for the ports & sample all bins
-            val pointVal = port.peek().asUInt().litValue().toInt
+            val pointVal = port.peek().asUInt().litValue.toInt
             bins.foreach(_.sample(pointName, pointVal, db))
         }
 
@@ -281,8 +281,8 @@ package object coverage {
             val curCycle = db.getCurCycle
 
             //Sample the two operands
-            db.addTimingValue(TimingValue(1, op.operand1.peek().litValue(), curCycle))
-            db.addTimingValue(TimingValue(2, op.operand2.peek().litValue(), curCycle))
+            db.addTimingValue(TimingValue(1, op.operand1.peek().litValue, curCycle))
+            db.addTimingValue(TimingValue(2, op.operand2.peek().litValue, curCycle))
         }
 
         override def register(db: CoverageDB): Unit = db.registerTimedCoverOp
@@ -330,7 +330,7 @@ package object coverage {
 
             //Sample the points at the current cycle
             val curCycle = db.getCurCycle
-            sampleBins(bins, ports.map(_.peek().litValue()), curCycle)
+            sampleBins(bins, ports.map(_.peek().litValue), curCycle)
         }
 
         /**
@@ -412,7 +412,7 @@ package object coverage {
         override def sample(db: CoverageDB): Unit = {
 
             //Sample all of the ports
-            val portVal = ports.map(_.peek().litValue())
+            val portVal = ports.map(_.peek().litValue)
 
             //Check for hits with each bin
             bins.foreach { b => if(portVal.zip(b.ranges).forall{ case (v, r) => r contains v })

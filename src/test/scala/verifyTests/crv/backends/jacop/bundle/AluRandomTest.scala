@@ -2,11 +2,11 @@ package verifyTests.crv.backends.jacop.bundle
 
 import chisel3._
 import chisel3.experimental.BundleLiterals.AddBundleLiteralConstructor
-import chisel3.tester.{ChiselScalatestTester, testableClock, testableData}
+import chiseltest._
 import chisel3.util._
 import chiselverify.crv.backends.jacop.experimental.RandBundle
 import chiselverify.crv.backends.jacop.{Rand, RandObj, rand}
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
 
 
 
@@ -71,14 +71,14 @@ class AluInputConstraint(size: Int) extends AluInput(size) with RandBundle {
 
   def expectedResult(): BigInt = {
     var result: BigInt = 0
-    if (fn.litValue() == 0) {
-      result = a.litValue() + b.litValue()
-    } else if (fn.litValue() == 1) {
-      result = a.litValue() - b.litValue()
-    } else if (fn.litValue() == 2) {
-      result = a.litValue() | b.litValue()
+    if (fn.litValue == 0) {
+      result = a.litValue + b.litValue
+    } else if (fn.litValue == 1) {
+      result = a.litValue - b.litValue
+    } else if (fn.litValue == 2) {
+      result = a.litValue | b.litValue
     } else {
-      result = a.litValue() & b.litValue()
+      result = a.litValue & b.litValue
     }
     result
   }
@@ -93,7 +93,7 @@ class AluOutput(val size: Int) extends Bundle {
   val result = UInt(size.W)
 }
 
-class Alu(size: Int) extends MultiIOModule {
+class Alu(size: Int) extends Module {
   val input = IO(Input(new AluInput(size)))
   val output = IO(Output(new AluOutput(size)))
 
@@ -109,7 +109,7 @@ class Alu(size: Int) extends MultiIOModule {
   output.result := result
 }
 
-class AluRandomTest extends FlatSpec with ChiselScalatestTester with Matchers {
+class AluRandomTest extends AnyFlatSpec with ChiselScalatestTester {
 
   it should "Test the ALU with random Transactions in form of bundle" in {
     test(new Alu(8)) { alu =>

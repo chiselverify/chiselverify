@@ -44,8 +44,8 @@ object TimedOp {
           * @return an operator that considers a result true if it satisfies both operators
           */
         def +(that: TimedOperator): TimedOperator = {
-            val compute1 = this(operand1.peek().litValue(), operand2.peek().litValue())
-            val compute2 = that(that.operand1.peek().litValue(), that.operand2.peek().litValue())
+            val compute1 = this(operand1.peek().litValue, operand2.peek().litValue)
+            val compute2 = that(that.operand1.peek().litValue, that.operand2.peek().litValue)
 
             new TimedOperator(operand1, operand2, that.operand1, that.operand2) {
                 override def apply(value1: BigInt, value2: BigInt): Boolean = compute1 && compute2

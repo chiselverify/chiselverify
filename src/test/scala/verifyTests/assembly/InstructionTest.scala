@@ -3,9 +3,9 @@ package verifyTests.assembly
 
 import chiselverify.assembly.{Category, CategoryWhiteList, GeneratorContext, Instruction}
 import chiselverify.assembly.leros.Leros
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
-class InstructionTest extends FlatSpec {
+class InstructionTest extends AnyFlatSpec {
   behavior of "Instruction producers"
 
   it should "select randomly between different instructions" in {

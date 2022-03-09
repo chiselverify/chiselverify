@@ -4,14 +4,14 @@ import chisel3._
 import chiseltest._
 import examples.heappriorityqueue.Helpers._
 import examples.heappriorityqueue.modules.linearSearchMem
-import org.scalatest.FreeSpec
+import org.scalatest.freespec.AnyFreeSpec
 
 /**
   * contains randomized tests for the memory module
   *   - one checks read and write specifications
   *   - the other tests the search behaviour
   */
-class MemoryTest extends FreeSpec with ChiselScalatestTester {
+class MemoryTest extends AnyFreeSpec with ChiselScalatestTester {
 
     def pokeMask(port: UInt, mask: Int = -1): Int = {
         if (mask != -1) {

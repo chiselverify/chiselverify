@@ -2,13 +2,13 @@ package examples.leros
 
 import chisel3._
 import chiseltest._
-import org.scalatest._
 import chiselverify.coverage.CoverageReporter
 import chiselverify.coverage._
 import chiselverify.coverage.{cover => ccover}
 import examples.leros.Types._
+import org.scalatest.flatspec.AnyFlatSpec
 
-class AluAccuTester extends FlatSpec with ChiselScalatestTester with Matchers {
+class AluAccuTester extends AnyFlatSpec with ChiselScalatestTester {
 
     def testFun[T <: AluAccu](dut: T): Unit = {
 
@@ -43,7 +43,7 @@ class AluAccuTester extends FlatSpec with ChiselScalatestTester with Matchers {
             dut.io.ena.poke(true.B)
             dut.io.din.poke(toUInt(a))
             dut.clock.step()
-            dut.io.op.poke(fun.asUInt())
+            dut.io.op.poke(fun.asUInt)
             dut.io.din.poke(toUInt(b))
             dut.clock.step()
             dut.io.accu.expect(toUInt(alu(a, b, fun)))

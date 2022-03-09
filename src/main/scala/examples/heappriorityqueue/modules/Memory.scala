@@ -11,7 +11,7 @@ import examples.heappriorityqueue.PriorityQueueParameters
   *   - CAM functionality -> when a reference ID is provided, the module should find the first occurrence in memory
   *   - should be initialized to all 1's
   */
-abstract class SearchSeqMem(capacity: Int)(implicit parameters: PriorityQueueParameters) extends MultiIOModule {
+abstract class SearchSeqMem(capacity: Int)(implicit parameters: PriorityQueueParameters) extends Module {
   import parameters._
   val rd = IO(Flipped(new rdPort(log2Ceil(size / order), Vec(order, new TaggedEvent))))
   val wr = IO(Flipped(new wrPort(log2Ceil(size / order), order, Vec(order, new TaggedEvent))))

@@ -5,10 +5,10 @@ import chisel3.tester.{testableClock, testableData}
 import chiseltest.ChiselScalatestTester
 import chiselverify.assertions._
 import chiselverify.timing._
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
 import verifyTests.ToyDUT.AssertionsToyDUT
 
-class TimedExpectTests  extends FlatSpec with ChiselScalatestTester with Matchers {
+class TimedExpectTests  extends AnyFlatSpec with ChiselScalatestTester {
     def toUInt(i: Int): UInt = (BigInt(i) & 0x00ffffffffL).asUInt(32.W)
 
     /**

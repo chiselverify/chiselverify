@@ -7,12 +7,13 @@ import chiselverify.assertions.AssertTimed._
 import chiselverify.assertions.{AssertTimed, ExpectTimed}
 import chiselverify.timing.TimedOp.{Equals, Gt, GtEq, Lt, LtEq, dataToID}
 import chiselverify.timing._
-import org.scalatest.{FlatSpec, Matchers, concurrent}
+import org.scalatest.concurrent
+import org.scalatest.flatspec.AnyFlatSpec
 import verifyTests.ToyDUT.AssertionsToyDUT
 
 import scala.language.postfixOps
 
-class TimedAssertionTests extends FlatSpec with ChiselScalatestTester with Matchers {
+class TimedAssertionTests extends AnyFlatSpec with ChiselScalatestTester {
     def toUInt(i: Int): UInt = (BigInt(i) & 0x00ffffffffL).asUInt(32.W)
 
     /**
@@ -27,14 +28,14 @@ class TimedAssertionTests extends FlatSpec with ChiselScalatestTester with Match
             dut.io.a.poke(10.U)
             dut.io.b.poke(10.U)
             dut.clock.step(1)
-            println(s"aEqb is ${dut.io.aEqb.peek().litValue()}")
-            AssertTimed(dut, dut.io.aEqb.peek().litValue() == 1, "aEqb timing is wrong")(Always(9)).join()
+            println(s"aEqb is ${dut.io.aEqb.peek().litValue}")
+            AssertTimed(dut, dut.io.aEqb.peek().litValue == 1, "aEqb timing is wrong")(Always(9)).join()
         }
 
         def testEventually(): Unit = {
             dut.io.a.poke(10.U)
             dut.io.b.poke(10.U)
-            AssertTimed(dut, dut.io.aEvEqC.peek().litValue() == 1, "a eventually isn't c")(Eventually(11)).join()
+            AssertTimed(dut, dut.io.aEvEqC.peek().litValue == 1, "a eventually isn't c")(Eventually(11)).join()
         }
 
         def testExactly(): Unit = {
@@ -67,7 +68,7 @@ class TimedAssertionTests extends FlatSpec with ChiselScalatestTester with Match
             dut.io.a.poke(10.U)
             dut.io.b.poke(10.U)
             dut.clock.step(1)
-            println(s"aEqb is ${dut.io.aEqb.peek().litValue()}")
+            println(s"aEqb is ${dut.io.aEqb.peek().litValue}")
             AssertTimed(dut, Equals(dut.io.aEqb, dut.io.isOne), "aEqb timing is wrong")(Always(9)).join()
         }
 
@@ -106,7 +107,7 @@ class TimedAssertionTests extends FlatSpec with ChiselScalatestTester with Match
             dut.io.a.poke(20.U)
             dut.io.b.poke(10.U)
             dut.clock.step(1)
-            println(s"aEqb is ${dut.io.aEqb.peek().litValue()}")
+            println(s"aEqb is ${dut.io.aEqb.peek().litValue}")
             AssertTimed(dut, Gt(dut.io.outA, dut.io.outB), "a isn't always superior to one")(Always(9)).join()
         }
 
@@ -121,7 +122,7 @@ class TimedAssertionTests extends FlatSpec with ChiselScalatestTester with Match
             dut.io.a.poke(6.U)
             dut.io.b.poke(5.U)
             dut.clock.step(2)
-            println(s"C = ${dut.io.outC.peek().litValue()}")
+            println(s"C = ${dut.io.outC.peek().litValue}")
 
             AssertTimed(dut, Gt(dut.io.outB, dut.io.outCNotSupB), "c isn't greater than b after 7 cycles")(Exactly(7)).join()
         }
@@ -150,7 +151,7 @@ class TimedAssertionTests extends FlatSpec with ChiselScalatestTester with Match
             dut.io.a.poke(10.U)
             dut.io.b.poke(20.U)
             dut.clock.step(1)
-            println(s"aEqb is ${dut.io.aEqb.peek().litValue()}")
+            println(s"aEqb is ${dut.io.aEqb.peek().litValue}")
             AssertTimed(dut, Lt(dut.io.outA, dut.io.outB), "a isn't always less than one")(Always(9)).join()
         }
 
@@ -165,7 +166,7 @@ class TimedAssertionTests extends FlatSpec with ChiselScalatestTester with Match
             dut.io.a.poke(6.U)
             dut.io.b.poke(5.U)
             dut.clock.step(2)
-            println(s"C = ${dut.io.outC.peek().litValue()}")
+            println(s"C = ${dut.io.outC.peek().litValue}")
 
             AssertTimed(dut, Lt(dut.io.outB, dut.io.outCSupB), "c isn't less than b after 7 cycles")(Exactly(7)).join()
         }
@@ -194,7 +195,7 @@ class TimedAssertionTests extends FlatSpec with ChiselScalatestTester with Match
             dut.io.a.poke(10.U)
             dut.io.b.poke(20.U)
             dut.clock.step(1)
-            println(s"aEqb is ${dut.io.aEqb.peek().litValue()}")
+            println(s"aEqb is ${dut.io.aEqb.peek().litValue}")
             AssertTimed(dut, LtEq(dut.io.outA, dut.io.outB), "a isn't always less than one")(Always(9)).join()
         }
 
@@ -209,7 +210,7 @@ class TimedAssertionTests extends FlatSpec with ChiselScalatestTester with Match
             dut.io.a.poke(6.U)
             dut.io.b.poke(5.U)
             dut.clock.step(2)
-            println(s"C = ${dut.io.outC.peek().litValue()}")
+            println(s"C = ${dut.io.outC.peek().litValue}")
 
             AssertTimed(dut, LtEq(dut.io.outB, dut.io.outCSupB), "c isn't less than b after 7 cycles")(Exactly(7)).join()
         }
@@ -238,7 +239,7 @@ class TimedAssertionTests extends FlatSpec with ChiselScalatestTester with Match
             dut.io.a.poke(10.U)
             dut.io.b.poke(20.U)
             dut.clock.step(1)
-            println(s"aEqb is ${dut.io.aEqb.peek().litValue()}")
+            println(s"aEqb is ${dut.io.aEqb.peek().litValue}")
             AssertTimed(dut, GtEq(dut.io.outB, dut.io.outA), "a isn't always less than one")(Always(9)).join()
         }
 
@@ -253,7 +254,7 @@ class TimedAssertionTests extends FlatSpec with ChiselScalatestTester with Match
             dut.io.a.poke(6.U)
             dut.io.b.poke(5.U)
             dut.clock.step(2)
-            println(s"C = ${dut.io.outC.peek().litValue()}")
+            println(s"C = ${dut.io.outC.peek().litValue}")
 
             AssertTimed(dut, GtEq(dut.io.outB, dut.io.outCNotSupB), "c isn't less than b after 7 cycles")(Exactly(7)).join()
         }

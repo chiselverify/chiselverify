@@ -19,7 +19,7 @@ class AluAccuOutput(val size: Int) extends Bundle {
   *
   * @param size
   */
-abstract class AluAccuMutliIO(sizen: Int) extends MultiIOModule {
+abstract class AluAccuMutliIO(sizen: Int) extends Module {
   val input = IO(Input(new AluAccuInput(sizen)))
   val output = IO(Output(new AluAccuOutput(sizen)))
 }

@@ -7,10 +7,11 @@ import chiselverify.coverage.{cover => ccover}
 import chiselverify.timing.TimedOp.{Equals, Gt, GtEq, Lt, LtEq}
 import chiselverify.timing._
 import verifyTests.ToyDUT._
-import org.scalatest._
 import chiselverify.Utils.stringToOption
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-class FunctionalCoverageTest extends FlatSpec with ChiselScalatestTester with Matchers {
+class FunctionalCoverageTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
 
     def toUInt(i: Int): UInt = (BigInt(i) & 0x00ffffffffL).asUInt(32.W)
 

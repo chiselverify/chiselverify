@@ -3,10 +3,10 @@ package verifyTests.assembly
 import chiselverify.assembly.RandomHelpers.BigRange
 import chiselverify.assembly.{IODistribution, MemoryDistribution, ProgramGenerator}
 import chiselverify.assembly.leros.Leros
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 import verifyTests.assembly.ProgramGeneratorTest.expectedProgramString
 
-class ProgramGeneratorTest extends FlatSpec {
+class ProgramGeneratorTest extends AnyFlatSpec {
   behavior of "Program generator"
 
   it should "generate the correct program" in {

@@ -7,12 +7,12 @@ import chiselverify.coverage._
 import chiselverify.coverage.{cover => ccover}
 import examples.heappriorityqueue.Helpers._
 import examples.heappriorityqueue.modules.QueueControl
-import org.scalatest._
+import org.scalatest.freespec.AnyFreeSpec
 
 /**
   * contains randomized tests for the queue controller
   */
-class QueueControlTest extends FreeSpec with ChiselScalatestTester {
+class QueueControlTest extends AnyFreeSpec with ChiselScalatestTester {
 
 
     "HeapPriorityQueue pass a single random poke test run" in {

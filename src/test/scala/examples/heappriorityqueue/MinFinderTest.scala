@@ -3,12 +3,12 @@ package examples.heappriorityqueue
 import chiseltest._
 import examples.heappriorityqueue.Helpers._
 import examples.heappriorityqueue.modules.MinFinder
-import org.scalatest._
+import org.scalatest.freespec.AnyFreeSpec
 
 /**
   * contains a randomized test for the MinFinder module
   */
-class MinFinderTest extends FreeSpec with ChiselScalatestTester {
+class MinFinderTest extends AnyFreeSpec with ChiselScalatestTester {
 
     def calculateOut(values: Seq[Seq[Int]]): Int = {
         val cyclic = values.map(_.head)

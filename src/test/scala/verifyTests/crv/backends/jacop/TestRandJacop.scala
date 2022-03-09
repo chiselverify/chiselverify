@@ -3,10 +3,10 @@ import chiselverify.crv
 import chiselverify.crv.backends.jacop
 import chiselverify.crv.{RangeBinder, ValueBinder, backends}
 import chiselverify.crv.backends.jacop.{Constraint, ConstraintGroup, Cyclic, IfCon, Model, Rand, RandCVar, RandObj, RandVar, Randc, rand}
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
 
 
-class TestRandJacop extends FlatSpec with Matchers {
+class TestRandJacop extends AnyFlatSpec {
 
   it should "be able to declare a random variable and and a constraint" in {
     class Packet extends RandObj {

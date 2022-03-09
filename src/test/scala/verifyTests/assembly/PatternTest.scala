@@ -2,9 +2,9 @@ package verifyTests.assembly
 
 import chiselverify.assembly.{GeneratorContext, Pattern}
 import chiselverify.assembly.leros.Leros
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
-class PatternTest extends FlatSpec {
+class PatternTest extends AnyFlatSpec {
   behavior of "pattern"
 
   def getEveryNthItem[T](start: Int, n: Int)(seq: Seq[T]): Seq[T] = {

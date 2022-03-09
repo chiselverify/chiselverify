@@ -4,9 +4,9 @@ import chiselverify.assembly.Label.LabelRecord
 import chiselverify.assembly.leros.{Leros, QuickAccessMemory}
 import chiselverify.assembly.rv32i.IntegerRegister
 import chiselverify.assembly.{Constant, IllegalRegisterInitializer, LabelReference, Register, Signed, Unsigned, WidthViolation, leros, rv32i}
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
-class FieldsTest extends FlatSpec {
+class FieldsTest extends AnyFlatSpec {
   behavior of "Constant field"
 
   it should "generate a random constant (unsigned)" in {

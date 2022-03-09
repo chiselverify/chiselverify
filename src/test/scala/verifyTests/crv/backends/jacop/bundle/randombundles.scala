@@ -1,12 +1,13 @@
 package verifyTests.crv.backends.jacop.bundle
 
-import chisel3.tester.ChiselScalatestTester
+import chiseltest._
 import chisel3.{Bundle, UInt, _}
 import chiselverify.crv.backends.jacop.{Constraint, IfCon}
 import chiselverify.crv.backends.jacop.experimental.RandBundle
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
 
-class RandomBunleTests extends FlatSpec with ChiselScalatestTester with Matchers {
+
+class RandomBunleTests extends AnyFlatSpec with ChiselScalatestTester {
   behavior.of("Random Bundles")
 
   class A extends Bundle with RandBundle {
@@ -31,21 +32,21 @@ class RandomBunleTests extends FlatSpec with ChiselScalatestTester with Matchers
   it should "Randomize with conditional constraints" in {
     val z = new F()
     val o = z.randomBundle()
-    assert(o.x.litValue() == 8)
-    assert(o.y.litValue() == 9)
+    assert(o.x.litValue == 8)
+    assert(o.y.litValue == 9)
     z.c.disable()
     z.o.enable()
     val t = z.randomBundle()
-    assert(t.y.litValue() != 9)
+    assert(t.y.litValue != 9)
   }
 
   it should "Randomize Bundles and enable disable constraints" in {
     val z = new A()
     val o = z.randomBundle()
-    assert(o.x.litValue() > o.y.litValue())
+    assert(o.x.litValue > o.y.litValue)
     z.greaterThen.disable()
     z.lessThen.enable()
     val t = z.randomBundle()
-    assert(t.x.litValue() < t.y.litValue())
+    assert(t.x.litValue < t.y.litValue)
   }
 }

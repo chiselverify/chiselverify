@@ -3,10 +3,11 @@ package verifyTests.coverage
 import chisel3._
 import chiseltest._
 import chiselverify.coverage.GlobalCoverage._
-import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import verifyTests.ToyDUT._
 
-class GlobalCoverageTest extends FlatSpec with ChiselScalatestTester with Matchers {
+class GlobalCoverageTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
 
     def toUInt(i: Int): UInt = (BigInt(i) & 0x00ffffffffL).asUInt(32.W)
 

@@ -6,13 +6,13 @@ import chiselverify.coverage._
 import chiselverify.coverage.{cover => ccover}
 import examples.heappriorityqueue.Helpers._
 import examples.heappriorityqueue.LocalHelpers._
-import org.scalatest._
+import org.scalatest.freespec.AnyFreeSpec
 
 
 /**
   * contains test for the whole priority queue
   */
-class PriorityQueueTest extends FreeSpec with ChiselScalatestTester {
+class PriorityQueueTest extends AnyFreeSpec with ChiselScalatestTester {
 
     "HeapPriorityQueue should pass random test" in {
         val size = 33

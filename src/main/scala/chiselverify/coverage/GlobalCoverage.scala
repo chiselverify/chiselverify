@@ -1,7 +1,7 @@
 package chiselverify.coverage
 
 import chisel3.experimental.DataMirror
-import chisel3.{Data, MultiIOModule}
+import chisel3._
 import chiseltest._
 
 import scala.collection.mutable
@@ -176,7 +176,7 @@ object GlobalCoverage {
       * @param dut the dut being covered
       * @tparam T the type of said dut
       */
-    class QueryableCoverage[T <: MultiIOModule](val dut: T) {
+    class QueryableCoverage[T <: Module](val dut: T) {
         val db = new QueryableCoverageDB
         val ports = (DataMirror.fullModulePorts(dut)).filter(p => p._1 != "clock" && p._1 != "reset" && p._1 != "io")
         private var cycles : Int = 0
@@ -189,7 +189,7 @@ object GlobalCoverage {
         /**
           * Samples every port in the DUT.
           */
-        def sample(): Unit = ports.foreach(p => db.set(p._1, (p._2.peek().litValue(), cycles)))
+        def sample(): Unit = ports.foreach(p => db.set(p._1, (p._2.peek().litValue, cycles)))
 
         /**
           * Steps the DUT clock while maintaining our internal one.

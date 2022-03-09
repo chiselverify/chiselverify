@@ -4,7 +4,7 @@ import chiseltest._
 import chiseltest.iotesters.PeekPokeTester
 import examples.heappriorityqueue.Behavioural._
 import examples.heappriorityqueue.modules.Heapifier
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 
 /**
@@ -12,7 +12,7 @@ import org.scalatest.FlatSpec
   *  - one tests the heapify up functionality on random memory states from random start positions
   *  - the other does the same for the heapify down functionality
   */
-class HeapifierTest extends FlatSpec with ChiselScalatestTester {
+class HeapifierTest extends AnyFlatSpec with ChiselScalatestTester {
     implicit val paramters = PriorityQueueParameters(17,4,2,8,4)
     val debugLvl = 0
     "Heapifier" should "heapify up" in {

@@ -9,7 +9,8 @@ import chiselverify.coverage.CoverReport._
 import chiselverify.coverage.{cover => ccover}
 import chiselverify.crv.{RangeBinder, ValueBinder}
 import chiselverify.crv.backends.jacop._
-import org.scalatest.{BeforeAndAfterAll, FlatSpec}
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.math.pow
 
@@ -52,22 +53,22 @@ object AluGoldenModel {
     def genNextState(transaction: AluAccuInput, accu: AluAccumulator): AluAccumulator = {
         val mask: Int = (1 << transaction.din.getWidth) - 1
         if (transaction.ena.litToBoolean) {
-            transaction.op.litValue().toInt match {
+            transaction.op.litValue.toInt match {
                 case 0 => accu
-                case 1 => if ((accu.value + transaction.din.litValue()) > mask) {
-                    AluAccumulator((accu.value + transaction.din.litValue()) & mask)
+                case 1 => if ((accu.value + transaction.din.litValue) > mask) {
+                    AluAccumulator((accu.value + transaction.din.litValue) & mask)
                 } else {
-                    AluAccumulator(accu.value + transaction.din.litValue())
+                    AluAccumulator(accu.value + transaction.din.litValue)
                 }
-                case 2 => if ((accu.value - transaction.din.litValue()) < 0) {
-                    AluAccumulator((accu.value - transaction.din.litValue()) & mask)
+                case 2 => if ((accu.value - transaction.din.litValue) < 0) {
+                    AluAccumulator((accu.value - transaction.din.litValue) & mask)
                 } else {
-                    AluAccumulator(accu.value - transaction.din.litValue())
+                    AluAccumulator(accu.value - transaction.din.litValue)
                 }
-                case 3 => AluAccumulator(accu.value & transaction.din.litValue())
-                case 4 => AluAccumulator(accu.value | transaction.din.litValue())
+                case 3 => AluAccumulator(accu.value & transaction.din.litValue)
+                case 4 => AluAccumulator(accu.value | transaction.din.litValue)
                 case 5 => AluAccumulator(accu.value ^ transaction.din.litValue)
-                case 6 => AluAccumulator(transaction.din.litValue())
+                case 6 => AluAccumulator(transaction.din.litValue)
                 case 7 => AluAccumulator(accu.value.toInt >>> 1)
             }
         } else {
@@ -93,8 +94,8 @@ object AluGoldenModel {
 
     def compareSingle(transaction: (AluAccuOutput, AluAccuOutput)): Boolean = {
         val (dutT, genT) = transaction
-        equals(dutT.accu.litValue() == genT.accu.litValue())
-        dutT.accu.litValue() == genT.accu.litValue()
+        equals(dutT.accu.litValue == genT.accu.litValue)
+        dutT.accu.litValue == genT.accu.litValue
     }
 
     def compare(transactions: List[(AluAccuOutput, AluAccuOutput)]): List[Boolean] = {
@@ -103,7 +104,7 @@ object AluGoldenModel {
 }
 
 trait AluBehavior {
-    this: FlatSpec with ChiselScalatestTester =>
+    this: AnyFlatSpec with ChiselScalatestTester =>
     val coverageCollector = new CoverageCollector
 
     def compute(name: String, size: Int, inputT: List[AluAccuInput]): Unit = {
@@ -157,7 +158,7 @@ trait AluBehavior {
     }
 }
 
-class AluVerification extends FlatSpec with AluBehavior with ChiselScalatestTester with BeforeAndAfterAll {
+class AluVerification extends AnyFlatSpec with AluBehavior with ChiselScalatestTester with BeforeAndAfterAll {
     behavior of "AluAccumulator"
     val size = 16
     val IsUnitTest = true // set to false to generate a lot more transactions
