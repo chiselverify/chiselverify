@@ -62,6 +62,16 @@ class CoverageReporter[T <: Module](private val dut: T) {
     def currentCycle: BigInt = coverageDB.getCurCycle
 
     /**
+      * Samples all points in a coverpoints defined in a given covergroup
+      * and updated the values stored in the coverageDB
+      * @param id the id of the covergroup that will be sampled.
+      */
+    def sample(id: Int): Unit = coverGroups.find(_.id == id) match {
+        case None => throw new IllegalArgumentException(s"No group with id $id registered!")
+        case Some(group) => group.points.foreach(_.sample(coverageDB))
+    }
+
+    /**
       * Samples all of the coverpoints defined in the various covergroups
       * and updates the values stored in the coverageDB
       */
