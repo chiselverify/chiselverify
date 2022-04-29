@@ -16,20 +16,143 @@ class ArbiterTest extends AnyFlatSpec with ChiselScalatestTester {
     test(new Arbiter(4, UInt(8.W))).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
       /* SYSTEM_VERILOG VERIFICATION PLAN:
       covergroup cg_output;
-      	OUT_READY: coverpoint dut.out_ready {
+      	OUT_READY: coverpoint dut.io_out_ready {
       		bins zero = {0};
             bins one = {1};
             bins transitionzto 0 => 1;
             bins transitionotz 1 => 0;
       	}
-      	OUT_VALID: coverpoint dut.out_valid {
+      	OUT_VALID: coverpoint dut.io_out_valid {
       	    bins zero = {0};
             bins one = {1};
             bins transitionzto 0 => 1;
             bins transitionotz 1 => 0;
       	}
-      	OUT_BITS: coverpoint dut.out_bits;
-      endgroup: cg_post_rst
+      	OUT_BITS: coverpoint dut.io_out_bits;
+      endgroup: cg_output
+      covergroup cg_input0;
+      	IN0_READY: coverpoint dut.io_in_0_ready {
+      		bins zero = {0};
+            bins one = {1};
+            bins transitionzto 0 => 1;
+            bins transitionotz 1 => 0;
+      	}
+      	IN1_VALID: coverpoint dut.io_in_0_valid {
+      	    bins zero = {0};
+            bins one = {1};
+            bins transitionzto 0 => 1;
+            bins transitionotz 1 => 0;
+      	}
+      	IN3_BITS: coverpoint dut.io_in_0_bits;
+      endgroup: cg_input0
+      covergroup cg_input1;
+      	IN0_READY: coverpoint dut.io_in_0_ready {
+      		bins zero = {0};
+            bins one = {1};
+            bins transitionzto 0 => 1;
+            bins transitionotz 1 => 0;
+      	}
+      	IN1_VALID: coverpoint dut.io_in_0_valid {
+      	    bins zero = {0};
+            bins one = {1};
+            bins transitionzto 0 => 1;
+            bins transitionotz 1 => 0;
+      	}
+      	IN3_BITS: coverpoint dut.io_in_0_bits;
+      endgroup: cg_input1
+      covergroup cg_input2;
+      	IN0_READY: coverpoint dut.io_in_0_ready {
+      		bins zero = {0};
+            bins one = {1};
+            bins transitionzto 0 => 1;
+            bins transitionotz 1 => 0;
+      	}
+      	IN1_VALID: coverpoint dut.io_in_0_valid {
+      	    bins zero = {0};
+            bins one = {1};
+            bins transitionzto 0 => 1;
+            bins transitionotz 1 => 0;
+      	}
+      	IN3_BITS: coverpoint dut.io_in_0_bits;
+      endgroup: cg_input2
+      covergroup cg_input3;
+      	IN0_READY: coverpoint dut.io_in_0_ready {
+      		bins zero = {0};
+            bins one = {1};
+            bins transitionzto 0 => 1;
+            bins transitionotz 1 => 0;
+      	}
+      	IN1_VALID: coverpoint dut.io_in_0_valid {
+      	    bins zero = {0};
+            bins one = {1};
+            bins transitionzto 0 => 1;
+            bins transitionotz 1 => 0;
+      	}
+      	IN3_BITS: coverpoint dut.io_in_0_bits;
+      endgroup: cg_input3
+      covergroup cg_input4;
+      	IN0_READY: coverpoint dut.io_in_0_ready {
+      		bins zero = {0};
+            bins one = {1};
+            bins transitionzto 0 => 1;
+            bins transitionotz 1 => 0;
+      	}
+      	IN1_VALID: coverpoint dut.io_in_0_valid {
+      	    bins zero = {0};
+            bins one = {1};
+            bins transitionzto 0 => 1;
+            bins transitionotz 1 => 0;
+      	}
+      	IN3_BITS: coverpoint dut.io_in_0_bits;
+      endgroup: cg_input4
+      covergroup cg_input5;
+      	IN0_READY: coverpoint dut.io_in_0_ready {
+      		bins zero = {0};
+            bins one = {1};
+            bins transitionzto 0 => 1;
+            bins transitionotz 1 => 0;
+      	}
+      	IN1_VALID: coverpoint dut.io_in_0_valid {
+      	    bins zero = {0};
+            bins one = {1};
+            bins transitionzto 0 => 1;
+            bins transitionotz 1 => 0;
+      	}
+      	IN3_BITS: coverpoint dut.io_in_0_bits;
+      endgroup: cg_input5
+      covergroup cg_input6;
+      	IN0_READY: coverpoint dut.io_in_0_ready {
+      		bins zero = {0};
+            bins one = {1};
+            bins transitionzto 0 => 1;
+            bins transitionotz 1 => 0;
+      	}
+      	IN1_VALID: coverpoint dut.io_in_0_valid {
+      	    bins zero = {0};
+            bins one = {1};
+            bins transitionzto 0 => 1;
+            bins transitionotz 1 => 0;
+      	}
+      	IN3_BITS: coverpoint dut.io_in_0_bits;
+      endgroup: cg_input6
+      covergroup cg_input7;
+      	IN0_READY: coverpoint dut.io_in_0_ready {
+      		bins zero = {0};
+            bins one = {1};
+            bins transitionzto 0 => 1;
+            bins transitionotz 1 => 0;
+      	}
+      	IN1_VALID: coverpoint dut.io_in_0_valid {
+      	    bins zero = {0};
+            bins one = {1};
+            bins transitionzto 0 => 1;
+            bins transitionotz 1 => 0;
+      	}
+      	IN3_BITS: coverpoint dut.io_in_0_bits;
+      endgroup: cg_input7
+
+
+      //WITH LOOPS AND ARRAYS (NOT REAL)
       covergroup cg_input_bits(ref bit [32:0] in_bits);
         IN_BITS: coverpoint in_bits;
       endgroup: cg_input_bits
