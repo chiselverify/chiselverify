@@ -2,14 +2,12 @@ package verifyTests.coverage
 
 import chisel3._
 import chiseltest._
-import chiselverify.coverage._
-import chiselverify.coverage.{cover => ccover}
-import chiselverify.timing.TimedOp.{Equals, Gt, GtEq, Lt, LtEq}
-import chiselverify.timing._
-import verifyTests.ToyDUT._
 import chiselverify.Utils.stringToOption
+import chiselverify.coverage.{cover => ccover, _}
+import chiselverify.timing._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import verifyTests.ToyDUT._
 
 class FunctionalCoverageTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
 
@@ -54,6 +52,59 @@ class FunctionalCoverageTest extends AnyFlatSpec with ChiselScalatestTester with
         report.binNHits(1, "accu", "First100") should be (BigInt(50))
         report.binNHits(1, "test", "testLo10") should be (BigInt(4))
         report.binNHits(1, "accuAndTest", "both1") should be (BigInt(1))
+    }
+
+    /**
+      * Tests functional coverage in a generic use case
+      */
+    def testSingleGroupSample[T <: BasicToyDUT](dut: T): Unit = {
+
+        val cr = new CoverageReporter(dut)
+        //Register group 0
+        cr.register(
+            ccover("accu", dut.io.outA)( //CoverPoint 1
+                bin("lo10", 0 until 10), bin("First100", 0 until 100)),
+            ccover("test", dut.io.outB)( //CoverPoint 2
+                bin("testLo10", 0 until 10)),
+            //Declare cross points
+            ccover("accuAndTest", dut.io.outA, dut.io.outB)(
+                cross("both1", Seq(1 to 1, 1 to 1)))
+        )
+        //Register group 1
+        cr.register(
+            ccover("accu1", dut.io.outA)(
+                bin("100onlyEven", 0 until 100, (x: Seq[BigInt]) => x.head % 2 == 0)
+            )
+        )
+
+        /**
+          * Test to see if sampling only a subgroup works
+          */
+        def testOne(): Unit = {
+            //Set a to 0
+            dut.io.a.poke(toUInt(0))
+            for (fun <- 1 until 50) {
+                cr.sample(2) // group id 1 should sample 0 to 48
+
+                dut.io.a.poke(toUInt(fun))
+                dut.io.b.poke(toUInt(fun % 4))
+
+                cr.sample(1) // group id 0 should sample 1 to 49
+            }
+        }
+
+        testOne()
+
+        //Generate report
+        val report = cr.report
+        print(report.serialize)
+
+        //Check that the number of hits is correct
+        report.binNHits(1, "accu", "lo10") should be (BigInt(9))
+        report.binNHits(1, "accu", "First100") should be (BigInt(49))
+        report.binNHits(1, "test", "testLo10") should be (BigInt(4))
+        report.binNHits(1, "accuAndTest", "both1") should be (BigInt(1))
+        report.binNHits(2, "accu1", "100onlyEven") should be (BigInt(25))
     }
 
     def testCond[T <: BasicToyDUT](dut: T): Unit = {
@@ -341,6 +392,12 @@ class FunctionalCoverageTest extends AnyFlatSpec with ChiselScalatestTester with
         test(new BasicToyDUT(32)) {
             dut => testCovCond(dut)
 
+        }
+    }
+
+    "SamplingWithMultipleGroups" should "pass" in {
+        test(new BasicToyDUT(32)) {
+            dut => testSingleGroupSample(dut)
         }
     }
 
