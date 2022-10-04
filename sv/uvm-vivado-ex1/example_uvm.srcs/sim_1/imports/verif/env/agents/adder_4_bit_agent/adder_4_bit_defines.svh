@@ -1,8 +1,0 @@
-`ifndef ADDER_4_BIT_DEFINES
-`define ADDER_4_BIT_DEFINES
-
-
-  `define ADDER_WIDTH 4 
-  `define NO_OF_TRANSACTIONS 1000
-
-`endif
