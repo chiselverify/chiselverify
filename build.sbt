@@ -9,8 +9,8 @@ scalacOptions ++= Seq(
 )
 
 // Chisel 3.5
-libraryDependencies += "edu.berkeley.cs" %% "chiseltest" % "0.5.1"
-addCompilerPlugin("edu.berkeley.cs" % "chisel3-plugin" % "3.5.1" cross CrossVersion.full)
+libraryDependencies += "edu.berkeley.cs" %% "chiseltest" % "0.5.4"
+addCompilerPlugin("edu.berkeley.cs" % "chisel3-plugin" % "3.5.4" cross CrossVersion.full)
 
 libraryDependencies += "org.jacop" % "jacop" % "4.7.0"
 libraryDependencies += "org.jliszka" %% "probability-monad" % "1.0.3"
@@ -19,7 +19,7 @@ libraryDependencies += "org.jliszka" %% "probability-monad" % "1.0.3"
 name := "chiselverify"
 
 // library version
-version := "0.2.0"
+version := "0.3.0"
 
 // groupId, SCM, license information
 organization := "io.github.chiselverify"
