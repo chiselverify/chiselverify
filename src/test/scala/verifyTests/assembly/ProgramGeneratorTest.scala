@@ -4,13 +4,11 @@ import chiselverify.assembly.RandomHelpers.BigRange
 import chiselverify.assembly.{IODistribution, MemoryDistribution, ProgramGenerator}
 import chiselverify.assembly.leros.Leros
 import org.scalatest.flatspec.AnyFlatSpec
-import verifyTests.assembly.ProgramGeneratorTest.expectedProgramString
 
 class ProgramGeneratorTest extends AnyFlatSpec {
   behavior of "Program generator"
 
   it should "generate the correct program" in {
-
     val pg = ProgramGenerator(Leros)(
       MemoryDistribution(
         BigRange(0, 0x1000) -> 1,
@@ -22,22 +20,15 @@ class ProgramGeneratorTest extends AnyFlatSpec {
       )
     )
 
-    val prog = pg.generate(300,0xdeadbeef)
-
-    println(prog)
-
+    val prog = pg.generate(300, 0xdeadbeef)
     prog.toString.split("\n")
-      .zip(expectedProgramString.split("\n"))
+      .zip(ProgramGeneratorTest.expectedProgramString.split("\n"))
       .zipWithIndex
       .foreach { case ((got,should),i) =>
         assert(got == should, s"$should was $got at line $i")
     }
-
-
   }
-
 }
-
 
 object ProgramGeneratorTest {
   val expectedProgramString = """  load <RANDOM_LABEL_0

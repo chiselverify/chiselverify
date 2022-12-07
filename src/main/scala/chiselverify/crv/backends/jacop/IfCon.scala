@@ -1,16 +1,16 @@
 package chiselverify.crv.backends.jacop
 import org.jacop.constraints.PrimitiveConstraint
 
-/** Since is not all the csp solver have support for conditional constraints, the IfThen and IfThenElse are not part of
-  * the common crv package.
+/** 
+  * Since not all csp solvers have support for conditional constraints, the IfThen and IfThenElse are not part of the common crv package.
   */
-
 class IfCon(val const: Constraint, val ifC: chiselverify.crv.Constraint, val thenC: chiselverify.crv.Constraint)(implicit model: Model)
-    extends Constraint(const.getConstraint) {
+  extends Constraint(const.getConstraint) {
 
-  /** Companion class for creating if-then-else constraint
-    * @param ifCons IfConstraint
-    * @param elseC ElseConstraint
+  /** 
+    * Companion class for creating if-then-else constraint
+    * @param ifCons an IfConstraint
+    * @param elseC an ElseConstraint
     */
   class IfElseCon(val ifCons: IfCon, val elseC: chiselverify.crv.Constraint) extends IfCon(const, ifC, thenC) {
     val newConstraint = new org.jacop.constraints.IfThenElse(
@@ -54,11 +54,12 @@ class IfCon(val const: Constraint, val ifC: chiselverify.crv.Constraint, val the
   thenC.disable()
 }
 
-/** Helper object for defining IfThen constraints
+/** 
+  * Helper object for defining IfThen constraints
   */
 object IfCon {
-
-  /** If then constraint
+  /** 
+    * Creates a new IfThen constraint
     * @param ifC the if condition represented as a constraint
     * @param thenC the constraint to be applied if the ifC condition is true
     * @param model the current [[Model]], constraint can only be defined inside a [[RandObj]]

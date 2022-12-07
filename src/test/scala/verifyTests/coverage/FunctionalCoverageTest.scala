@@ -2,7 +2,7 @@ package verifyTests.coverage
 
 import chisel3._
 import chiseltest._
-import chiselverify.Utils.stringToOption
+import chiselverify._
 import chiselverify.coverage.{cover => ccover, _}
 import chiselverify.timing._
 import org.scalatest.flatspec.AnyFlatSpec

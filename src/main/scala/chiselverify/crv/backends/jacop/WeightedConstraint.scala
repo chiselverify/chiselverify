@@ -1,40 +1,37 @@
 package chiselverify.crv.backends.jacop
 
 /**
-  * A bucket represent a range of values between 0 and 1.
-  * The length of the bucket intrinsically represents the weight
-  * associated with this bucket
-  *
+  * Represents a range of values between 0 and 1.
   * @param min the minimum value of the bucket
-  * @param max the maximum value of the bucket
+  * @param max the maximum value of the bucket 
+  * 
+  * The length of a bucket intrinsically represents the weight associated with it.
   */
 case class Bucket(min: Double, max: Double)
 
 /**
-  * A Weight is used in distribution constraints to
-  * set the priority of a range or a value
+  * Used in distribution constraints to set the priority of a range or a value
   */
 sealed trait Weight {
   val weight: Int
 }
 
 /**
-  * WeightedValue is a compound type between an integer and a weight
+  * Compound type between a value and a weight
   * @param value integer value
   * @param weight integer weight
   */
 case class WeightedValue(value: Int, weight: Int) extends Weight
 
 /**
-  * WeightedRange is a compound type between an range and a weight
-  * @param range integer value
+  * Compound type between a range and a weight
+  * @param range integer range
   * @param weight integer weight
   */
 case class WeightedRange(range: Range, weight: Int) extends Weight
 
 /**
-  * Weighted constraint group is a class that assign to each constraint group a bucket
-  *
+  * Weighted constraint group is a class that assigns to each constraint group a bucket
   * @param bucket the current bucket
   * @param group a group of constraints
   */

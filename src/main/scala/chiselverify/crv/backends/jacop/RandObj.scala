@@ -97,7 +97,7 @@ trait RandObj extends chiselverify.crv.RandObj {
     */
   def setDistConstraints(): Unit = {
     currentModel.distConst.foreach(_.disableAll())
-    currentModel.distConst.filter(_.isEanble).foreach(_.randomlyEnable())
+    currentModel.distConst.filter(_.isEnabled).foreach(_.randomlyEnable())
   }
 
   /** Randomize the current [[RandObj]]

@@ -16,15 +16,15 @@ import scala.util.Random
   * An instance of a generator context is passed down the function call tree which produces the final instruction sequence
   */
 case class GeneratorContext(
-                             isa: InstructionSet,
-                             nextInstruction: Seq[Constraint] => InstructionFactory with Categorizable,
-                             nextMemoryAddress: Seq[Constraint] => BigInt,
-                             nextIOAddress: Seq[Constraint] => BigInt,
-                             nextJumpTarget: () => LabelRecord,
-                             pc: Counter,
-                             labelCounter: Counter,
-                             jumpTargets: ListBuffer[LabelRecord]
-                           )
+  isa: InstructionSet,
+  nextInstruction: Seq[Constraint] => InstructionFactory with Categorizable,
+  nextMemoryAddress: Seq[Constraint] => BigInt,
+  nextIOAddress: Seq[Constraint] => BigInt,
+  nextJumpTarget: () => LabelRecord,
+  pc: Counter,
+  labelCounter: Counter,
+  jumpTargets: ListBuffer[LabelRecord]
+)
 
 object GeneratorContext {
   // a generator context can be defined by an ISA and a set of constraints
@@ -84,8 +84,6 @@ object GeneratorContext {
       // no distribution was supplied and all allowed instructions are distributed uniformly
       randomSelect((isa.instructions ++ Seq(Label())).filter(i => i.isOfOneOfCategories(allowedCategories) && !i.isOfOneOfCategories(blacklisted)))
     }
-
-
   }
 
   /**
@@ -181,7 +179,7 @@ class ProgramGenerator(context: GeneratorContext) {
 
   // generate approximately n instructions using a random seed
   def generate(n: Int): Program = {
-    generate(n,Random.nextLong())
+    generate(n, Random.nextLong())
   }
 
   // generate an instruction sequence based on a pattern using the passed seed
@@ -192,7 +190,6 @@ class ProgramGenerator(context: GeneratorContext) {
 
   // generate an instruction sequence based on a pattern with a random seed
   def generate(p: Pattern): Program = {
-    generate(p,Random.nextLong())
+    generate(p, Random.nextLong())
   }
-
 }

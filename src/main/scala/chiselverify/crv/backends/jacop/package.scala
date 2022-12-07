@@ -4,7 +4,7 @@ import org.jacop.constraints._
 import org.jacop.core.IntDomain
 import org.jacop.scala.{IntSet, SetVar}
 import org.jacop.set.constraints.{EinA, XinA}
-import chiselverify.Utils.randName
+import chiselverify.crv.randName
 import scala.util.Random
 
 package object jacop {

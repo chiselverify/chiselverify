@@ -42,4 +42,3 @@ publishTo := Some(
   else
     Opts.resolver.sonatypeStaging
 )
-

@@ -9,22 +9,28 @@ trait DistTrait {
   protected val wConstraintGList: Seq[WConstraintGroup]
   protected val _var: Rand
   /**
-    * Like for normal constraints distribution constraint
-    * can be enabled or disabled
+    * Like for normal constraints, the distribution constraint can be enabled or disabled
     */
-  var isEanble = true
+  var isEnabled = true
 
+  /** 
+    * Disables the constraint
+    */
   def disable(): Unit = {
-    isEanble = false
+    isEnabled = false
   }
 
+  /** 
+    * Enables the constraint
+    * 
+    * Each constraint is by default enabled when instantiated. This method has effect only if called after [[disable]]
+    */
   def enable(): Unit = {
-    isEanble = true
+    isEnabled = true
   }
 
   /**
-    * Randomly enable one of the constraint groups defined in the
-    * constraint group list
+    * Randomly enables one of the constraint groups defined in the constraint group list
     */
   def randomlyEnable(): Unit = {
     val number = random.nextDouble()
@@ -35,13 +41,12 @@ trait DistTrait {
   }
 
   /**
-    * disable all the constraints in the constraint group list
+    * Disables all the constraints in the constraint group list
     */
   def disableAll(): Unit = wConstraintGList foreach (_.disable())
 
   /**
-    * From a list of doubles creates a list of buckets where
-    * the min is the current double and the max is the next element on the list
+    * From a list of doubles creates a list of buckets where the min is the current double and the max is the next element on the list
    */
   protected def swipeAndSum(buckets: List[Double]): List[Bucket] = {
     buckets match {
@@ -54,7 +59,7 @@ trait DistTrait {
 
 /**
   * Create a [[DistConstraint]] between a [[Rand]] and a list of [[WeightedRange]] and [[WeightedValue]]
-  * @param variable the [[Rand]] variable to constraint
+  * @param variable the [[Rand]] variable to constrain
   * @param listOfDistC list of [[WeightedRange]] and [[WeightedValue]]
   * @param model implicit [[Model]] of the current [[RandObj]]
   */
@@ -63,11 +68,11 @@ class DistConstraint(variable: Rand, listOfDistC: List[Weight])(implicit model: 
   protected override val random = new Random(model.seed + listOfDistC.length)
 
   /**
-    * Create a [[WConstraintGroup]] based on the type of [[Weight]] and [[Bucket]]
+    * Creates a [[WConstraintGroup]] based on the type of [[Weight]] and [[Bucket]]
     * @param rangeAndBucket tuple of [[Weight]] and [[Bucket]]
-    * @return
+    * @return the defined constraint group
     */
-  private def createWeightedConstraintGroup(rangeAndBucket: (Weight, Bucket)): WConstraintGroup = {
+  private def createWeightedConstraintGroup(rangeAndBucket: (Weight, Bucket)) = {
     rangeAndBucket match {
       case (weight, bucket) => weight match {
         case WeightedRange(range, _) => new WConstraintGroup(bucket, variable > range.start, variable <= range.end)
@@ -79,7 +84,7 @@ class DistConstraint(variable: Rand, listOfDistC: List[Weight])(implicit model: 
   /**
     * Constraint group list
     */
-  protected override val wConstraintGList: immutable.Seq[WConstraintGroup] = {
+  protected override val wConstraintGList = {
     val total: Double = listOfDistC.map(_.weight).sum.toDouble
     val buckets:  List[Double] = listOfDistC.map(_.weight / total).scan(0.0)((a, b) => a + b)
     val zipped  = listOfDistC zip swipeAndSum(buckets)

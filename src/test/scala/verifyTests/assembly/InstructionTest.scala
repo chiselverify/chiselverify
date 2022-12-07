@@ -1,6 +1,5 @@
 package verifyTests.assembly
 
-
 import chiselverify.assembly.{Category, CategoryWhiteList, GeneratorContext, Instruction}
 import chiselverify.assembly.leros.Leros
 import org.scalatest.flatspec.AnyFlatSpec

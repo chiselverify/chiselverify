@@ -27,7 +27,6 @@ package object assembly {
     }
   }
 
-
   object AssemblyDistributions extends Distributions(scala.util.Random)
 
   /**
@@ -51,7 +50,6 @@ package object assembly {
       old
     }
   }
-
 
   trait Constraint
 
@@ -92,6 +90,4 @@ package object assembly {
       }
     }
   }
-
-
 }

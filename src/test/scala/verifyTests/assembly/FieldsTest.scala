@@ -39,6 +39,7 @@ class FieldsTest extends AnyFlatSpec {
     }
     assert(checker)
   }
+
   it should "not allow an out of bounds initializer (signed)" in {
     var checker = true
     try {
@@ -49,7 +50,6 @@ class FieldsTest extends AnyFlatSpec {
     }
     assert(checker)
   }
-
 
   behavior of "Label reference field"
 
@@ -80,6 +80,4 @@ class FieldsTest extends AnyFlatSpec {
     }
     assert(checker)
   }
-
-
 }

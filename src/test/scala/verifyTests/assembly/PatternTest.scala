@@ -22,5 +22,4 @@ class PatternTest extends AnyFlatSpec {
     assert(getEveryNthItem(3,6)(mnemonics).forall(_ == mnemonics(3)))
     assert(getEveryNthItem(4,6)(mnemonics).forall(_ == mnemonics(4)))
   }
-
 }
