@@ -1,4 +1,4 @@
-package verifyTests.approximate
+package verifyTests.approximation
 
 import chisel3._
 import chiseltest._
@@ -51,7 +51,7 @@ class ApproximateVerificationTest extends AnyFlatSpec with ChiselScalatestTester
 
   it should "produce an empty report" in {
     val er = new ErrorReporter()
-    er.report().split('\n') should contain ("  Error reporter is empty!")
+    er.report().split('\n') should contain ("Error reporter is empty!")
   }
 
   it should "verify without watchers" in {
@@ -83,7 +83,7 @@ class ApproximateVerificationTest extends AnyFlatSpec with ChiselScalatestTester
       val er = new ErrorReporter(
         track(dut.io.outAA, dut.io.outA)
       )
-      er.report().split('\n') should contain (s"  Tracker on ports ${portName(dut.io.outAA)} and ${portName(dut.io.outA)} has no metrics!")
+      er.report().split('\n') should contain (s"Tracker on ports ${portName(dut.io.outAA)} and ${portName(dut.io.outA)} has no metrics!")
     }
   }
 
@@ -93,7 +93,7 @@ class ApproximateVerificationTest extends AnyFlatSpec with ChiselScalatestTester
         track(dut.io.outAA, dut.io.outA)
       )
       simpleTest(dut, er)
-      er.report().split('\n') should contain (s"  Tracker on ports ${portName(dut.io.outAA)} and ${portName(dut.io.outA)} has no metrics!")
+      er.report().split('\n') should contain (s"Tracker on ports ${portName(dut.io.outAA)} and ${portName(dut.io.outA)} has no metrics!")
     }
   }
 
@@ -105,13 +105,13 @@ class ApproximateVerificationTest extends AnyFlatSpec with ChiselScalatestTester
       )
       simpleTest(dut, er)
       er.report().split('\n') should (
-        contain (s"  Tracker on ports ${portName(dut.io.outAA)} and ${portName(dut.io.outA)} has no metrics!")
+        contain (s"Tracker on ports ${portName(dut.io.outAA)} and ${portName(dut.io.outA)} has no metrics!")
         and
-        contain (s"  Tracker on ports ${portName(dut.io.outBB)} and ${portName(dut.io.outB)} has results:")
+        contain (s"Tracker on ports ${portName(dut.io.outBB)} and ${portName(dut.io.outB)} has results:")
         and
-        contain (s"  - History-based ER(None) metric has value 0.00!")
+        contain (s"- History-based ER(None) metric has value 0.000!")
         and
-        contain (s"  - Instantaneous ED(None) metric has mean 0.00 and maximum 0.00!")
+        contain (s"- Instantaneous ED(None) metric has mean 0.000 and maximum 0.000!")
       )
     }
   }
@@ -125,9 +125,9 @@ class ApproximateVerificationTest extends AnyFlatSpec with ChiselScalatestTester
         constrain(dut.io.outBB, dut.io.outB)
       )
       er.report().split('\n') should (
-        contain (s"  Tracker on ports ${portName(dut.io.outAA)} and ${portName(dut.io.outA)} has no metrics!")
+        contain (s"Tracker on ports ${portName(dut.io.outAA)} and ${portName(dut.io.outA)} has no metrics!")
         and
-        contain (s"  Constraint on ports ${portName(dut.io.outBB)} and ${portName(dut.io.outB)} has no metrics!")
+        contain (s"Constraint on ports ${portName(dut.io.outBB)} and ${portName(dut.io.outB)} has no metrics!")
       )
     }
   }
@@ -176,7 +176,7 @@ class ApproximateVerificationTest extends AnyFlatSpec with ChiselScalatestTester
       simpleTest(dut, er)
       er.verify() should be (false)
       er.report().split('\n').map { ln =>
-        ln.startsWith("  - History-based MRED(Some(0.1)) metric is violated by")
+        ln.startsWith("- History-based MRED(Some(0.1)) metric is violated by")
       }.reduce(_ || _) should be (true)
     }
   }
