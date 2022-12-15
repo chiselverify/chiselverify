@@ -90,4 +90,49 @@ object ToyDUT {
         io.outCSupB := io.b + cSupb
         io.outCNotSupB := io.b - cSupb
     }
+
+    //Used for approximate verification testing
+    class ApproximateBasicToyDUT(size: Int) extends Module {
+        val io = IO(new Bundle {
+            val a = Input(UInt(size.W))
+            val b = Input(UInt(size.W))
+            val outAA = Output(UInt(size.W))
+            val outBB = Output(UInt(size.W))
+            val outAABB = Output(UInt((size + 1).W))
+        })
+        
+        io.outAA := io.a
+        io.outBB := io.b
+        io.outAABB := (io.a(size-1) & io.b(size-1)) ## (io.a ^ io.b)
+    }
+
+    class ApproximateExactToyDUT(size: Int) extends Module {
+        val io = IO(new Bundle {
+            val a = Input(UInt(size.W))
+            val b = Input(UInt(size.W))
+            // Exact outputs
+            val outA = Output(UInt(size.W))
+            val outB = Output(UInt(size.W))
+            val outAB = Output(UInt((size + 1).W))
+            // Approximate outputs
+            val outAA = Output(UInt(size.W))
+            val outBB = Output(UInt(size.W))
+            val outAABB = Output(UInt((size + 1).W))
+        })
+
+        val approxDUT = Module(new ApproximateBasicToyDUT(size))
+        val exactDUT  = Module(new BasicToyDUT(size))
+        //Connect inputs
+        approxDUT.io.a := io.a
+        approxDUT.io.b := io.b
+        exactDUT.io.a  := io.a
+        exactDUT.io.b  := io.b
+        //Connect outputs
+        io.outAA   := approxDUT.io.outAA
+        io.outBB   := approxDUT.io.outBB
+        io.outAABB := approxDUT.io.outAABB
+        io.outA    := exactDUT.io.outA
+        io.outB    := exactDUT.io.outB
+        io.outAB   := exactDUT.io.outAB
+    }
 }
