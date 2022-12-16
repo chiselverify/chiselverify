@@ -1,4 +1,4 @@
-scalaVersion := "2.12.15"
+scalaVersion := "2.13.8"
 
 scalacOptions ++= Seq(
   "-language:reflectiveCalls",
@@ -9,11 +9,11 @@ scalacOptions ++= Seq(
 )
 
 // Chisel 3.5
-libraryDependencies += "edu.berkeley.cs" %% "chiseltest" % "0.5.1"
-addCompilerPlugin("edu.berkeley.cs" % "chisel3-plugin" % "3.5.1" cross CrossVersion.full)
+libraryDependencies += "edu.berkeley.cs" %% "chiseltest" % "0.5.4"
+addCompilerPlugin("edu.berkeley.cs" % "chisel3-plugin" % "3.5.4" cross CrossVersion.full)
 
-libraryDependencies += "org.jacop" % "jacop" % "4.7.0"
-libraryDependencies += "org.jliszka" %% "probability-monad" % "1.0.3"
+libraryDependencies += "org.jacop" % "jacop" % "4.9.0"
+libraryDependencies += "org.jliszka" %% "probability-monad" % "1.0.4"
 
 // library name
 name := "chiselverify"
@@ -42,4 +42,3 @@ publishTo := Some(
   else
     Opts.resolver.sonatypeStaging
 )
-

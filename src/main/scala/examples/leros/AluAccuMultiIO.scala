@@ -25,7 +25,6 @@ abstract class AluAccuMutliIO(sizen: Int) extends Module {
 }
 
 class AluAccuMultiChisel(val size: Int) extends AluAccuMutliIO(size) {
-
   val accuReg = RegInit(0.U(size.W))
 
   val op = input.op

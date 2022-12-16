@@ -1,6 +1,5 @@
 package chiselverify.assembly
 
-
 /**
   * Functions for creating symbolic labels in generated assembly code
   * they are represented by instruction objects whose assembly code is
@@ -18,6 +17,7 @@ object Label {
       Seq(Label.create(lbl))
     })
   }
+
   // user defined labels factory
   def apply(lbl: String): Pattern = {
     Pattern(implicit c => {
@@ -33,5 +33,4 @@ object Label {
       override def toAsm: String = s"$id:"
     }
   }
-
 }

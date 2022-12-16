@@ -2,6 +2,7 @@ package examples.heappriorityqueue
 
 import chisel3._
 import chiseltest._
+
 import examples.heappriorityqueue.Interfaces.{Event, TaggedEvent}
 
 /**
@@ -37,22 +38,14 @@ object Helpers {
   }
 
   def peekPrioAndId(port: TaggedEvent): Seq[Int] = {
-    Seq(port.event.superCycle, port.event.cycle, port.id).map(_.peek.litValue.toInt)
+    Seq(port.event.superCycle, port.event.cycle, port.id).map(_.peek().litValue.toInt)
   }
 
-  def peekPrio(port: Event): Seq[Int] = {
-    Seq(port.superCycle, port.cycle).map(_.peek.litValue.toInt)
-  }
+  def peekPrio(port: Event): Seq[Int] = Seq(port.superCycle, port.cycle).map(_.peek().litValue.toInt)
 
-  def peekPrioAndIdVec(port: Vec[TaggedEvent]): Seq[Seq[Int]] = {
-    Seq.tabulate(port.length)(i => peekPrioAndId(port(i)))
-  }
+  def peekPrioAndIdVec(port: Vec[TaggedEvent]): Seq[Seq[Int]] = Seq.tabulate(port.length)(i => peekPrioAndId(port(i)))
 
-  def prioAndIdToString(data: Seq[Int]): String = {
-    data.mkString(":")
-  }
+  def prioAndIdToString(data: Seq[Int]): String = data.mkString(":")
 
-  def prioAndIdVecToString(data: Seq[Seq[Int]]): String = {
-    data.map(_.mkString(":")).mkString(", ")
-  }
+  def prioAndIdVecToString(data: Seq[Seq[Int]]): String = data.map(_.mkString(":")).mkString(", ")
 }

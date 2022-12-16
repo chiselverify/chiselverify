@@ -2,6 +2,7 @@ package examples.heappriorityqueue.modules
 
 import chisel3._
 import chisel3.util._
+
 import examples.heappriorityqueue.Interfaces._
 import examples.heappriorityqueue.PriorityQueueParameters
 
@@ -10,9 +11,9 @@ import examples.heappriorityqueue.PriorityQueueParameters
   */
 class QueueControl(implicit parameters: PriorityQueueParameters) extends Module {
   import parameters._
-  /////////////////////////////////////////////////////IO///////////////////////////////////////////////////////////////
+  require(isPow2(order), "The number of children per node needs to be a power of 2!")
+  
   val io = IO(new Bundle {
-
     val head = new Bundle {
       val valid = Output(Bool())
       val none = Output(Bool())
@@ -42,9 +43,6 @@ class QueueControl(implicit parameters: PriorityQueueParameters) extends Module 
     // output of the current state for debug purposes
     val state = Output(UInt())
   })
-  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-  require(isPow2(order), "The number of children per node needs to be a power of 2!")
 
   // modules
   val heapifier = Module(new Heapifier)
@@ -109,7 +107,6 @@ class QueueControl(implicit parameters: PriorityQueueParameters) extends Module 
   io.state := stateReg
 
   //////////////////////////////////////////////////State Machine///////////////////////////////////////////////////////
-
   switch(stateReg) {
     is(idle) {
 

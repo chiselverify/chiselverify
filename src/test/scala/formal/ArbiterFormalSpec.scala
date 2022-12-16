@@ -4,8 +4,9 @@ import chisel3._
 import chisel3.util._
 import chiseltest._
 import chiseltest.formal._
-import examples.Arbiter
 import org.scalatest.flatspec.AnyFlatSpec
+
+import examples.Arbiter
 
 class ArbiterFormalSpec extends AnyFlatSpec with ChiselScalatestTester with Formal {
   behavior of "Arbiter"
@@ -25,8 +26,6 @@ class ArbiterFormalSpec extends AnyFlatSpec with ChiselScalatestTester with Form
     assert(e.failAt == 7, s"expected check to fail at step 7 not $e")
   }
 }
-
-
 
 private class ArbiterFormalFairnessCheck[D <: Data](makeDut: => Arbiter[D], debugPrint: Boolean = false) extends Module {
   val dut = Module(makeDut)

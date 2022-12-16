@@ -1,13 +1,14 @@
 package verifyTests.crv.backends.jacop
+
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
+
 import chiselverify.crv
 import chiselverify.crv.backends.jacop
 import chiselverify.crv.{RangeBinder, ValueBinder, backends}
-import chiselverify.crv.backends.jacop.{Constraint, ConstraintGroup, Cyclic, IfCon, Model, Rand, RandCVar, RandObj, RandVar, Randc, rand}
-import org.scalatest.flatspec.AnyFlatSpec
+import chiselverify.crv.backends.jacop.{JaCoPConstraint, JaCoPConstraintGroup, Cyclic, IfCon, Model, Rand, RandCVar, RandObj, RandVar, Randc, rand}
 
-
-class TestRandJacop extends AnyFlatSpec {
-
+class JaCoPRandTest extends AnyFlatSpec with Matchers {
   it should "be able to declare a random variable and and a constraint" in {
     class Packet extends RandObj {
       currentModel = new Model(3)
@@ -17,42 +18,38 @@ class TestRandJacop extends AnyFlatSpec {
       var size = rand(min, max)
       var len = rand(min, max)
       len >= size
-      val x:       crv.Constraint = len <= size
-      val y:       crv.Constraint = len > 4
+      val x: crv.CRVConstraint = len <= size
+      val y: crv.CRVConstraint = len > 4
       val payload = Array.tabulate(11)(_ => rand(1, 100))
       payload(0) = (len + size)
     }
 
     val myPacket = new Packet
     myPacket.x.disable()
-    assert(myPacket.randomize)
-    assert(myPacket.len.value() >= myPacket.size.value())
-
-    assert(myPacket.randomize)
-    assert(myPacket.len.value() >= myPacket.size.value())
-
-    assert(myPacket.randomize)
-    assert(myPacket.len.value() >= myPacket.size.value())
+    for (_ <- 0 until 3) {
+      myPacket.randomize should be (true)
+      (myPacket.len.value() >= myPacket.size.value()) should be (true)
+    }
 
     myPacket.y.disable()
     myPacket.x.enable()
-    myPacket.randomize
-    assert(myPacket.len.value() <= myPacket.size.value())
+    myPacket.randomize should be (true)
+    (myPacket.len.value() <= myPacket.size.value()) should be (true)
 
     myPacket.y.enable()
     myPacket.x.disable()
-    myPacket.randomize
-    assert(myPacket.len.value() >= myPacket.size.value())
+    myPacket.randomize should be (true)
+    (myPacket.len.value() >= myPacket.size.value()) should be (true)
 
     myPacket.y.disable()
     myPacket.x.enable()
-    myPacket.randomize
-    assert(myPacket.len.value() <= myPacket.size.value())
+    myPacket.randomize should be (true)
+    (myPacket.len.value() <= myPacket.size.value()) should be (true)
 
     myPacket.y.enable()
     myPacket.x.disable()
-    myPacket.randomize
-    assert(myPacket.len.value() >= myPacket.size.value())
+    myPacket.randomize should be (true)
+    (myPacket.len.value() >= myPacket.size.value()) should be (true)
   }
 
   it should "be able to enable disable constraint 2" in {
@@ -62,32 +59,17 @@ class TestRandJacop extends AnyFlatSpec {
       val max = 100
       val size = rand(min, max)
       val len = rand(min, max)
-      val grater: Constraint = size > len
-      val smaller: Constraint = size < len
+      val greater: JaCoPConstraint = size > len
+      val smaller: JaCoPConstraint = size < len
     }
     val myPacket = new Packet
-    myPacket.grater.disable()
-    assert(myPacket.randomize)
-    assert(myPacket.size.value() < myPacket.len.value())
+    myPacket.greater.disable()
+    myPacket.randomize should be (true)
+    (myPacket.size.value() < myPacket.len.value()) should be (true)
     myPacket.smaller.disable()
-    myPacket.grater.enable()
-    assert(myPacket.randomize)
-    assert(myPacket.size.value() > myPacket.len.value())
-  }
-
-  it should "be able to subtract two Rand var" in {
-    class Packet extends RandObj {
-      currentModel = new Model(3)
-      val min = 1
-      val max = 100
-      val size = rand(min, max)
-      val len = rand(min, max)
-      val payload = Array.tabulate(11)(i => rand(1, 100))
-      payload(0) = (len - size)
-    }
-    val myPacket = new Packet
-    assert(myPacket.randomize)
-    assert(myPacket.payload(0).value() == myPacket.len.value - myPacket.size.value())
+    myPacket.greater.enable()
+    myPacket.randomize should be (true)
+    (myPacket.size.value() > myPacket.len.value()) should be (true)
   }
 
   it should "be able to add two Rand var" in {
@@ -102,12 +84,12 @@ class TestRandJacop extends AnyFlatSpec {
       payload(1) = (len + 4)
     }
     val myPacket = new Packet
-    assert(myPacket.randomize)
-    assert(myPacket.payload(0).value() == myPacket.len.value + myPacket.size.value())
-    assert(myPacket.payload(1).value() == myPacket.len.value + 4)
+    myPacket.randomize should be (true)
+    myPacket.payload(0).value() should equal (myPacket.len.value + myPacket.size.value())
+    myPacket.payload(1).value() should equal (myPacket.len.value + 4)
   }
 
-  it should "be able to divide two Rand var" in {
+  it should "be able to subtract two Rand var" in {
     class Packet extends RandObj {
       currentModel = new Model(3)
       val min = 1
@@ -115,13 +97,11 @@ class TestRandJacop extends AnyFlatSpec {
       val size = rand(min, max)
       val len = rand(min, max)
       val payload = Array.tabulate(11)(i => rand(1, 100))
-      payload(0) = len.div(size)
-      payload(1) = len.div(4)
+      payload(0) = (len - size)
     }
     val myPacket = new Packet
-    assert(myPacket.randomize)
-    assert(myPacket.payload(0).value() == myPacket.len.value / myPacket.size.value())
-    assert(myPacket.payload(1).value() == myPacket.len.value / 4)
+    myPacket.randomize should be (true)
+    myPacket.payload(0).value() should equal (myPacket.len.value - myPacket.size.value())
   }
 
   it should "be able to multiply two Rand var" in {
@@ -136,12 +116,29 @@ class TestRandJacop extends AnyFlatSpec {
       payload(1) = (len * 4)
     }
     val myPacket = new Packet
-    assert(myPacket.randomize)
-    assert(myPacket.payload(0).value() == myPacket.len.value * myPacket.size.value())
-    assert(myPacket.payload(1).value() == myPacket.len.value * 4)
+    myPacket.randomize should be (true)
+    myPacket.payload(0).value() should equal (myPacket.len.value * myPacket.size.value())
+    myPacket.payload(1).value() should equal (myPacket.len.value * 4)
   }
 
-  it should "be able to constraint the reminder of Rand var" in {
+  it should "be able to divide two Rand var" in {
+    class Packet extends RandObj {
+      currentModel = new Model(3)
+      val min = 1
+      val max = 100
+      val size = rand(min, max)
+      val len = rand(min, max)
+      val payload = Array.tabulate(11)(i => rand(1, 100))
+      payload(0) = len.div(size)
+      payload(1) = len.div(4)
+    }
+    val myPacket = new Packet
+    myPacket.randomize should be (true)
+    myPacket.payload(0).value() should equal (myPacket.len.value / myPacket.size.value())
+    myPacket.payload(1).value() should equal (myPacket.len.value / 4)
+  }
+
+  it should "be able to constrain the remainder of Rand var" in {
     class Packet extends RandObj {
       currentModel = new Model(6)
       val min = 1
@@ -153,30 +150,12 @@ class TestRandJacop extends AnyFlatSpec {
       payload(1) = len.mod(4)
     }
     val myPacket = new Packet
-    assert(myPacket.randomize)
-    assert(myPacket.payload(0).value() == myPacket.len.value % myPacket.size.value())
-    assert(myPacket.payload(1).value() == myPacket.len.value % 4)
+    myPacket.randomize should be (true)
+    myPacket.payload(0).value() should equal (myPacket.len.value % myPacket.size.value())
+    myPacket.payload(1).value() should equal (myPacket.len.value % 4)
   }
 
-
-  it should "be able to constraint the exponential of Rand var" in {
-    class Packet extends RandObj {
-      currentModel = new Model(6)
-      val min = 1
-      val max = 100
-      val size: RandVar = rand(2, 3)
-      val len: RandVar = rand(min, max)
-      val payload: Array[RandVar] = Array.tabulate(11)(i => rand(1, 100))
-      payload(0) = (len ^ size)
-      payload(1) = (len ^ 3)
-    }
-    val myPacket = new Packet
-    assert(myPacket.randomize)
-    //assert(myPacket.payload(0).value() == math.pow(myPacket.len.value.toDouble, myPacket.size.value().toDouble).toInt)
-    //assert(myPacket.payload(1).value() == math.pow(myPacket.len.value.toDouble, 3).toInt)
-  }
-
-  it should "be able to constraint less or equal then  Rand var" in {
+  it should "be able to constrain less than or equal to Rand var" in {
     class Packet extends RandObj {
       currentModel = new Model(6)
       val min = 1
@@ -187,12 +166,12 @@ class TestRandJacop extends AnyFlatSpec {
       payload(1) <= 3
     }
     val myPacket = new Packet
-    myPacket.randomize
-    assert(myPacket.payload(0).value() <= myPacket.len.value())
-    assert(myPacket.payload(1).value() <= 3)
+    myPacket.randomize should be (true)
+    (myPacket.payload(0).value() <= myPacket.len.value()) should be (true)
+    (myPacket.payload(1).value() <= 3) should be (true)
   }
 
-  it should "be able to constraint less then  Rand var" in {
+  it should "be able to constrain less than Rand var" in {
     class Packet extends RandObj {
       currentModel = new Model(6)
       val min = 1
@@ -203,12 +182,12 @@ class TestRandJacop extends AnyFlatSpec {
       payload(1) < 3
     }
     val myPacket = new Packet
-    assert(myPacket.randomize)
-    assert(myPacket.payload(0).value() < myPacket.len.value())
-    assert(myPacket.payload(1).value() < 3)
+    myPacket.randomize should be (true)
+    (myPacket.payload(0).value() < myPacket.len.value()) should be (true)
+    (myPacket.payload(1).value() < 3) should be (true)
   }
 
-  it should "be able to constraint gather or equal than of Rand var" in {
+  it should "be able to constrain greater than or equal to Rand var" in {
     class Packet extends RandObj {
       currentModel = new Model(6)
       val min = 1
@@ -219,12 +198,12 @@ class TestRandJacop extends AnyFlatSpec {
       payload(1) >= 3
     }
     val myPacket = new Packet
-    myPacket.randomize
-    assert(myPacket.payload(0).value() >= myPacket.len.value())
-    assert(myPacket.payload(1).value() >= 3)
+    myPacket.randomize should be (true)
+    (myPacket.payload(0).value() >= myPacket.len.value()) should be (true)
+    (myPacket.payload(1).value() >= 3) should be (true)
   }
 
-  it should "be able to constraint gather than of Rand var" in {
+  it should "be able to constrain greater than Rand var" in {
     class Packet extends RandObj {
       currentModel = new Model(6)
       val min = 1
@@ -235,41 +214,39 @@ class TestRandJacop extends AnyFlatSpec {
       payload(1) > 3
     }
     val myPacket = new Packet
-    myPacket.randomize
-    assert(myPacket.payload(0).value() > myPacket.len.value())
-    assert(myPacket.payload(1).value() > 3)
+    myPacket.randomize should be (true)
+    (myPacket.payload(0).value() > myPacket.len.value()) should be (true)
+    (myPacket.payload(1).value() > 3) should be (true)
   }
 
   it should "be able to add Constraint Groups" in {
-
     class Packet extends RandObj {
       currentModel = new Model(6)
       val min = 1
       val max = 100
       val len: RandVar = rand(min, max)
       val payload: Array[RandVar] = Array.tabulate(11)(i => rand(min, max))
-      val cgroup: ConstraintGroup = new ConstraintGroup(
+      val cgroup: JaCoPConstraintGroup = new JaCoPConstraintGroup(
         payload(0) > len,
         payload(1) > 98
       )
 
-      val negc: crv.Constraint = payload(1) < 98
+      val negc: crv.CRVConstraint = payload(1) < 98
       negc.disable()
     }
 
     val myPacket = new Packet
-    assert(myPacket.randomize)
-    assert(myPacket.payload(0).value() > myPacket.len.value())
-    assert(myPacket.payload(1).value() > 98)
+    myPacket.randomize should be (true)
+    (myPacket.payload(0).value() > myPacket.len.value()) should be (true)
+    (myPacket.payload(1).value() > 98) should be (true)
     myPacket.cgroup.disable()
     myPacket.negc.enable()
 
-    assert(myPacket.randomize)
-    assert(myPacket.payload(1).value() < 98)
+    myPacket.randomize should be (true)
+    (myPacket.payload(1).value() < 98) should be (true)
   }
 
   it should "be possible to add Randc variables" in {
-
     class Packet extends RandObj {
       currentModel = new Model(6)
       val min = 1
@@ -281,16 +258,16 @@ class TestRandJacop extends AnyFlatSpec {
       payload(0) > len
       payload(1) > 98
 
-      val negc: crv.Constraint = payload(1) < 98
+      val negc: crv.CRVConstraint = payload(1) < 98
       negc.disable()
     }
 
     val myPacket = new Packet
-    assert(myPacket.randomize)
+    myPacket.randomize should be (true)
     val z: BigInt = myPacket.randc.value()
-    assert(myPacket.randomize)
+    myPacket.randomize should be (true)
     val x: BigInt = if (z == myPacket.max) myPacket.min else z + 1
-    assert(myPacket.randc.value() == x)
+    myPacket.randc.value() should equal (x)
   }
 
   it should "be able to declare nested random classes" in {
@@ -308,10 +285,10 @@ class TestRandJacop extends AnyFlatSpec {
       size == nestedPacket.len
     }
 
-    val myPaket = new Packet2(new Model)
-    assert(myPaket.currentModel.id == myPaket.nestedPacket.currentModel.id)
-    assert(myPaket.randomize)
-    assert(myPaket.size.value() == myPaket.nestedPacket.len.value())
+    val myPacket = new Packet2(new Model)
+    myPacket.currentModel.id should equal (myPacket.nestedPacket.currentModel.id)
+    myPacket.randomize should be (true)
+    myPacket.size.value() should equal (myPacket.nestedPacket.len.value())
   }
 
   it should "be able to declare conditional constraint" in {
@@ -335,13 +312,13 @@ class TestRandJacop extends AnyFlatSpec {
 
     }
     val myPacket = new Packet(new Model)
-    assert(myPacket.randomize)
+    myPacket.randomize should be (true)
     if (myPacket.len.value() == 1) {
-      assert(myPacket.c.value() == 50)
+      myPacket.c.value() should equal (50)
     } else if (myPacket.len.value() == 2) {
-      assert(myPacket.c.value() == 40)
+      myPacket.c.value() should equal (40)
     } else {
-      assert(myPacket.c.value() == 70)
+      myPacket.c.value() should equal (70)
     }
   }
 
@@ -352,7 +329,7 @@ class TestRandJacop extends AnyFlatSpec {
       val len:               RandVar = rand(1, 3)
       val c:                 RandVar = rand(1, 10)
       // TODO: Fixme
-      val conditional: Constraint = IfCon(len == 1) {
+      val conditional: JaCoPConstraint = IfCon(len == 1) {
         c == 50
       } ElseC {
         c == 10
@@ -360,21 +337,21 @@ class TestRandJacop extends AnyFlatSpec {
     }
 
     val myPacket = new Packet(new Model)
-    assert(myPacket.randomize)
+    myPacket.randomize should be (true)
 
     if (myPacket.len.value() == 1) {
-      assert(myPacket.c.value() == 50)
+      myPacket.c.value() should equal (50)
     } else {
-      assert(myPacket.c.value() == 10)
+      myPacket.c.value() should equal (10)
     }
     myPacket.conditional.disable()
-    assert(myPacket.randomize)
+    myPacket.randomize should be (true)
     if (myPacket.len.value() == 1) {
-      assert(myPacket.c.value() != 50)
+      myPacket.c.value() should not equal (50)
     }
-    assert(myPacket.randomize)
+    myPacket.randomize should be (true)
     if (myPacket.len.value() != 1) {
-      assert(myPacket.c.value() != 100)
+      myPacket.c.value() should not equal (100)
     }
   }
 
@@ -386,6 +363,7 @@ class TestRandJacop extends AnyFlatSpec {
 
     val myPacket = new Packet(new Model)
     myPacket.len.setVar(10)
+    myPacket.len.value() should be (10)
   }
 
   it should "be possible to create dist" in {
@@ -402,13 +380,6 @@ class TestRandJacop extends AnyFlatSpec {
     }
 
     val myPacket = new Packet
-    for (i <- Range(1, 100)) {
-       if (myPacket.randomize) {
-          myPacket.debug()
-       } else {
-         println("Couldn't randomize :-(")
-       }
-    }
-
+    (0 until 100).map(_ => myPacket.randomize).forall(s => s) should be (true)
   }
 }

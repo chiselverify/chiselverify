@@ -1,15 +1,14 @@
 package examples
 
+import chisel3._
 import chisel3.util.DecoupledIO
 import chiseltest._
-import chiselverify.coverage._
-import chiselverify.coverage.{cover => ccover}
-import chiselverify.timing._
-import chisel3._
 import org.scalatest.flatspec.AnyFlatSpec
 
-class ArbiterTest extends AnyFlatSpec with ChiselScalatestTester {
+import chiselverify.coverage.{cover => ccover, _}
+import chiselverify.timing._
 
+class ArbiterTest extends AnyFlatSpec with ChiselScalatestTester {
   behavior of "Arbiter"
 
   it should "pass" in {
@@ -236,7 +235,6 @@ class ArbiterTest extends AnyFlatSpec with ChiselScalatestTester {
       cr.step(10)
       // disable for now to avoid Travis issue.
       dut.io.out.bits.expect(2.U)
-      cr.printReport()
     }
   }
 
@@ -252,11 +250,10 @@ class ArbiterTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.clock.step()
       for (i <- 0 until 40) {
         if (dut.io.out.valid.peek().litToBoolean) {
-          println(dut.io.out.bits.peek().litValue)
+          // println(dut.io.out.bits.peek().litValue)
         }
         dut.clock.step()
       }
     }
   }
 }
-

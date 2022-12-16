@@ -1,9 +1,10 @@
 package chiselverify.crv.backends.jacop
 
-import chisel3.experimental.DataMirror
 import chisel3._
-import chiselverify.crv.backends.jacop.experimental.RandBundle.ModuleElaboration
+import chisel3.experimental.DataMirror
 import chisel3.experimental.BundleLiterals._
+
+import chiselverify.crv.backends.jacop.experimental.RandBundle.ModuleElaboration
 
 package object experimental {
 

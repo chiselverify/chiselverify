@@ -1,10 +1,8 @@
 package formal
 
-
 import chisel3._
-import chisel3.experimental.IO
 import chisel3.util._
-
+import chisel3.experimental.IO
 
 object MagicPacketTracker {
   def apply[D <: Data](enq: ValidIO[D], deq: ValidIO[D], depth: Int, debugPrint: Boolean = false): Unit = {
