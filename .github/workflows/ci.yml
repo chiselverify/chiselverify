@@ -9,10 +9,15 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Setup Scala
-      uses: olafurpg/setup-scala@v11
+    - name: Install Tabby OSS Cad Suite (from YosysHQ)
+      uses: YosysHQ/setup-oss-cad-suite@v1
       with:
-        java-version: openjdk@1.11
+        osscadsuite-version: '2022-03-07'
+
+    - name: Set up JDK 11
+      uses: actions/setup-java@v1
+      with:
+        java-version: 11
 
     - name: Compile
       run: sbt compile

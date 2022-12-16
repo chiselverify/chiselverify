@@ -23,7 +23,7 @@ object Reporting {
       */
     def +(that: Report): Report
 
-    override def toString(): String = report
+    override def toString(): String = report()
   }
 
   /** 
@@ -51,7 +51,7 @@ object Reporting {
       case _ => ErrorReport(watchers ++ Seq(that))
     }
 
-    override def toString(): String = report
+    override def toString(): String = report()
   }
 
   /** 
@@ -90,7 +90,7 @@ object Reporting {
       case _ => ErrorReport(Seq(this, that))
     }
 
-    override def toString(): String = report
+    override def toString(): String = report()
   }
 
   /** 
@@ -146,6 +146,6 @@ object Reporting {
       case _ => ErrorReport(Seq(this, that))
     }
 
-    override def toString(): String = report
+    override def toString(): String = report()
   }
 }

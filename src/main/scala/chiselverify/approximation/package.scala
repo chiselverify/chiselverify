@@ -64,7 +64,7 @@ package object approximation {
     def sample(): Unit = {
       metrics match {
         case Nil =>
-        case _ => _samples += ((approxPort.peek.litValue, exactPort.peek.litValue))
+        case _ => _samples += ((approxPort.peek().litValue, exactPort.peek().litValue))
       }
       _computed = false
     }
