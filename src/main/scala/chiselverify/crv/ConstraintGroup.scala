@@ -8,12 +8,12 @@ package chiselverify.crv
   *
   * @see <a href="https://www.chipverify.com/systemverilog/systemverilog-constraint-examples">systemverilog-random-variables</a>
   */
-trait ConstraintGroup {
+trait CRVConstraintGroup {
 
   /** 
     * List of all the constraint declared in the group
     */
-  val constraints: List[Constraint]
+  val constraints: List[CRVConstraint]
 
   /** 
     * Enables the current constraint group. 

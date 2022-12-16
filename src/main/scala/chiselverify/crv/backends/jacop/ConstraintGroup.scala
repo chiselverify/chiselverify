@@ -1,8 +1,8 @@
 package chiselverify.crv.backends.jacop
 
-class ConstraintGroup(group: Constraint*) extends chiselverify.crv.ConstraintGroup {
+class JaCoPConstraintGroup(group: JaCoPConstraint*) extends chiselverify.crv.CRVConstraintGroup {
   /** 
     * List of all the constraints declared in the group
     */
-  override val constraints: List[Constraint] = group.toList
+  override val constraints: List[JaCoPConstraint] = group.toList
 }

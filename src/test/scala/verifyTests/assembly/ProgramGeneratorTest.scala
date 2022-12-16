@@ -1,11 +1,13 @@
 package verifyTests.assembly
 
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
+
 import chiselverify.assembly.RandomHelpers.BigRange
 import chiselverify.assembly.{IODistribution, MemoryDistribution, ProgramGenerator}
 import chiselverify.assembly.leros.Leros
-import org.scalatest.flatspec.AnyFlatSpec
 
-class ProgramGeneratorTest extends AnyFlatSpec {
+class ProgramGeneratorTest extends AnyFlatSpec with Matchers {
   behavior of "Program generator"
 
   it should "generate the correct program" in {
@@ -24,8 +26,8 @@ class ProgramGeneratorTest extends AnyFlatSpec {
     prog.toString.split("\n")
       .zip(ProgramGeneratorTest.expectedProgramString.split("\n"))
       .zipWithIndex
-      .foreach { case ((got,should),i) =>
-        assert(got == should, s"$should was $got at line $i")
+      .foreach { case ((got, expected), i) =>
+        got should equal (expected)
     }
   }
 }

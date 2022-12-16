@@ -1,8 +1,9 @@
 package chiselverify.crv.backends.jacop
 
-import chiselverify.crv.CRVException
 import scala.collection.immutable
 import scala.util.Random
+
+import chiselverify.crv.CRVException
 
 trait DistTrait {
   protected val random: Random

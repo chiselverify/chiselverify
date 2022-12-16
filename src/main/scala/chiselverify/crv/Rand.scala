@@ -102,74 +102,74 @@ trait Rand {
   def ^(that: BigInt): U
 
   /** 
-    * Defines the inequality [[Constraint]] between two [[Rand]] variables
+    * Defines the inequality [[CRVConstraint]] between two [[Rand]] variables
     * @param that a second parameter for inequality constraint
     * @return the defined constraint
     */
-  def \=(that: U): Constraint
+  def \=(that: U): CRVConstraint
 
   /** 
-    * Defines the inequality [[Constraint]] between a [[Rand]] variable and a BigInt
+    * Defines the inequality [[CRVConstraint]] between a [[Rand]] variable and a BigInt
     * @param that a second parameter for the inequality constraint
     * @return the defined constraint
     */
-  def \=(that: BigInt): Constraint
+  def \=(that: BigInt): CRVConstraint
 
   /** 
-    * Defines the "less than" [[Constraint]] between two [[Rand]] variables
+    * Defines the "less than" [[CRVConstraint]] between two [[Rand]] variables
     * @param that a second parameter for the "less than" constraint
     * @return the defined constraint
     */
-  def <(that: U): Constraint
+  def <(that: U): CRVConstraint
 
   /** 
-    * Defines the "less than" [[Constraint]] between a [[Rand]] varaiable and a BigInt
+    * Defines the "less than" [[CRVConstraint]] between a [[Rand]] varaiable and a BigInt
     * @param that a second parameter for the "less than" constraint
     * @return the defined constraint
     */
-  def <(that: BigInt): Constraint
+  def <(that: BigInt): CRVConstraint
 
   /** 
-    * Defines the "less than or equal" [[Constraint]] between two [[Rand]] variables
+    * Defines the "less than or equal" [[CRVConstraint]] between two [[Rand]] variables
     * @param that a second parameter for the "less than or equal" constraint
     * @return the defined constraint
     */
-  def <=(that: U): Constraint
+  def <=(that: U): CRVConstraint
 
   /** 
-    * Defines the "less than or equal" [[Constraint]] between a [[Rand]] variable and a BigInt
+    * Defines the "less than or equal" [[CRVConstraint]] between a [[Rand]] variable and a BigInt
     * @param that a second parameter for the "less than or equal" constraint
     * @return the defined constraint
     */
-  def <=(that: BigInt): Constraint
+  def <=(that: BigInt): CRVConstraint
 
   /** 
-    * Defines the "greater than" [[Constraint]] between two [[Rand]] variables
+    * Defines the "greater than" [[CRVConstraint]] between two [[Rand]] variables
     * @param that a second parameter for the "greater than or equal" constraint
     * @return the defined constraint
     */
-  def >(that: U): Constraint
+  def >(that: U): CRVConstraint
 
   /** 
-    * Defines the "greater than" [[Constraint]] between a [[Rand]] variable and a BigInt
+    * Defines the "greater than" [[CRVConstraint]] between a [[Rand]] variable and a BigInt
     * @param that a second parameter for the "greater than or equal" constraint
     * @return the defined constraint
     */
-  def >(that: BigInt): Constraint
+  def >(that: BigInt): CRVConstraint
 
   /** 
-    * Defines the "greater than or equal" [[Constraint]] between two [[Rand]] variables
+    * Defines the "greater than or equal" [[CRVConstraint]] between two [[Rand]] variables
     * @param that a second parameter for the "greater than or equal" constraint
     * @return the defined constraint
     */
-  def >=(that: U): Constraint
+  def >=(that: U): CRVConstraint
 
   /** 
-    * Defines the "greater than or equal" [[Constraint]] between a [[Rand]] variable and a BigInt
+    * Defines the "greater than or equal" [[CRVConstraint]] between a [[Rand]] variable and a BigInt
     * @param that a second parameter for the "greater than or equal" constraint
     * @return the defined constraint
     */
-  def >=(that: BigInt): Constraint
+  def >=(that: BigInt): CRVConstraint
 
   /** 
     * Sets the value of the current random variable
@@ -222,74 +222,74 @@ trait Rand {
     */
   def #^(that: BigInt): U
 
-  /** Defines inequality [[Constraint]] between [[Rand]] and BigInt constant.
+  /** Defines inequality [[CRVConstraint]] between [[Rand]] and BigInt constant.
     *
-    * @param that a second parameter for inequality [[Constraint]].
-    * @return the defined [[Constraint]].
+    * @param that a second parameter for inequality [[CRVConstraint]].
+    * @return the defined [[CRVConstraint]].
     */
-  def #\=(that: U): Constraint
+  def #\=(that: U): CRVConstraint
 
-  /** Defines inequality [[Constraint]] between [[Rand]] and BigInt constant.
+  /** Defines inequality [[CRVConstraint]] between [[Rand]] and BigInt constant.
     *
-    * @param that a second parameter for inequality [[Constraint]].
-    * @return the defined [[Constraint]].
+    * @param that a second parameter for inequality [[CRVConstraint]].
+    * @return the defined [[CRVConstraint]].
     */
-  def #\=(that: BigInt): Constraint
+  def #\=(that: BigInt): CRVConstraint
 
-  /** Defines "less than" [[Constraint]] between two [[Rand]].
+  /** Defines "less than" [[CRVConstraint]] between two [[Rand]].
     *
-    * @param that a second parameter for "less than" [[Constraint]].
-    * @return the defined [[Constraint]].
+    * @param that a second parameter for "less than" [[CRVConstraint]].
+    * @return the defined [[CRVConstraint]].
     */
-  def #<(that: U): Constraint
+  def #<(that: U): CRVConstraint
 
-  /** Defines "less than" [[Constraint]] between [[Rand]] and BigInt constant.
+  /** Defines "less than" [[CRVConstraint]] between [[Rand]] and BigInt constant.
     *
-    * @param that a second parameter for "less than" [[Constraint]].
-    * @return the equation [[Constraint]].
+    * @param that a second parameter for "less than" [[CRVConstraint]].
+    * @return the equation [[CRVConstraint]].
     */
-  def #<(that: BigInt): Constraint
+  def #<(that: BigInt): CRVConstraint
 
-  /** Defines "less than or equal" [[Constraint]] between two [[Rand]].
+  /** Defines "less than or equal" [[CRVConstraint]] between two [[Rand]].
     *
-    * @param that a second parameter for "less than or equal" [[Constraint]].
-    * @return the defined [[Constraint]].
+    * @param that a second parameter for "less than or equal" [[CRVConstraint]].
+    * @return the defined [[CRVConstraint]].
     */
-  def #<=(that: U): Constraint
+  def #<=(that: U): CRVConstraint
 
-  /** Defines "less than or equal" [[Constraint]] between [[Rand]] and BigInt constant.
+  /** Defines "less than or equal" [[CRVConstraint]] between [[Rand]] and BigInt constant.
     *
-    * @param that a second parameter for "less than or equal" [[Constraint]].
-    * @return the equation [[Constraint]].
+    * @param that a second parameter for "less than or equal" [[CRVConstraint]].
+    * @return the equation [[CRVConstraint]].
     */
-  def #<=(that: BigInt): Constraint
+  def #<=(that: BigInt): CRVConstraint
 
-  /** Defines "greater than" [[Constraint]] between two [[Rand]].
+  /** Defines "greater than" [[CRVConstraint]] between two [[Rand]].
     *
-    * @param that a second parameter for "greater than or equal" [[Constraint]].
-    * @return the defined [[Constraint]].
+    * @param that a second parameter for "greater than or equal" [[CRVConstraint]].
+    * @return the defined [[CRVConstraint]].
     */
-  def #>(that: U): Constraint
+  def #>(that: U): CRVConstraint
 
-  /** Defines "greater than" [[Constraint]] between [[Rand]] and BigInt constant.
+  /** Defines "greater than" [[CRVConstraint]] between [[Rand]] and BigInt constant.
     *
-    * @param that a second parameter for "greater than or equal" [[Constraint]].
-    * @return the equation [[Constraint]].
+    * @param that a second parameter for "greater than or equal" [[CRVConstraint]].
+    * @return the equation [[CRVConstraint]].
     */
-  def #>(that: BigInt): Constraint
+  def #>(that: BigInt): CRVConstraint
 
-  /** Defines "greater than or equal" [[Constraint]] between two [[Rand]].
+  /** Defines "greater than or equal" [[CRVConstraint]] between two [[Rand]].
     *
-    * @param that a second parameter for "greater than or equal" [[Constraint]].
-    * @return the defined [[Constraint]].
+    * @param that a second parameter for "greater than or equal" [[CRVConstraint]].
+    * @return the defined [[CRVConstraint]].
     */
-  def #>=(that: U): Constraint
+  def #>=(that: U): CRVConstraint
 
-  /** Defines "greater than or equal" [[Constraint]] between [[Rand]] and BigInt constant.
+  /** Defines "greater than or equal" [[CRVConstraint]] between [[Rand]] and BigInt constant.
     *
-    * @param that a second parameter for "greater than or equal" [[Constraint]].
-    * @return the equation [[Constraint]].
+    * @param that a second parameter for "greater than or equal" [[CRVConstraint]].
+    * @return the equation [[CRVConstraint]].
     */
-  def #>=(that: BigInt): Constraint
+  def #>=(that: BigInt): CRVConstraint
 */
 }

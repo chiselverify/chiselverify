@@ -1,8 +1,8 @@
 package chiselverify.coverage
 
-import chiselverify.timing.{DelayType, NoDelay}
-
 import scala.collection.mutable
+
+import chiselverify.timing.{DelayType, NoDelay}
 
 object CoverReport {
   /**

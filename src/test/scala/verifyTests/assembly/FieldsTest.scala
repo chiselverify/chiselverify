@@ -1,83 +1,60 @@
 package verifyTests.assembly
 
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
+
 import chiselverify.assembly.Label.LabelRecord
 import chiselverify.assembly.leros.{Leros, QuickAccessMemory}
 import chiselverify.assembly.rv32i.IntegerRegister
 import chiselverify.assembly.{Constant, IllegalRegisterInitializer, LabelReference, Register, Signed, Unsigned, WidthViolation, leros, rv32i}
-import org.scalatest.flatspec.AnyFlatSpec
 
-class FieldsTest extends AnyFlatSpec {
+class FieldsTest extends AnyFlatSpec with Matchers {
   behavior of "Constant field"
 
   it should "generate a random constant (unsigned)" in {
     val constant = Constant(Unsigned(8))(None)
-    assert(constant >= 0 && constant < 256)
+    (constant >= 0 && constant < 256) should be (true)
   }
 
   it should "generate a random constant (signed)" in {
     val constant = Constant(Signed(8))(None)
-    assert(constant > -129 && constant < 127)
+    (constant > -129 && constant < 127) should be (true)
   }
 
   it should "accept initializer (unsigned)" in {
-    val constant = Constant(Unsigned(8))(Some(BigInt(10)))
-    assert(constant == 10)
+    Constant(Unsigned(8))(Some(BigInt(10))) should equal (10)
   }
 
   it should "accept initializer (signed)" in {
-    val constant = Constant(Signed(8))(Some(BigInt(-10)))
-    assert(constant == -10)
+    Constant(Signed(8))(Some(BigInt(-10))) should equal (-10)
   }
 
   it should "not allow an out of bounds initializer (unsigned)" in {
-    var checker = true
-    try {
-      val constant = Constant(Unsigned(8))(Some(BigInt(256)))
-      checker = false
-    } catch {
-      case e: WidthViolation =>
-    }
-    assert(checker)
+    a [WidthViolation] should be thrownBy(Constant(Unsigned(8))(Some(BigInt(256))))
   }
 
   it should "not allow an out of bounds initializer (signed)" in {
-    var checker = true
-    try {
-      val constant = Constant(Signed(8))(Some(BigInt(-129)))
-      checker = false
-    } catch {
-      case e: WidthViolation =>
-    }
-    assert(checker)
+    a [WidthViolation] should be thrownBy(Constant(Signed(8))(Some(BigInt(-129))))
   }
 
   behavior of "Label reference field"
 
   it should "accept a label" in {
-    val lf = LabelReference(Unsigned(8))(Some(LabelRecord("HelloWorld")))
-    assert(lf == "HelloWorld")
+    val ref = "HelloWorld"
+    LabelReference(Unsigned(8))(Some(LabelRecord(ref))) should equal (ref)
   }
 
   behavior of "Register field"
 
   it should "produce a random register" in {
-    val reg = Register(QuickAccessMemory)(None)
-    assert(QuickAccessMemory.registers.indices.contains(reg))
+    QuickAccessMemory.registers.indices should contain (Register(QuickAccessMemory)(None))
   }
 
   it should "accept an initializer" in {
-    val reg = Register(QuickAccessMemory)(Some(QuickAccessMemory.registers(10)))
-    assert(reg == 10)
+    Register(QuickAccessMemory)(Some(QuickAccessMemory.registers(10))) should equal (10)
   }
 
   it should "not allow an illegal initializer" in {
-    var checker = true
-    try {
-      val reg = Register(leros.QuickAccessMemory)(Some(rv32i.IntegerRegister.zero))
-      checker = false
-    } catch {
-      case e: IllegalRegisterInitializer =>
-    }
-    assert(checker)
+    a [IllegalRegisterInitializer] should be thrownBy(Register(leros.QuickAccessMemory)(Some(rv32i.IntegerRegister.zero)))
   }
 }

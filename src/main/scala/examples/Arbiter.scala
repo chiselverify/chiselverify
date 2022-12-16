@@ -2,9 +2,7 @@ package examples
 
 import chisel3._
 import chisel3.util._
-
 import java.lang.Math.{floor, log10, pow}
-
 
 class Arbiter[T <: Data: Manifest](n: Int, private val gen: T) extends Module {
   val io = IO(new Bundle {
@@ -13,7 +11,6 @@ class Arbiter[T <: Data: Manifest](n: Int, private val gen: T) extends Module {
   })
 
   def myTreeFunctional[T](s: Seq[T], op: (T, T) => T): T = {
-
     val n = s.length
     require(n > 0, "Cannot apply reduction on a Seq of size 0")
 
@@ -35,7 +32,6 @@ class Arbiter[T <: Data: Manifest](n: Int, private val gen: T) extends Module {
   }
 
   def arbitrateTwo(a: DecoupledIO[T], b: DecoupledIO[T]) = {
-
     val idleA :: idleB :: hasA :: hasB :: Nil = Enum(4)
     val regData = Reg(gen)
     val regState = RegInit(idleA)
@@ -86,13 +82,9 @@ class Arbiter[T <: Data: Manifest](n: Int, private val gen: T) extends Module {
     out.valid := true.B
     out
   }
-  // io.out <> io.in.reduceTree(foo)
-  // io.out <> io.in.reduce(foo)
-  // io.out <> io.in.treeReduce(add)
   io.out <> myTreeFunctional(io.in, arbitrateTwo)
 }
 
 object Arbiter extends App {
   println((new chisel3.stage.ChiselStage).emitVerilog(new Arbiter(7, UInt(8.W))))
 }
-

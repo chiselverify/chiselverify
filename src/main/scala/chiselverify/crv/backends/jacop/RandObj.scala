@@ -1,12 +1,14 @@
 package chiselverify.crv.backends.jacop
-import chiselverify.crv.CRVException
+
 import org.jacop.core.IntDomain
 import org.jacop.search._
-
 import scala.collection.mutable
 import scala.util.Random
 
+import chiselverify.crv.CRVException
+
 object RandObj {
+
   private val addLabelFun = new ThreadLocal[mutable.Buffer[DepthFirstSearch[_ <: org.jacop.core.Var]]]
 
   private def dfs[A <: Rand]: DepthFirstSearch[A] = {
@@ -61,14 +63,13 @@ trait RandObj extends chiselverify.crv.RandObj {
     for (i <- Range(0, currentModel.n)) {
       buffer ++= currentModel.vars(i).toString + ", "
     }
-    buffer + currentModel.randcVars.mkString(", ")
+    buffer ++= currentModel.randcVars.mkString(", ")
+    buffer.mkString
   }
 
   /** Print all the random variables declared inside the current [[RandObj]]
     */
-  def debug(): Unit = {
-    problemVariables.foreach(println)
-  }
+  def debug(): Unit = problemVariables.foreach(println)
 
   /** This method is called only the first time we randomize the current [[RandObj]]
     * This is necessary because every time we assign a solution to each of the random variables, their domains are
@@ -85,8 +86,8 @@ trait RandObj extends chiselverify.crv.RandObj {
     * @param constraints additional [[Constraint]]
     * @return the result of the randomization
     */
-  override def randomizeWith(constraints: chiselverify.crv.Constraint*): Boolean = {
-   val ret = randomize
+  override def randomizeWith(constraints: chiselverify.crv.CRVConstraint*): Boolean = {
+    val ret = randomize
     constraints.foreach(_.disable())
     ret
   }

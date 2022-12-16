@@ -2,15 +2,15 @@ package chiselverify.coverage
 
 import chisel3._
 import chisel3.tester.testableClock
-import chiselverify.coverage.CoverReport._
+import scala.collection.mutable
 
-import scala.collection.mutable.ArrayBuffer
+import chiselverify.coverage.CoverReport._
 
 /**
   * Handles everything related to functional coverage
   */
 class CoverageReporter[T <: Module](private val dut: T) {
-  private val coverGroups: ArrayBuffer[CoverGroup] = new ArrayBuffer[CoverGroup]()
+  private val coverGroups: mutable.ArrayBuffer[CoverGroup] = new mutable.ArrayBuffer[CoverGroup]()
   private val coverageDB: CoverageDB = new CoverageDB
 
   /**

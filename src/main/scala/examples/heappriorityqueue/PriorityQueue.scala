@@ -2,6 +2,7 @@ package examples.heappriorityqueue
 
 import chisel3._
 import chisel3.util._
+
 import examples.heappriorityqueue.Interfaces._
 import examples.heappriorityqueue.modules.{QueueControl, linearSearchMem}
 
@@ -30,14 +31,14 @@ case class PriorityQueueParameters(size: Int, order: Int, superCycleWidth: Int, 
   * @param rWid    width of the reference ID tags
   */
 class PriorityQueue(size: Int, order: Int, superCycleRes: Int, cyclesPerSuperCycle: Int, exposeState: Boolean = false) extends Module {
+  require(isPow2(order), "The number of children per node needs to be a power of 2!")
 
   val superCycleWidth = superCycleRes
   val cycleWidth = log2Ceil(cyclesPerSuperCycle)
   val referenceIdWidth = log2Ceil(size+1)
-  implicit val parameters = PriorityQueueParameters(size,order,superCycleWidth,cycleWidth,referenceIdWidth)
+  implicit val parameters = PriorityQueueParameters(size, order, superCycleWidth, cycleWidth, referenceIdWidth)
 
   val io = IO(new Bundle {
-
     // Interface for signaling head element to user.
     // I.e. the element with the lowest priority
     val head = new Bundle {
@@ -65,11 +66,7 @@ class PriorityQueue(size: Int, order: Int, superCycleRes: Int, cyclesPerSuperCyc
     }
 
     val state = if (exposeState) Some(Output(UInt())) else None
-
   })
-
-
-  require(isPow2(order), "The number of children per node needs to be a power of 2!")
 
   val mem = Module(new linearSearchMem(size - 1))
   val queue = Module(new QueueControl)
@@ -83,5 +80,4 @@ class PriorityQueue(size: Int, order: Int, superCycleRes: Int, cyclesPerSuperCyc
   io.cmd.done := mem.srch.done && queue.io.cmd.done
 
   if (exposeState) io.state.get := queue.io.state
-
 }

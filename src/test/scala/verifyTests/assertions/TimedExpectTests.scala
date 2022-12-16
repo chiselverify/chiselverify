@@ -1,11 +1,11 @@
 package verifyTests.assertions
 
 import chisel3._
-import chisel3.tester.{testableClock, testableData}
-import chiseltest.ChiselScalatestTester
+import chiseltest._
+import org.scalatest.flatspec.AnyFlatSpec
+
 import chiselverify.assertions._
 import chiselverify.timing._
-import org.scalatest.flatspec.AnyFlatSpec
 import verifyTests.ToyDUT.AssertionsToyDUT
 
 class TimedExpectTests  extends AnyFlatSpec with ChiselScalatestTester {
@@ -60,15 +60,18 @@ class TimedExpectTests  extends AnyFlatSpec with ChiselScalatestTester {
   }
 
   "Timed Expect Always" should "pass" in {
-    test(new AssertionsToyDUT(32)){ dut => testGeneric(dut, Alw) }
+    test(new AssertionsToyDUT(32))(testGeneric(_, Alw))
   }
+
   "Timed Expect Eventually" should "pass" in {
-    test(new AssertionsToyDUT(32)){ dut => testGeneric(dut, Evt) }
+    test(new AssertionsToyDUT(32))(testGeneric(_, Evt))
   }
+
   "Timed Expect Exactly" should "pass" in {
-    test(new AssertionsToyDUT(32)){ dut => testGeneric(dut, Exct) }
+    test(new AssertionsToyDUT(32))(testGeneric(_, Exct))
   }
+
   "Timed Expect Never" should "pass" in {
-    test(new AssertionsToyDUT(32)){ dut => testGeneric(dut, Nvr) }
+    test(new AssertionsToyDUT(32))(testGeneric(_, Nvr))
   }
 }

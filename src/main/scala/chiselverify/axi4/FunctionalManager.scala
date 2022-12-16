@@ -5,7 +5,6 @@ import chisel3.util._
 import chisel3.experimental.BundleLiterals._
 import chiseltest._
 import chiseltest.internal.TesterThreadList
-
 import scala.util.Random
 import scala.collection.mutable
 
@@ -97,7 +96,7 @@ class FunctionalManager[T <: Subordinate](dut: T) {
       // Write address to subordinate
       wa.valid.poke(true.B)
       wa.bits.pokePartial(head.ctrl)
-      while (!wa.ready.peek.litToBoolean) clk.step()
+      while (!wa.ready.peek().litToBoolean) clk.step()
       clk.step()
       wa.valid.poke(false.B) 
 
@@ -124,10 +123,10 @@ class FunctionalManager[T <: Subordinate](dut: T) {
       // Write data to subordinate
       wd.valid.poke(true.B)
       while (!head.complete) {
-        val nextVal = head.next
+        val nextVal = head.next()
         wd.bits.pokePartial(nextVal)
         println("Write " + nextVal.data.litValue + " with strobe " + nextVal.strb.toString + " and last " + nextVal.last.litToBoolean)
-        while (!wd.ready.peek.litToBoolean) clk.step()
+        while (!wd.ready.peek().litToBoolean) clk.step()
         clk.step()
       }
       wd.valid.poke(false.B)
@@ -154,8 +153,8 @@ class FunctionalManager[T <: Subordinate](dut: T) {
 
       // Indicate that interface is ready and wait for response
       wr.ready.poke(true.B)
-      while (!wr.valid.peek.litToBoolean) clk.step()
-      responses += new Response(wr.bits.resp.peek, if (wr.bits.idW > 0) wr.bits.id.peek.litValue else 0)
+      while (!wr.valid.peek().litToBoolean) clk.step()
+      responses += new Response(wr.bits.resp.peek(), if (wr.bits.idW > 0) wr.bits.id.peek().litValue else 0)
       wr.ready.poke(false.B)
 
       // Update queue
@@ -179,7 +178,7 @@ class FunctionalManager[T <: Subordinate](dut: T) {
       // Write address to subordinate
       ra.valid.poke(true.B)
       ra.bits.pokePartial(head.ctrl)
-      while (!ra.ready.peek.litToBoolean) clk.step()
+      while (!ra.ready.peek().litToBoolean) clk.step()
       clk.step()
       ra.valid.poke(false.B)
 
@@ -206,8 +205,8 @@ class FunctionalManager[T <: Subordinate](dut: T) {
       // Read data from subordinate
       rd.ready.poke(true.B)
       while (!head.complete) {
-        if (rd.valid.peek.litToBoolean) {
-          val (data, resp, last) = (rd.bits.data.peek, rd.bits.resp.peek, rd.bits.last.peek)
+        if (rd.valid.peek().litToBoolean) {
+          val (data, resp, last) = (rd.bits.data.peek(), rd.bits.resp.peek(), rd.bits.last.peek())
           println(s"Read " + data.litValue + " with response " + resp.litValue + " and last " + last.litToBoolean)
           head.add(data.litValue)
         }
@@ -234,7 +233,7 @@ class FunctionalManager[T <: Subordinate](dut: T) {
     if (readT  != null) readT.join()
 
     // Check for unchecked responses and read data
-    if (hasRespOrReadData) println(s"WARNING: manager had ${responses.length} responses and ${readValues.length} Seq's of read data waiting")
+    if (hasRespOrReadData()) println(s"WARNING: manager had ${responses.length} responses and ${readValues.length} Seq's of read data waiting")
   }
 
   /** 

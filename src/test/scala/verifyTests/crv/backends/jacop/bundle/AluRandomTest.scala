@@ -1,14 +1,27 @@
 package verifyTests.crv.backends.jacop.bundle
 
 import chisel3._
-import chisel3.experimental.BundleLiterals.AddBundleLiteralConstructor
+import chisel3.experimental.BundleLiterals._
 import chiseltest._
 import chisel3.util._
-import chiselverify.crv.backends.jacop.experimental.RandBundle
-import chiselverify.crv.backends.jacop.{Rand, RandObj, rand}
 import org.scalatest.flatspec.AnyFlatSpec
 
+import chiselverify.crv.backends.jacop.experimental.RandBundle
+import chiselverify.crv.backends.jacop.{Rand, RandObj, rand}
 
+class AluInput(val size: Int) extends Bundle {
+  val a = UInt(size.W)
+  val b = UInt(size.W)
+  val fn = UInt(2.W)
+
+  // Ugly
+  override def typeEquivalent(data: Data): Boolean = {
+    data match {
+      case aluInput: AluInput => aluInput.size == size
+      case _ => false
+    }
+  }
+}
 
 class AluTransaction(val size: Int) extends RandObj {
   val a = rand(0, math.pow(2, size).toInt)
@@ -61,10 +74,9 @@ class AluInputTransaction extends RandObj {
 }
 
 class AluInputConstraint(size: Int) extends AluInput(size) with RandBundle {
-
   override def typeEquivalent(data: Data): Boolean = {
     data match {
-      case _: (AluInput @AluInputConstraint(size)) => true
+      case aluInput: AluInputConstraint => aluInput.size == size
       case _ => false
     }
   }
@@ -110,11 +122,10 @@ class Alu(size: Int) extends Module {
 }
 
 class AluRandomTest extends AnyFlatSpec with ChiselScalatestTester {
-
   it should "Test the ALU with random Transactions in form of bundle" in {
     test(new Alu(8)) { alu =>
       val transaction = new AluInputConstraint(8)
-      println(transaction.elements)
+
       for (i <- Range(0, 10)) {
         val currentT = transaction.randomBundle()
         alu.input.poke(currentT)
@@ -157,6 +168,7 @@ class AluRandomTest extends AnyFlatSpec with ChiselScalatestTester {
   it should "Test the ALU with random Transactions with literals" in {
     test(new Alu(8)) { alu =>
       val transaction = new AluTransaction(8)
+      
       for (i <- Range(0, 10)) {
         transaction.randomize
         alu.input.a.poke(transaction.a.value.U)

@@ -3,6 +3,7 @@ package chiselverify.assertions
 import chisel3._
 import chiseltest._
 import chiseltest.internal.TesterThreadList
+
 import chiselverify.timing.TimedOp._
 import chiselverify.timing._
 

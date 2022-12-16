@@ -1,9 +1,8 @@
 package chiselverify.coverage
 
-import chisel3.experimental.DataMirror
 import chisel3._
+import chisel3.experimental.DataMirror
 import chiseltest._
-
 import scala.collection.mutable
 
 object GlobalCoverage {

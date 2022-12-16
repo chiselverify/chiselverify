@@ -8,11 +8,11 @@ import scala.util.Random
   * @param seed with which the current class is initialized
   */
 class Model(val seed: Int = new Random().nextInt()) extends org.jacop.scala.Model {
-  val crvconstr = new ListBuffer[Constraint]()
+  val crvconstr = new ListBuffer[JaCoPConstraint]()
   val randcVars = new ListBuffer[Randc]
   val distConst = new ListBuffer[DistConstraint]
 
-  override def imposeAllConstraints() {
+  override def imposeAllConstraints() = {
     // Reset number of constraints
     this.numberOfConstraints = 0
     this.crvconstr.filter(_.isEnabled).foreach(e => this.impose(e.getConstraint))

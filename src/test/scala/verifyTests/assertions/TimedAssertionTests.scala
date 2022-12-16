@@ -1,17 +1,14 @@
 package verifyTests.assertions
 
 import chisel3._
-import chisel3.tester._
-import chiseltest.ChiselScalatestTester
+import chiseltest._
+import org.scalatest.flatspec.AnyFlatSpec
+
 import chiselverify.assertions.AssertTimed._
 import chiselverify.assertions.{AssertTimed, ExpectTimed}
-import chiselverify.timing.TimedOp.{Equals, Gt, GtEq, Lt, LtEq, dataToID}
 import chiselverify.timing._
-import org.scalatest.concurrent
-import org.scalatest.flatspec.AnyFlatSpec
+import chiselverify.timing.TimedOp.{Equals, Gt, GtEq, Lt, LtEq, dataToID}
 import verifyTests.ToyDUT.AssertionsToyDUT
-
-import scala.language.postfixOps
 
 class TimedAssertionTests extends AnyFlatSpec with ChiselScalatestTester {
   def toUInt(i: Int): UInt = (BigInt(i) & 0x00ffffffffL).asUInt(32.W)
@@ -33,7 +30,6 @@ class TimedAssertionTests extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.a.poke(10.U)
       dut.io.b.poke(10.U)
       dut.clock.step(1)
-      println(s"aEqb is ${dut.io.aEqb.peek().litValue}")
       AssertTimed(dut, dut.io.aEqb.peek().litValue == 1, "aEqb timing is wrong")(Always(9)).join()
     }
 
@@ -72,7 +68,6 @@ class TimedAssertionTests extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.a.poke(10.U)
       dut.io.b.poke(10.U)
       dut.clock.step(1)
-      println(s"aEqb is ${dut.io.aEqb.peek().litValue}")
       AssertTimed(dut, Equals(dut.io.aEqb, dut.io.isOne), "aEqb timing is wrong")(Always(9)).join()
     }
 
@@ -263,80 +258,80 @@ class TimedAssertionTests extends AnyFlatSpec with ChiselScalatestTester {
   }
 
   "Timed Assertions Alw" should "pass" in {
-    test(new AssertionsToyDUT(32)){ dut => testGeneric(dut, Alw) }
+    test(new AssertionsToyDUT(32))(testGeneric(_, Alw))
   }
   "Timed Assertions Eventually" should "pass" in {
-    test(new AssertionsToyDUT(32)){ dut => testGeneric(dut, Evt) }
+    test(new AssertionsToyDUT(32))(testGeneric(_, Evt))
   }
   "Timed Assertions Exactly" should "pass" in {
-    test(new AssertionsToyDUT(32)){ dut => testGeneric(dut, Exct) }
+    test(new AssertionsToyDUT(32))(testGeneric(_, Exct))
   }
   "Timed Assertions Never" should "pass" in {
-    test(new AssertionsToyDUT(32)){ dut => testGeneric(dut, Nvr) }
+    test(new AssertionsToyDUT(32))(testGeneric(_, Nvr))
   }
 
   "Timed Assertions Alw with Equals Op" should "pass" in {
-    test(new AssertionsToyDUT(32)){dut => testGenericEqualsOp(dut, Alw)}
+    test(new AssertionsToyDUT(32))(testGenericEqualsOp(_, Alw))
   }
   "Timed Assertions Eventually with Equals Op" should "pass" in {
-    test(new AssertionsToyDUT(32)){ dut => testGenericEqualsOp(dut, Evt) }
+    test(new AssertionsToyDUT(32))(testGenericEqualsOp(_, Evt))
   }
   "Timed Assertions Exct with Equals Op" should "pass" in {
-    test(new AssertionsToyDUT(32)){ dut => testGenericEqualsOp(dut, Exct) }
+    test(new AssertionsToyDUT(32))(testGenericEqualsOp(_, Exct))
   }
   "Timed Assertions Nvr with Equals Op" should "pass" in {
-    test(new AssertionsToyDUT(32)){ dut => testGenericEqualsOp(dut, Nvr) }
+    test(new AssertionsToyDUT(32))(testGenericEqualsOp(_, Nvr))
   }
 
   "Timed Assertions Alw with GreaterThan Op" should "pass" in {
-    test(new AssertionsToyDUT(32)){dut => testGenericGtOp(dut, Alw)}
+    test(new AssertionsToyDUT(32))(testGenericGtOp(_, Alw))
   }
   "Timed Assertions Evt with GreaterThan Op" should "pass" in {
-    test(new AssertionsToyDUT(32)){ dut => testGenericGtOp(dut, Evt) }
+    test(new AssertionsToyDUT(32))(testGenericGtOp(_, Evt))
   }
   "Timed Assertions Exct with GreaterThan Op" should "pass" in {
-    test(new AssertionsToyDUT(32)){ dut => testGenericGtOp(dut, Exct) }
+    test(new AssertionsToyDUT(32))(testGenericGtOp(_, Exct))
   }
   "Timed Assertions Nvr with GreaterThan Op" should "pass" in {
-    test(new AssertionsToyDUT(32)){ dut => testGenericGtOp(dut, Nvr) }
-  }
-
-  "Timed Assertions Alw with LessThan Op" should "pass" in {
-    test(new AssertionsToyDUT(32)){dut => testGenericLtOp(dut, Alw)}
-  }
-  "Timed Assertions Evt with LessThan Op" should "pass" in {
-    test(new AssertionsToyDUT(32)){ dut => testGenericLtOp(dut, Evt) }
-  }
-  "Timed Assertions Exct with LessThan Op" should "pass" in {
-    test(new AssertionsToyDUT(32)){ dut => testGenericLtOp(dut, Exct) }
-  }
-  "Timed Assertions Nvr with LessThan Op" should "pass" in {
-    test(new AssertionsToyDUT(32)){ dut => testGenericLtOp(dut, Nvr) }
-  }
-
-  "Timed Assertions Alw with LessThan or Equal to Op" should "pass" in {
-    test(new AssertionsToyDUT(32)){dut => testGenericLtEqOp(dut, Alw)}
-  }
-  "Timed Assertions Evt with LessThan or Equal to Op" should "pass" in {
-    test(new AssertionsToyDUT(32)){ dut => testGenericLtEqOp(dut, Evt) }
-  }
-  "Timed Assertions Exct with LessThan or Equal to Op" should "pass" in {
-    test(new AssertionsToyDUT(32)){ dut => testGenericLtEqOp(dut, Exct) }
-  }
-  "Timed Assertions Nvr with LessThan or Equal to Op" should "pass" in {
-    test(new AssertionsToyDUT(32)){ dut => testGenericLtEqOp(dut, Nvr) }
+    test(new AssertionsToyDUT(32))(testGenericGtOp(_, Nvr))
   }
 
   "Timed Assertions Alw with GreaterThan or Equal to Op" should "pass" in {
-    test(new AssertionsToyDUT(32)){dut => testGenericGtEqOp(dut, Alw)}
+    test(new AssertionsToyDUT(32))(testGenericGtEqOp(_, Alw))
   }
   "Timed Assertions Evt with GreaterThan or Equal to Op" should "pass" in {
-    test(new AssertionsToyDUT(32)){ dut => testGenericGtEqOp(dut, Evt) }
+    test(new AssertionsToyDUT(32))(testGenericGtEqOp(_, Evt))
   }
   "Timed Assertions Exct with GreaterThan or Equal to Op" should "pass" in {
-    test(new AssertionsToyDUT(32)){ dut => testGenericGtEqOp(dut, Exct) }
+    test(new AssertionsToyDUT(32))(testGenericGtEqOp(_, Exct))
   }
   "Timed Assertions Nvr with GreaterThan or Equal to Op" should "pass" in {
-    test(new AssertionsToyDUT(32)){ dut => testGenericGtEqOp(dut, Nvr) }
+    test(new AssertionsToyDUT(32))(testGenericGtEqOp(_, Nvr))
+  }
+
+  "Timed Assertions Alw with LessThan Op" should "pass" in {
+    test(new AssertionsToyDUT(32))(testGenericLtOp(_, Alw))
+  }
+  "Timed Assertions Evt with LessThan Op" should "pass" in {
+    test(new AssertionsToyDUT(32))(testGenericLtOp(_, Evt))
+  }
+  "Timed Assertions Exct with LessThan Op" should "pass" in {
+    test(new AssertionsToyDUT(32))(testGenericLtOp(_, Exct))
+  }
+  "Timed Assertions Nvr with LessThan Op" should "pass" in {
+    test(new AssertionsToyDUT(32))(testGenericLtOp(_, Nvr))
+  }
+
+  "Timed Assertions Alw with LessThan or Equal to Op" should "pass" in {
+    test(new AssertionsToyDUT(32))(testGenericLtEqOp(_, Alw))
+  }
+  "Timed Assertions Evt with LessThan or Equal to Op" should "pass" in {
+    test(new AssertionsToyDUT(32))(testGenericLtEqOp(_, Evt))
+  }
+  "Timed Assertions Exct with LessThan or Equal to Op" should "pass" in {
+    test(new AssertionsToyDUT(32))(testGenericLtEqOp(_, Exct))
+  }
+  "Timed Assertions Nvr with LessThan or Equal to Op" should "pass" in {
+    test(new AssertionsToyDUT(32))(testGenericLtEqOp(_, Nvr))
   }
 }

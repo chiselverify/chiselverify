@@ -1,7 +1,7 @@
 package chiselverify.crv.backends.jacop
 
-class Constraint(private val constraint: org.jacop.constraints.Constraint)(implicit var model: Model)
-  extends chiselverify.crv.Constraint {
+class JaCoPConstraint(private val constraint: org.jacop.constraints.Constraint)(implicit var model: Model)
+  extends chiselverify.crv.CRVConstraint {
 
   override type U = org.jacop.constraints.Constraint
   var isEnabled: Boolean = true

@@ -35,7 +35,7 @@ case class WeightedRange(range: Range, weight: Int) extends Weight
   * @param bucket the current bucket
   * @param group a group of constraints
   */
-class WConstraintGroup(val bucket: Bucket, group: Constraint*) extends ConstraintGroup {
-  override val constraints: List[Constraint] = group.toList
+class WConstraintGroup(val bucket: Bucket, group: JaCoPConstraint*) extends JaCoPConstraintGroup {
+  override val constraints: List[JaCoPConstraint] = group.toList
   def contains(point: Double): Boolean =  bucket.min < point && point <= bucket.max
 }

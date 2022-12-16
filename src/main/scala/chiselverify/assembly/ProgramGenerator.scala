@@ -114,7 +114,7 @@ object GeneratorContext {
     * The jump target generator produces references to defined symbolic labels in the produced assembly code
     */
   private def createJumpTargetGenerator(pc: Counter, targets: ListBuffer[LabelRecord]): () => LabelRecord = { () =>
-    if(targets.nonEmpty) randomSelect(targets) else LabelRecord("RANDOM_LABEL_0")
+    if(targets.nonEmpty) randomSelect(targets.toSeq) else LabelRecord("RANDOM_LABEL_0")
   }
 }
 

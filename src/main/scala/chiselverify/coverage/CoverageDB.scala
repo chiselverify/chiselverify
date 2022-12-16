@@ -1,9 +1,7 @@
 package chiselverify.coverage
 
 import chisel3._
-
 import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
 
 /**
   * Stores all of the data relevant to the functional coverage elements
@@ -25,7 +23,7 @@ class CoverageDB {
   private val registeredCrossBins: mutable.ArrayBuffer[String] = new mutable.ArrayBuffer[String]()
 
   // Mappings for conditional coverage that hit
-  private val registeredConditions: mutable.ArrayBuffer[String] = new ArrayBuffer[String]()
+  private val registeredConditions: mutable.ArrayBuffer[String] = new mutable.ArrayBuffer[String]()
   private val conditionalHits: mutable.HashMap[String, List[Seq[BigInt]]] = new mutable.HashMap[String, List[Seq[BigInt]]]()
   private val conditionSizes: mutable.HashMap[String, BigInt] = new mutable.HashMap[String, BigInt]()
 
@@ -34,10 +32,10 @@ class CoverageDB {
 
   // Timed operator mappings
   private val timedOpVals: mutable.HashMap[String, List[TimingValue]] = new mutable.HashMap[String, List[TimingValue]]()
-  private val registeredTimedOp: mutable.ArrayBuffer[String] = new ArrayBuffer[String]()
+  private val registeredTimedOp: mutable.ArrayBuffer[String] = new mutable.ArrayBuffer[String]()
 
   // Keep track of the different valid IDs
-  private val groupIds: ArrayBuffer[BigInt] = new ArrayBuffer[BigInt]()
+  private val groupIds: mutable.ArrayBuffer[BigInt] = new mutable.ArrayBuffer[BigInt]()
   private var lastCoverGroupId: BigInt = 0
 
   private var curCycle : BigInt = 0

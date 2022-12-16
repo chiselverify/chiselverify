@@ -9,7 +9,7 @@ trait RandObj {
   /** Randomize the current object with additional [[Constraint]]
     * @return Boolean returns true only if a solution was found
     */
-  def randomizeWith(constraints: Constraint*): Boolean
+  def randomizeWith(constraints: CRVConstraint*): Boolean
 
   /** Method containing a set of directives to run before the current object is randomized
     */

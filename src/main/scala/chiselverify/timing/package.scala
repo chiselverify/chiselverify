@@ -1,9 +1,11 @@
 package chiselverify
 
 import chisel3.Module
+
 import chiselverify.assertions.AssertTimed
 
 package object timing {
+  
   /**
     * Defines a type of delay that can be applied to timed constructs
     * @param delay the number of cycles by which we want a delay

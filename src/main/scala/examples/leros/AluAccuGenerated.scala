@@ -18,9 +18,7 @@ class accualu extends BlackBox with HasBlackBoxResource {
   addResource("/accualu_converted.v")
 }
 
-
 class AluAccuGenerated(size: Int) extends AluAccu(size) {
-
   // TODO: can we parameterize the generated Verilog?
   val AluAccu = Module(new accualu())
 
