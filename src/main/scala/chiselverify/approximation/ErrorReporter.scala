@@ -63,15 +63,20 @@ class ErrorReporter(watchers: Watcher*) {
     * @note Requires that there exists an entry in the map for all non-port based watchers, 
     *       the corresponding approximate DUT ports being the keys.
     */
-  def sample(expected: Map[Bits, BigInt] = Map.empty): Unit = watchers.foreach { _ match {
-    case wtchr: PortTracker => wtchr.sample()
-    case wtchr: PortConstraint => wtchr.sample()
-    case wtchr =>
-      val approxPort = wtchr.approxPort
-      wtchr.sample(expected.getOrElse(approxPort,
-        throw new AssertionError(s"watcher on port ${portName(approxPort)} needs a reference value but none was provided"))
-      )
-  }}
+  def sample(expected: Map[Bits, BigInt] = Map.empty): Unit = watchers.foreach { wtchr =>
+    val approxPort = wtchr.approxPort
+    wtchr match {
+      case wtchr: PortTracker =>
+        if (expected.contains(approxPort)) wtchr.sample(expected(approxPort)) else wtchr.sample()
+      case wtchr: PortConstraint => wtchr.sample()
+        if (expected.contains(approxPort)) wtchr.sample(expected(approxPort)) else wtchr.sample()
+      case wtchr =>
+        val approxPort = wtchr.approxPort
+        wtchr.sample(expected.getOrElse(approxPort,
+          throw new AssertionError(s"watcher on port ${portName(approxPort)} needs a reference value but none was provided"))
+        )
+    }
+  }
 
   /** 
     * Verifies any given constraints and asserts their satisfaction, printing results of 
