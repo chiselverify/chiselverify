@@ -94,6 +94,46 @@ object Reporting {
   }
 
   /** 
+    * Contains the error report for a `Tracker`
+    */
+  private[chiselverify] case class OptimizedTrackerReport(approxPort: String, exactPort: String, metrics: Iterable[Metric], results: Map[Metric, Any])
+    extends Report {
+    // Create an identifier for this tracker report
+    val id = s"T($approxPort, $exactPort)"
+
+    def report(): String = metrics match {
+      case Nil =>
+        s"Tracker on ports $approxPort and $exactPort has no metrics!\n"
+      case _ =>
+        val bs = new StringBuilder(s"Tracker on ports $approxPort and $exactPort has results:\n")
+        metrics.foreach { mtrc =>
+          val mtrcResults = results(mtrc)
+          bs ++= "- "
+          mtrc match {
+            // For instantaneous metrics, report the mean and maximum found error
+            case _: Instantaneous =>
+              val (_, mtrcMax, mtrcMean) = mtrcResults.asInstanceOf[(Int, Double, Double)]
+              bs ++= f"Instantaneous $mtrc metric has mean $mtrcMean%.3f and maximum $mtrcMax%.3f"
+            
+              // For history-based metrics, report the found error
+            case _: HistoryBased =>
+              val mtrcVal = mtrcResults.asInstanceOf[Double]
+              bs ++= f"History-based $mtrc metric has value $mtrcVal%.3f"
+          }
+          bs ++= "!\n"
+        }
+        bs.mkString
+    }
+
+    def +(that: Report): Report = that match {
+      case ErrorReport(watchers) => ErrorReport(watchers ++ Seq(this))
+      case _ => ErrorReport(Seq(this, that))
+    }
+
+    override def toString(): String = report()
+  }
+
+  /** 
     * Contains the error report for a `Constraint`
     */
   private[chiselverify] case class ConstraintReport(approxPort: String, exactPort: String, metrics: Iterable[Metric], results: Map[Metric, Seq[Double]])
@@ -134,6 +174,60 @@ object Reporting {
                 bs ++= f"is satisfied with error ${mtrcResults.head}%.3f"
               } else {
                 bs ++= f"is violated by error ${mtrcResults.head}%.3f"
+              }
+          }
+          bs ++= "!\n"
+        }
+        bs.mkString
+    }
+
+    def +(that: Report): Report = that match {
+      case ErrorReport(watchers) => ErrorReport(watchers ++ Seq(this))
+      case _ => ErrorReport(Seq(this, that))
+    }
+
+    override def toString(): String = report()
+  }
+
+  /** 
+    * Contains the error report for a `Constraint`
+    */
+  private[chiselverify] case class OptimizedConstraintReport(approxPort: String, exactPort: String, metrics: Iterable[Metric], results: Map[Metric, Any])
+    extends Report {
+    // Create an identifier for this constraint report
+    val id = s"C($approxPort, $exactPort)"
+
+    def report(): String = metrics match {
+      case Nil =>
+        s"Constraint on ports $approxPort and $exactPort has no metrics!\n"
+      case _ =>
+        val bs = new StringBuilder(s"Constraint on ports $approxPort and $exactPort has results:\n")
+        metrics.foreach { mtrc =>
+          val mtrcResults = results(mtrc)
+          bs ++= "- "
+          mtrc match {
+            // For instantaneous metrics:
+            // - if satisfied, report this with the maximum found error
+            // - if not, report this with the first violating error
+            case _: Instantaneous =>
+              val (maxIndex, mtrcMax, _) = mtrcResults.asInstanceOf[(Int, Double, Double)]
+              bs ++= s"Instantaneous $mtrc metric "
+              if (mtrc.check(mtrcMax)) {
+                bs ++= f"is satisfied with maximum error $mtrcMax%.3f"
+              } else {
+                bs ++= f"is violated by maximum error $mtrcMax%.3f (sample #$maxIndex)"
+              }
+            
+            // For history-based metrics:
+            // - if satisfied, report this with ...
+            // - if not, report this with ...
+            case _: HistoryBased =>
+              val mtrcVal = mtrcResults.asInstanceOf[Double]
+              bs ++= s"History-based $mtrc metric "
+              if (mtrc.check(mtrcVal)) {
+                bs ++= f"is satisfied with error $mtrcVal%.3f"
+              } else {
+                bs ++= f"is violated by error $mtrcVal%.3f"
               }
           }
           bs ++= "!\n"

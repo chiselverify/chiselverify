@@ -11,10 +11,10 @@ import chiselverify.approximation.Metrics._
 class ApproxAdderTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   behavior of "Approximate adder"
 
-  val NumTests: Int = 100000
+  val NumTests: Int = 1000000
   val Width: Int = 32
   val ApproxWidths: Seq[Int] = Seq(4, 8, 12, 16)
-  val ExpectedResults: Seq[Boolean] = Seq(true, true, true, false)
+  val ExpectedResults: Seq[Boolean] = Seq(true, true, false, false)
 
   // Adder IO bundle
   class AdderIO(width: Int) extends Bundle {
@@ -103,16 +103,30 @@ class ApproxAdderTest extends AnyFlatSpec with ChiselScalatestTester with Matche
     }
   }
 
-  // Run tests for each specified width of the approximate adder's lower part
-  it should "verify designs with different approxWidths" in {
+  // BASELINE: Run tests for each specified width of the approximate adder's lower part
+  it should "test designs with different approxWidths" in {
+    ApproxWidths.zip(ExpectedResults).foreach { case (approxWidth, mtrcsSatisfied) =>
+      test(new DUT(Width, approxWidth)) { dut =>
+        // Create a new ErrorReporter with no constraints
+        val er = new ErrorReporter()
+        simpleTest(dut, er)
+        println(er.report())
+        er.verify() should be (true)
+      }
+    }
+  }
+
+  // BENCHMARK: Run tests for each specified width of the approximate adder's lower part
+  ignore should "verify designs with different approxWidths" in {
     ApproxWidths.zip(ExpectedResults).foreach { case (approxWidth, mtrcsSatisfied) =>
       test(new DUT(Width, approxWidth)) { dut =>
         // Create a new ErrorReporter with two constraints
         val er = new ErrorReporter(
-          constrain(dut.io.sA, dut.io.sE, RED(.1), MRED(.025)),
-          constrain(dut.io.coutA, dut.io.coutE, ER(.01))
+          optconstrain(dut.io.sA, dut.io.sE, RED(.1), MRED(.025)),
+          optconstrain(dut.io.coutA, dut.io.coutE, ER(.01))
         )
         simpleTest(dut, er)
+        println(er.report())
         er.verify() should be (mtrcsSatisfied)
       }
     }

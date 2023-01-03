@@ -64,5 +64,5 @@ class ErrorReporter(watchers: PortWatcher*) {
     * verification for each constraint
     * @return true if all constraints are satisfied
     */
-  def verify(): Boolean = watchers.collect { case cnstr: Constraint => cnstr.verify() }.forall(s => s)
+  def verify(): Boolean = watchers.collect { case cnstr: OptimizedConstraint => cnstr.verify() }.forall(s => s)
 }
