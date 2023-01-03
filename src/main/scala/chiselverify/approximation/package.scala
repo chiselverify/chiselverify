@@ -1,6 +1,6 @@
 package chiselverify
 
-import chisel3.{Bits, Data}
+import chisel3.Bits
 import chisel3.experimental.DataMirror.{checkTypeEquivalence, directionOf, widthOf}
 import chiseltest._
 import scala.collection.mutable
@@ -15,31 +15,50 @@ package object approximation {
     * @param port port whose name to extract
     * @return name of the given port
     */
-  private[chiselverify] def portName(port: Data): String = port.pathName.split('.').last
+  private[chiselverify] def portName(port: Bits): String = port.pathName.split('.').last
 
   /** 
-    * Represents a generic port watcher of which there are two types:
+    * Represents the expected value style of a generic port watcher of which there are 
+    * two types:
+    * 
+    * - Reference-based watchers that require expected values when sampled
+    * - Port-based watchers that require an exact port to peek when sampled
+    */
+  private[chiselverify] sealed abstract trait WatcherStyle
+
+  /** 
+    * Represents a reference-based 
+    */
+  private[chiselverify] sealed abstract trait ReferenceBased extends WatcherStyle
+
+  /** 
+    * Represents a super-type of port-based watchers
+    */
+  private[chiselverify] sealed abstract trait PortBased extends WatcherStyle {
+    def exactPort: Bits
+
+    /** 
+      * Samples the two given ports and stores their values internally
+      */
+    def sample(): Unit
+  }
+
+  /** 
+    * Represents a generic watcher of which there are two types:
     * 
     * - `Tracker`s that sample and report on error metrics related to a pair of ports 
     *   but are not used for verification
     * - `Constraint`s that sample and report on error metrics related to a pair of ports 
     *   supporting also verification
     * 
+    * Both types come in two sub-types: one taking a port as reference and one that requires 
+    * passing in expected values when sampling. The port-based watcher also accepts passed 
+    * expected values.
+    * 
     * @param approxPort port of the approximate DUT to track
-    * @param exactPort port of the exact DUT to track
     * @param metrics metrics to use in this watcher
-    * 
-    * @note Requires given pairs of ports to have the same type, direction and width.
-    * 
-    * @todo extend to support software emulation of exact DUT
     */
-  private[chiselverify] abstract class PortWatcher(val approxPort: Bits, val exactPort: Bits, val metrics: Metric*) {
-    // Verify that the ports have the same type, direction and width
-    private[PortWatcher] val errMsg: String = "pairs of watched ports must have"
-    require(checkTypeEquivalence(approxPort, exactPort), s"$errMsg the same type")
-    require(directionOf(approxPort) == directionOf(exactPort), s"$errMsg the same direction")
-    require(widthOf(approxPort) == widthOf(exactPort), s"$errMsg the same width")
-
+  private[chiselverify] sealed abstract class Watcher(val approxPort: Bits, val metrics: Metric*) {
     // Storage for port samples
     private val _samples: mutable.ArrayBuffer[(BigInt, BigInt)] = mutable.ArrayBuffer[(BigInt, BigInt)]()
 
@@ -59,12 +78,14 @@ package object approximation {
     private[chiselverify] def results: Map[Metric, Seq[Double]] = _results.toMap
 
     /** 
-      * Samples the two ports of the watcher and stores their values internally
+      * Samples the approximate port of the watcher and stores its value with a 
+      * given expected value internally
+      * @param expected expected value of the exact port
       */
-    def sample(): Unit = {
+    def sample(expected: BigInt): Unit = {
       metrics match {
         case Nil =>
-        case _ => _samples += ((approxPort.peek().litValue, exactPort.peek().litValue))
+        case _ => _samples += ((approxPort.peek().litValue, expected))
       }
       _computed = false
     }
@@ -100,31 +121,66 @@ package object approximation {
   }
 
   /** 
-    * Represents a port tracker that does not support verification
+    * Represents a tracker that does not support verification
     */
-  private[chiselverify] class Tracker(approxPort: Bits, exactPort: Bits, metrics: Metric*)
-    extends PortWatcher(approxPort, exactPort, metrics:_*) {
+  private[chiselverify] sealed abstract class Tracker(approxPort: Bits, metrics: Metric*)
+    extends Watcher(approxPort, metrics:_*) {
+    this: WatcherStyle =>
+
+    /** 
+      * Converts the tracker into a report
+      * @return a report
+      */
     def report(): Report = {
       // First compute the metric values
       compute()
 
       // Then create a report for this watcher
-      TrackerReport(portName(approxPort), portName(exactPort), metrics, results)
+      TrackerReport(portName(approxPort), metrics, results)
     }
   }
 
   /** 
-    * Represents a port constraint that supports verification
+    * Represents a plain tracker
+    */
+  private[chiselverify] sealed class PlainTracker(approxPort: Bits, metrics: Metric*)
+    extends Tracker(approxPort, metrics:_*) with ReferenceBased
+
+  /** 
+    * Represents a port-based tracker
+    * @param exactPort port of the exact DUT to track
+    * 
+    * @note Requires given pairs of ports to have the same type, direction and width.
+    */
+  private[chiselverify] sealed class PortTracker(approxPort: Bits, val exactPort: Bits, metrics: Metric*)
+    extends Tracker(approxPort, metrics:_*) with PortBased {
+    // Verify that the ports have the same type, direction and width
+    private[PortTracker] val errMsg: String = "pairs of watched ports must have"
+    require(checkTypeEquivalence(approxPort, exactPort), s"$errMsg the same type")
+    require(directionOf(approxPort) == directionOf(exactPort), s"$errMsg the same direction")
+    require(widthOf(approxPort) == widthOf(exactPort), s"$errMsg the same width")
+
+    def sample(): Unit = sample(exactPort.peek().litValue)
+  }
+
+  /** 
+    * Represents a constraint that supports verification
     * @todo extend to support early termination on instantaneous metrics
     */
-  private[chiselverify] class Constraint(approxPort: Bits, exactPort: Bits, metrics: Metric*)
-    extends PortWatcher(approxPort, exactPort, metrics:_*) {
+  private[chiselverify] sealed abstract class Constraint(approxPort: Bits, metrics: Metric*)
+    extends Watcher(approxPort, metrics:_*) {
+    this: WatcherStyle =>
+
+    /** 
+      * Converts the constraint into a report
+      * @return a report
+      */
     def report(): Report = {
       // First compute the metric values
       compute()
 
       // Then create a report for this watcher
-      ConstraintReport(portName(approxPort), portName(exactPort), metrics, results)
+      ConstraintReport(portName(approxPort), metrics, results)
     }
 
     /** 
@@ -139,7 +195,7 @@ package object approximation {
 
         // Then verify all the metrics and identify the unsatisfied ones
         val bs = new StringBuilder()
-        bs ++= s"Verification results of constraint on ports ${portName(approxPort)} and ${portName(exactPort)}\n"
+        bs ++= s"Verification results of constraint on port ${portName(approxPort)}\n"
         val satisfieds = metrics.map { mtrc =>
           val mtrcResults   = results(mtrc)
           val mtrcSatisfied = mtrcResults.map(mtrc.check(_)).forall(s => s)
@@ -159,24 +215,66 @@ package object approximation {
   }
 
   /** 
+    * Represents a plain constraint
+    */
+  private[chiselverify] sealed class PlainConstraint(approxPort: Bits, metrics: Metric*)
+    extends Constraint(approxPort, metrics:_*) with ReferenceBased
+
+  /** 
+    * Represents a port-based constraint
+    * @param exactPort port of the exact DUT to track
+    * 
+    * @note Requires given pairs of ports to have the same type, direction and width.
+    */
+  private[chiselverify] sealed class PortConstraint(approxPort: Bits, val exactPort: Bits, metrics: Metric*)
+    extends Constraint(approxPort, metrics:_*) with PortBased {
+    // Verify that the ports have the same type, direction and width
+    private[PortConstraint] val errMsg: String = "pairs of watched ports must have"
+    require(checkTypeEquivalence(approxPort, exactPort), s"$errMsg the same type")
+    require(directionOf(approxPort) == directionOf(exactPort), s"$errMsg the same direction")
+    require(widthOf(approxPort) == widthOf(exactPort), s"$errMsg the same width")
+
+    def sample(): Unit = sample(exactPort.peek().litValue)
+  }
+
+  /** 
     * API end-point for the approximate verification constructs. Allows to define port trackers 
     * with a specified list of relevant error metrics to be used in a report
     */
   object track {
     /** 
-      * Creates a new Tracker with the given arguments
+      * Print warnings about metrics with ignored maximum values
+      * @param portName a port name
+      * @param metrics a sequence of metrics
+      */
+    private[chiselverify] def warn(portName: String, metrics: Iterable[Metric]): Unit = metrics
+      .filter(_.isConstrained).foreach { mtrc =>
+      println(s"Tracker on port ${portName} ignores maximum value of $mtrc metric!")
+    }
+
+    /** 
+      * Creates a new `PlainTracker` with the given arguments
+      * @param approxPort port of the approximate DUT to track
+      * @param metrics metrics to use in this tracker
+      */
+    def apply(approxPort: Bits, metrics: Metric*): Tracker = {
+      warn(portName(approxPort), metrics)
+
+      // Create a new `PlainTracker` with the given arguments
+      new PlainTracker(approxPort, metrics:_*)
+    }
+
+    /** 
+      * Creates a new `PortTracker` with the given arguments
       * @param approxPort port of the approximate DUT to track
       * @param exactPort port of the exact DUT to track
       * @param metrics metrics to use in this tracker
       */
     def apply(approxPort: Bits, exactPort: Bits, metrics: Metric*): Tracker = {
-      // Warn the designer about any metrics with maximum values
-      metrics.foreach { metr =>
-        println(s"Tracker on ports ${portName(approxPort)} and ${portName(exactPort)} ignores maximum value of $metr metric!")
-      }
+      warn(portName(approxPort), metrics)
 
-      // Create a new `Tracker` with the given arguments
-      new Tracker(approxPort, exactPort, metrics:_*)
+      // Create a new `PortTracker` with the given arguments
+      new PortTracker(approxPort, exactPort, metrics:_*)
     }
   }
 
@@ -186,20 +284,38 @@ package object approximation {
     */
   object constrain {
     /** 
-      * Creates a new Constraint with the given arguments
+      * Checks and fails on unconstrained metrics
+      * @param port a port name
+      * @param constraints a sequence of metrics
+      */
+    private[chiselverify] def check(portName: String, constraints: Iterable[Metric]): Unit = constraints
+      .foreach { mtrc =>
+        require(mtrc.isConstrained, s"cannot create $mtrc constraint without maximum value")
+    }
+
+    /** 
+      * Creates a new `PlainConstraint` with the given arguments
+      * @param approxPort port of the approximate DUT to track
+      * @param constraints metrics to verify in this constraint
+      */
+    def apply(approxPort: Bits, constraints: Metric*): Constraint = {
+      check(portName(approxPort), constraints)
+
+      // Create a new `PlainConstraint` with the given arguments
+      new PlainConstraint(approxPort, constraints:_*)
+    }
+
+    /** 
+      * Creates a new `PortConstraint` with the given arguments
       * @param approxPort port of the approximate DUT to track
       * @param exactPort port of the exact DUT to track
       * @param constraints metrics to verify in this constraint
       */
     def apply(approxPort: Bits, exactPort: Bits, constraints: Metric*): Constraint = {
-      // Verify that all the metrics have maximum values
-      constraints.foreach { constr =>
-        require(constr.isConstrained, 
-          s"cannot create $constr constraint without maximum value")
-      }
+      check(portName(approxPort), constraints)
       
-      // Create a new `Constraint` with the given arguments
-      new Constraint(approxPort, exactPort, constraints:_*)
+      // Create a new `PortConstraint` with the given arguments
+      new PortConstraint(approxPort, exactPort, constraints:_*)
     }
   }
 }

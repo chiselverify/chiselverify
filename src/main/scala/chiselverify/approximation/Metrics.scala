@@ -23,14 +23,14 @@ object Metrics {
   }
 
   /** 
-    * Represents an absolute MetricResult
+    * Represents an absolute `MetricResult`
     */
   trait Absolute extends MetricResult {
     final def isAbsolute: Boolean = true
   }
 
   /** 
-    * Represents a relative MetricResult
+    * Represents a relative `MetricResult`
     */
   trait Relative extends MetricResult {
     final def isAbsolute: Boolean = false
@@ -67,7 +67,7 @@ object Metrics {
   }
 
   /** 
-    * Represents an instantaneous Metric
+    * Represents an instantaneous `Metric`
     * 
     * @note Inheriting classes must mixin either 
     */
@@ -124,7 +124,7 @@ object Metrics {
   }
 
   /** 
-    * Represents a history-based Metric
+    * Represents a history-based `Metric`
     */
   abstract class HistoryBased(maxVal: Option[Double]) extends Metric {
     this: MetricResult =>

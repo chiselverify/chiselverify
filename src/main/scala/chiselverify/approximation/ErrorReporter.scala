@@ -1,5 +1,7 @@
 package chiselverify.approximation
 
+import chisel3.Bits
+
 /** 
   * Handles everything related to tracking and verification of error metrics
   * 
@@ -27,7 +29,7 @@ package chiselverify.approximation
   * )
   * }}}
   */
-class ErrorReporter(watchers: PortWatcher*) {
+class ErrorReporter(watchers: Watcher*) {
   /** 
     * Creates a readable error metric report
     * @return report in string form
@@ -55,9 +57,21 @@ class ErrorReporter(watchers: PortWatcher*) {
   }
 
   /** 
-    * Samples all given watchers
+    * Samples all given watchers with given expected values
+    * @param expected a map of (port, value) pairs
+    * 
+    * @note Requires that there exists an entry in the map for all non-port based watchers, 
+    *       the corresponding approximate DUT ports being the keys.
     */
-  def sample(): Unit = watchers.foreach(_.sample())
+  def sample(expected: Map[Bits, BigInt] = Map.empty): Unit = watchers.foreach { _ match {
+    case wtchr: PortTracker => wtchr.sample()
+    case wtchr: PortConstraint => wtchr.sample()
+    case wtchr =>
+      val approxPort = wtchr.approxPort
+      wtchr.sample(expected.getOrElse(approxPort,
+        throw new AssertionError(s"watcher on port ${portName(approxPort)} needs a reference value but none was provided"))
+      )
+  }}
 
   /** 
     * Verifies any given constraints and asserts their satisfaction, printing results of 

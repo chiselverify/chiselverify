@@ -32,7 +32,7 @@ object Reporting {
     */
   private[chiselverify] case class ErrorReport(watchers: Iterable[Report]) extends Report {
     // Create an identifier for this error report
-    val id = s"ER(${watchers.map(wtchr => s" - ${wtchr.id}\n")})"
+    val id = s"ER(\n${watchers.map(wtchr => s" - ${wtchr.id}\n")})"
 
     def report(): String = {
       // Generate reports for all contained watchers
@@ -57,16 +57,16 @@ object Reporting {
   /** 
     * Contains the error report for a `Tracker`
     */
-  private[chiselverify] case class TrackerReport(approxPort: String, exactPort: String, metrics: Iterable[Metric], results: Map[Metric, Seq[Double]])
+  private[chiselverify] case class TrackerReport(approxPort: String, metrics: Iterable[Metric], results: Map[Metric, Seq[Double]])
     extends Report {
     // Create an identifier for this tracker report
-    val id = s"T($approxPort, $exactPort)"
+    val id = s"T($approxPort)"
 
     def report(): String = metrics match {
       case Nil => 
-        s"Tracker on ports $approxPort and $exactPort has no metrics!\n"
+        s"Tracker on port $approxPort has no metrics!\n"
       case _ =>
-        val bs = new StringBuilder(s"Tracker on ports $approxPort and $exactPort has results:\n")
+        val bs = new StringBuilder(s"Tracker on port $approxPort has results:\n")
         metrics.foreach { mtrc =>
           val mtrcResults = results(mtrc)
           bs ++= "- "
@@ -96,16 +96,16 @@ object Reporting {
   /** 
     * Contains the error report for a `Constraint`
     */
-  private[chiselverify] case class ConstraintReport(approxPort: String, exactPort: String, metrics: Iterable[Metric], results: Map[Metric, Seq[Double]])
+  private[chiselverify] case class ConstraintReport(approxPort: String, metrics: Iterable[Metric], results: Map[Metric, Seq[Double]])
     extends Report {
     // Create an identifier for this constraint report
-    val id = s"C($approxPort, $exactPort)"
+    val id = s"C($approxPort)"
 
     def report(): String = metrics match {
       case Nil =>
-        s"Constraint on ports $approxPort and $exactPort has no metrics!\n"
+        s"Constraint on port $approxPort has no metrics!\n"
       case _ =>
-        val bs = new StringBuilder(s"Constraint on ports $approxPort and $exactPort has results:\n")
+        val bs = new StringBuilder(s"Constraint on port $approxPort has results:\n")
         metrics.foreach { mtrc =>
           val mtrcResults   = results(mtrc)
           val mtrcSatisfied = mtrcResults.map(mtrc.check(_)).forall(s => s)
