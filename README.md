@@ -1,6 +1,6 @@
 # ChiselVerify: A Hardware Verification Library for Chisel
 
-In this repository, we proprose ChiselVerify, which is the beginning of a verification library within Scala for digital hardware described in [Chisel](https://github.com/chipsalliance/chisel3), but also supporting legacy components in VHDL, Verilog, or SystemVerilog. The library runs off of [ChiselTest](https://github.com/ucb-bar/chisel-testers2) for all of the DUT interfacing. A technical report describing the library in detail is available online: [Open-Source Verification with Chisel and Scala](https://arxiv.org/abs/2102.13460).
+In this repository, we proprose ChiselVerify, which is the beginning of a verification library within Scala for digital hardware described in [Chisel](https://github.com/chipsalliance/chisel3), but also supporting legacy components in VHDL, Verilog, or SystemVerilog. The library runs off of [ChiselTest](https://github.com/ucb-bar/chisel-testers2) for all of the DUT interfacing. An early technical report describing the initial version of the library in detail is available online: [Open-Source Verification with Chisel and Scala](https://arxiv.org/abs/2102.13460). For the most up-to-date writing on topic, please refer to [Verification of Chisel Hardware Designs with ChiselVerify](https://www.sciencedirect.com/science/article/pii/S0141933122002666).  
 
 When you use this library in a research project, please cite it as:
 ```
