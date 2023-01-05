@@ -9,7 +9,7 @@ When you use this library in a research project, please cite it as:
   author={Dobis, Andrew and Laeufer, Kevin and Damsgaard, Hans Jakob and Petersen, Tjark and Rasmussen, Kasper Juul Hesse and Tolotto, Enrico and Andersen, Simon Thye and Lin, Richard and Schoeberl, Martin},
   journal={Microprocessors and Microsystems},
   pages={104737},
-  year={2022},
+  year={2023},
   publisher={Elsevier}}
 ```
 
