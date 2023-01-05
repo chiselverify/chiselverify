@@ -1,18 +1,16 @@
 package chiselverify.crv.backends.jacop.experimental
 
-import Chisel.{Bool, SInt}
 import chisel3.stage.{ChiselGeneratorAnnotation, DesignAnnotation}
-import chisel3.{Data, RawModule, UInt}
-import chiselverify.crv.backends.jacop.{Rand, RandObj}
-import scala.language.implicitConversions
+import chisel3.{Data, RawModule, UInt, SInt, Bool}
 import org.jacop.core.Var
-
+import scala.language.implicitConversions
 import scala.math.pow
 import scala.reflect.runtime.universe
 import scala.reflect.runtime.universe.{Type, runtimeMirror, typeOf}
 
-object RandBundle {
+import chiselverify.crv.backends.jacop.{Rand, RandObj}
 
+object RandBundle {
   object ModuleElaboration {
     def elaborate[M <: RawModule](gen: () => M): M = {
       val genAnno = ChiselGeneratorAnnotation(gen)
@@ -24,7 +22,6 @@ object RandBundle {
 }
 
 trait RandBundle extends RandObj {
-
   private val rm = runtimeMirror(getClass.getClassLoader)
   private val im = rm.reflect(this)
   private val members = im.symbol.typeSignature.members
@@ -35,13 +32,11 @@ trait RandBundle extends RandObj {
   }
 
   private def getName[T <: Data](member: T, collection: Iterable[universe.Symbol]): String = {
-
     im.reflectField(collection.filter(x => im.reflectField(x.asTerm).get.asInstanceOf[T] == member).head.asTerm)
       .symbol
       .toString
       .drop(6)
   }
-
 
   private def searchNameInModel(name: String): Option[Var] = currentModel.vars.filter(_ != null).find(_.id() == name)
 

@@ -25,7 +25,6 @@ object Pattern {
 }
 
 class Pattern(instructions: GeneratorContext => Seq[InstructionFactory]) extends InstructionFactory {
-
   // allows to attach a set of categories to a pattern
   def giveCategory(cat: Category*): InstructionFactory with Categorizable = {
     val originalProduce = (c: GeneratorContext) => this.produce()(c)
@@ -35,6 +34,7 @@ class Pattern(instructions: GeneratorContext => Seq[InstructionFactory]) extends
       override def produce()(implicit context: GeneratorContext): Seq[Instruction] = originalProduce(context)
     }
   }
+  
   // produce means invoking produce on all pattern elements and flattening them
   override def produce()(implicit context: GeneratorContext): Seq[Instruction] = instructions(context).flatMap(_.produce())
 }

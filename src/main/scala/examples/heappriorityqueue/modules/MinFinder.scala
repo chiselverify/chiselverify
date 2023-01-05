@@ -2,6 +2,7 @@ package examples.heappriorityqueue.modules
 
 import chisel3._
 import chisel3.util._
+
 import examples.heappriorityqueue.Interfaces.TaggedEvent
 import examples.heappriorityqueue.PriorityQueueParameters
 
@@ -21,6 +22,7 @@ class MinFinder(n: Int)(implicit parameters: PriorityQueueParameters) extends Mo
     val res = Output(new TaggedEvent)
     val index = Output(UInt(log2Ceil(n).W))
   })
+  
   // lowest cyclic priority wins
   // if cyclic priorities are equal the normal priority decides
   // if both are equal the lowest index wins

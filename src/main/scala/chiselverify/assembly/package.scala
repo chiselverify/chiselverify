@@ -1,10 +1,10 @@
 package chiselverify
 
-import chiselverify.assembly.RandomHelpers._
-import probability_monad.Distributions
-
 import scala.language.implicitConversions
 import scala.math._
+import probability_monad.Distributions
+
+import chiselverify.assembly.RandomHelpers._
 
 package object assembly {
 
@@ -26,7 +26,6 @@ package object assembly {
       case t => Some(t)
     }
   }
-
 
   object AssemblyDistributions extends Distributions(scala.util.Random)
 
@@ -51,7 +50,6 @@ package object assembly {
       old
     }
   }
-
 
   trait Constraint
 
@@ -92,6 +90,4 @@ package object assembly {
       }
     }
   }
-
-
 }

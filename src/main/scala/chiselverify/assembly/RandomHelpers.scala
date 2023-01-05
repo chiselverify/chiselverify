@@ -4,7 +4,6 @@ import scala.math.{ceil, log10, pow}
 import scala.util.Random
 
 object RandomHelpers {
-
   // choose a random element from a sequence
   def randomSelect[T](xs: Seq[T]): T = xs.apply(Random.nextInt(xs.length))
 
@@ -60,5 +59,4 @@ object RandomHelpers {
     // create a BigRange containing a single number
     def apply(v: Int): BigRange = BigRange(v, v + 1)
   }
-
 }

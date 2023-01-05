@@ -2,6 +2,7 @@ package examples.heappriorityqueue.modules
 
 import chisel3._
 import chisel3.util._
+
 import examples.heappriorityqueue.Interfaces.{TaggedEvent, rdPort, searchPort, wrPort}
 import examples.heappriorityqueue.PriorityQueueParameters
 
@@ -22,7 +23,6 @@ abstract class SearchSeqMem(capacity: Int)(implicit parameters: PriorityQueuePar
   * A implementation of SearchSeqMem, where the CAM-functionality is provided by a linear search through the memory
   */
 class linearSearchMem(capacity: Int)(implicit parameters: PriorityQueueParameters) extends SearchSeqMem(capacity) {
-
   import parameters._
 
   // create memory

@@ -6,7 +6,6 @@ import chisel3.util._
 /**
   * contains relevant bundle types and port types for the heap-based priority queue
   */
-
 object Interfaces {
 
   class Event(implicit parameters: PriorityQueueParameters) extends Bundle {
@@ -46,5 +45,4 @@ object Interfaces {
     val error = Input(Bool())
     val done = Input(Bool())
   }
-
 }

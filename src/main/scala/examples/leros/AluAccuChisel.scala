@@ -15,7 +15,6 @@ object Types {
   * @param size
   */
 class AluAccuChisel(size: Int) extends AluAccu(size) {
-
   val accuReg = RegInit(0.U(size.W))
 
   val op = io.op

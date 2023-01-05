@@ -1,118 +1,103 @@
-/*
-* Copyright 2020 DTU Compute - Section for Embedded Systems Engineering
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
-* or implied. See the License for the specific language governing
-* permissions and limitations under the License.
-*/
-
 package chiselverify
 
 import chisel3._
+import chisel3.experimental.ChiselEnum
 
 package object axi4 {
-  /** AXI4-Lite manager
-   * 
-   * An empty class representing an AXI manager
-   *
-   * @param addrW the width of the address signals in bits
-   * @param dataW the width of the data read/write signals in bits
-   */
+  /** 
+    * AXI4-Lite manager
+    * @param addrW the width of the address signals in bits
+    * @param dataW the width of the data read/write signals in bits
+    * 
+    * An empty class representing an AXI manager
+    */
   abstract class LiteManager(val addrW: Int, val dataW: Int) extends Module {
     val io = IO(new ManagerInterfaceLite(addrW, dataW))
   }
 
-  /** AXI4 full manager
-   * 
-   * An empty class representing an AXI manager
-   *
-   * @param addrW the width of the address signals in bits
-   * @param dataW the width of the data read/write signals in bits
-   * @param idW the width of the ID signals in bits, defaults to 0
-   * @param userW the width of the user signals in bits, defaults to 0
-   */
+  /** 
+    * AXI4 full manager
+    * @param addrW the width of the address signals in bits
+    * @param dataW the width of the data read/write signals in bits
+    * @param idW [Optiona] the width of the ID signals in bits
+    * @param userW [Optional] the width of the user signals in bits
+    * 
+    * An empty class representing an AXI manager
+    */
   abstract class Manager(val addrW: Int, val dataW: Int, val idW: Int = 0, val userW: Int = 0) extends Module {
     val io = IO(new ManagerInterface(addrW, dataW, idW, userW))
   }
 
-  /** AXI4-Lite subordinate
-   * 
-   * An empty class representing an AXI subordinate
-   *
-   * @param addrW the width of the address signals in bits
-   * @param dataW the width of the data read/write signals in bits
-   */
+  /** 
+    * AXI4-Lite subordinate
+    * @param addrW the width of the address signals in bits
+    * @param dataW the width of the data read/write signals in bits
+    * 
+    * An empty class representing an AXI subordinate
+    */
   abstract class LiteSubordinate(val addrW: Int, val dataW: Int) extends Module {
     val io = IO(new SubordinateInterfaceLite(addrW, dataW))
   }
 
-  /** AXI4 full subordinate
-   * 
-   * An empty class representing an AXI subordinate
-   *
-   * @param addrW the width of the address signals in bits
-   * @param dataW the width of the data read/write signals in bits
-   * @param idW the width of the ID signals in bits, defaults to 0
-   * @param userW the width of the user signals in bits, defaults to 0
-   */
+  /** 
+    * AXI4 full subordinate
+    * @param addrW the width of the address signals in bits
+    * @param dataW the width of the data read/write signals in bits
+    * @param idW [Optional] the width of the ID signals in bits
+    * @param userW [Optional] the width of the user signals in bits
+    * 
+    * An empty class representing an AXI subordinate
+    */
   abstract class Subordinate(val addrW: Int, val dataW: Int, val idW: Int = 0, val userW: Int = 0) extends Module {
     val io = IO(new SubordinateInterface(addrW, dataW, idW, userW))
   }
 
   /** AXI4 burst encodings */
-  object BurstEncodings {
-    val Fixed             = "b00".U
-    val Incr              = "b01".U
-    val Wrap              = "b10".U
+  object BurstEncodings extends ChiselEnum {
+    val Fixed = Value("b00".U)
+    val Incr  = Value("b01".U)
+    val Wrap  = Value("b10".U)
   }
   
   /** AXI lock encodings */
-  object LockEncodings {
-    val NormalAccess     = false.B
-    val ExclusiveAccess  = true.B
+  object LockEncodings extends ChiselEnum {
+    val NormalAccess    = Value(false.B)
+    val ExclusiveAccess = Value(true.B)
   }
   
   /** AXI4 memory encodings */
-  object MemoryEncodings {
-    val DeviceNonbuf     = "b0000".U
-    val DeviceBuf        = "b0001".U
-    val NormalNonbuf     = "b0010".U 
-    val NormalBuf        = "b0011".U
-    val WtNoalloc        = "b0110".U
-    val WtReadalloc      = "b0110".U
-    val WtWritealloc     = "b1110".U
-    val WtRwalloc        = "b1110".U
-    val WbNoalloc        = "b0111".U
-    val WbReadalloc      = "b0111".U
-    val WbWritealloc     = "b1111".U
-    val WbRwalloc        = "b1111".U
+  object MemoryEncodings extends ChiselEnum {
+    val DeviceNonbuf = Value("b0000".U)
+    val DeviceBuf    = Value("b0001".U)
+    val NormalNonbuf = Value("b0010".U)
+    val NormalBuf    = Value("b0011".U)
+    val WtNoalloc    = Value("b0110".U)
+    val WtReadalloc  = Value("b0110".U)
+    val WtWritealloc = Value("b1110".U)
+    val WtRwalloc    = Value("b1110".U)
+    val WbNoalloc    = Value("b0111".U)
+    val WbReadalloc  = Value("b0111".U)
+    val WbWritealloc = Value("b1111".U)
+    val WbRwalloc    = Value("b1111".U)
   }
   
   /** AXI4 protection encodings */
-  object ProtectionEncodings {
-    val DataSecUpriv    = "b000".U
-    val DataSecPriv     = "b001".U
-    val DataNsecUpriv   = "b010".U
-    val DataNsecPriv    = "b011".U
-    val InstrSecUpriv   = "b100".U
-    val InstrSecPriv    = "b101".U
-    val InstrNsecUpriv  = "b110".U
-    val InstrNsecPriv   = "b111".U
+  object ProtectionEncodings extends ChiselEnum {
+    val DataSecUpriv   = Value("b000".U)
+    val DataSecPriv    = Value("b001".U)
+    val DataNsecUpriv  = Value("b010".U)
+    val DataNsecPriv   = Value("b011".U)
+    val InstrSecUpriv  = Value("b100".U)
+    val InstrSecPriv   = Value("b101".U)
+    val InstrNsecUpriv = Value("b110".U)
+    val InstrNsecPriv  = Value("b111".U)
   }
   
   /** AXI4 response encodings */
-  object ResponseEncodings {
-    val Okay              = "b00".U
-    val Exokay            = "b01".U
-    val Slverr            = "b10".U
-    val Decerr            = "b11".U
+  object ResponseEncodings extends ChiselEnum {
+    val Okay   = Value("b00".U)
+    val Exokay = Value("b01".U)
+    val Slverr = Value("b10".U)
+    val Decerr = Value("b11".U)
   }
 }

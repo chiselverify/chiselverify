@@ -1,9 +1,0 @@
-before_install:
-  - sudo apt-get install scala verilator
-language: scala
-scala:
- - 2.12.6
-jdk:
- - openjdk8
-script:
- - make

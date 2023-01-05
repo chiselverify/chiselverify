@@ -2,6 +2,7 @@ package examples.heappriorityqueue.modules
 
 import chisel3._
 import chisel3.util._
+
 import examples.heappriorityqueue.Interfaces.{TaggedEvent, rdPort, wrPort}
 import examples.heappriorityqueue.PriorityQueueParameters
 
@@ -73,7 +74,6 @@ class Heapifier(implicit parameters: PriorityQueueParameters) extends Module {
   val nextIndexUp = ((indexReg - 1.U) >> log2Ceil(order)).asUInt() // index of next parent is given by (index-1)/childrenCount
   val nextIndexDown = (indexReg << log2Ceil(order)).asUInt() + RegNext(minFinder.io.index) // index of next parent is given by (index * childrenCount) + selected child
   val swapRequired = minFinder.io.index =/= 0.U // a swap is only required when the parent does not have the highest priority
-
 
   // default assignments
   io.control.done := false.B
@@ -238,5 +238,4 @@ class Heapifier(implicit parameters: PriorityQueueParameters) extends Module {
       }
     }
   }
-
 }
