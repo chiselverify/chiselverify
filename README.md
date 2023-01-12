@@ -4,7 +4,7 @@ In this repository, we proprose ChiselVerify, which is the beginning of a verifi
 
 When you use this library in a research project, please cite it as:
 ```
-@article{dobis2022verification,
+@article{dobis2023verification,
   title={{Verification of Chisel Hardware Designs with ChiselVerify}},
   author={Dobis, Andrew and Laeufer, Kevin and Damsgaard, Hans Jakob and Petersen, Tjark and Rasmussen, Kasper Juul Hesse and Tolotto, Enrico and Andersen, Simon Thye and Lin, Richard and Schoeberl, Martin},
   journal={Microprocessors and Microsystems},
