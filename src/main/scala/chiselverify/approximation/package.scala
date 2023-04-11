@@ -17,6 +17,9 @@ package object approximation {
     */
   private[chiselverify] def portName(port: Bits): String = port.pathName.split('.').last
 
+  private[chiselverify] implicit def iterableToDouble(iterable: Iterable[Double]): Double = iterable.head
+  private [chiselverify] implicit def doubleToIterable(double: Double): Iterable[Double] = Iterable(double)
+
   /** 
     * Represents the expected value style of a generic port watcher of which there are 
     * two types:
@@ -24,17 +27,17 @@ package object approximation {
     * - Reference-based watchers that require expected values when sampled
     * - Port-based watchers that require an exact port to peek when sampled
     */
-  private[chiselverify] sealed abstract trait WatcherStyle
+  private[chiselverify] sealed trait WatcherStyle
 
   /** 
     * Represents a reference-based 
     */
-  private[chiselverify] sealed abstract trait ReferenceBased extends WatcherStyle
+  private[chiselverify] sealed trait ReferenceBased extends WatcherStyle
 
   /** 
     * Represents a super-type of port-based watchers
     */
-  private[chiselverify] sealed abstract trait PortBased extends WatcherStyle {
+  private[chiselverify] sealed trait PortBased extends WatcherStyle {
     def exactPort: Bits
 
     /** 
@@ -62,6 +65,10 @@ package object approximation {
     // Storage for port samples
     private val _samples: mutable.ArrayBuffer[(BigInt, BigInt)] = mutable.ArrayBuffer[(BigInt, BigInt)]()
 
+    // For caching
+    private val _caching_period = 100 //TODO: MAKE PARAMETER
+    private val _sample_cache: mutable.ArrayBuffer[Double] = mutable.ArrayBuffer[Double]()
+
     // Storage for caching results during computation
     private var _computed: Boolean = false
     private val _results: mutable.Map[Metric, Seq[Double]] = mutable.Map[Metric, Seq[Double]]()
@@ -83,33 +90,53 @@ package object approximation {
       * @param expected expected value of the exact port
       */
     def sample(expected: BigInt): Unit = {
-      metrics match {
-        case Nil =>
-        case _ => _samples += ((approxPort.peek().litValue, expected))
+      if(metrics.nonEmpty) {
+          _samples += ((approxPort.peek().litValue, expected))
+
+          // Check for buffer emptying
+          if(_samples.length >= _caching_period) {
+
+            // Compute and cache results
+            _sample_cache += compute_imm()
+
+            // Clear sampling buffer
+            _samples.clear()
+          }
       }
       _computed = false
     }
 
-    /** 
+    private[chiselverify] implicit def seqToAverageable(s: Seq[Double]): AverageableSeq = AverageableSeq(s)
+
+    /**
+      * Computes the average of a sequence of elements in a single pass
+      * @param s the sequence we want to average
+      * @return the numerical average of all values in the sequence
+      */
+    private[chiselverify] case class AverageableSeq(s: Seq[Double]) {
+      def average: Double = {
+          val t = s.foldLeft((0.0, 0)) { case (acc, i) => (acc._1 + i, acc._2 + 1) }
+          t._1 / t._2
+        }
+    }
+
+    /**
+      * Computes the average of all sampled metrics.
+      * @return
+      */
+    private[chiselverify] def compute_imm(): Double =
+      metrics.map((m: Metric) => m.compute(samples).toSeq.average).average
+
+      /**
       * Computes the metrics of the watcher and stores their values internally
       * 
       * @note Assumes there exist samples to compute metrics based on, if `metrics` is 
       *       non-empty.
       */
     private[chiselverify] def compute(): Unit = {
-      if (!_computed) {
-        metrics match {
-          case Nil =>
-          case _ =>
-            assume(!_samples.isEmpty, "cannot compute metrics without samples")
-            metrics.foreach { _ match {
-              case mtrc: Instantaneous =>
-                _results += (mtrc -> mtrc.compute(samples).toSeq)
-              case mtrc: HistoryBased =>
-                _results += (mtrc -> Seq(mtrc.compute(samples)))
-            }}
-        }
-      }
+      assume(_samples.nonEmpty, "cannot compute metrics without samples")
+      if (!_computed && metrics.nonEmpty)
+            metrics.foreach(m => _results += (m -> m.compute(samples).toSeq))
       _computed = true
     }
 
@@ -198,7 +225,7 @@ package object approximation {
         bs ++= s"Verification results of constraint on port ${portName(approxPort)}\n"
         val satisfieds = metrics.map { mtrc =>
           val mtrcResults   = results(mtrc)
-          val mtrcSatisfied = mtrcResults.map(mtrc.check(_)).forall(s => s)
+          val mtrcSatisfied = mtrcResults.map(mtrc.check).forall(s => s)
           if (mtrcSatisfied) {
             bs ++= s"- ${mtrc} metric is satisfied!\n"
           } else {

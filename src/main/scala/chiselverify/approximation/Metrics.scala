@@ -63,7 +63,20 @@ object Metrics {
       * @param err value of the metric
       * @return true if `maxVal` is `None` or if `err` is less than `maxVal`
       */
-    final def check(err: Double): Boolean = maxVal == None || err <= maxVal.get
+    final def check(err: Double): Boolean = maxVal.isEmpty || err <= maxVal.get
+
+    def compute(vs1: Iterable[BigInt], vs2: Iterable[BigInt]): Iterable[Double]
+
+    /**
+      * Computes the values of the metric given a sequence of tuples of samples
+      * @param vss sequence of tuples of samples
+      * @return values of the metric
+      */
+    final def compute(vss: Iterable[(BigInt, BigInt)]): Iterable[Double] = {
+      val (vs1, vs2) = vss.unzip
+      compute(vs1, vs2)
+    }
+
   }
 
   /** 
@@ -104,23 +117,15 @@ object Metrics {
       * Checks if the values of the metric given two sequences of samples are less than its maximum
       * @return `check(compute(v1, v2))` for each `(v1, v2)` in `vs1.zip(vs2)`
       */
-    final def check(vs1: Iterable[BigInt], vs2: Iterable[BigInt]): Boolean = compute(vs1, vs2).map(check(_)).forall(s => s)
+    final def check(vs1: Iterable[BigInt], vs2: Iterable[BigInt]): Boolean = compute(vs1, vs2).map(check).forall(s => s)
 
-    /** 
-      * Computes the values of the metric given a sequence of tuples of samples
-      * @param vss sequence of tuples of samples
-      * @return values of the metric
-      */
-    final def compute(vss: Iterable[(BigInt, BigInt)]): Iterable[Double] = {
-      val (vs1, vs2) = vss.unzip
-      compute(vs1, vs2)
-    }
+
 
     /** 
       * Checks if the values of the metric given a sequence of tuples of samples are less than its maximum
       * @return `check(compute(v1, v2))` for each `(v1, v2)` in `vss`
       */
-    final def check(vss: Iterable[(BigInt, BigInt)]): Boolean = compute(vss).map(check(_)).forall(s => s)
+    final def check(vss: Iterable[(BigInt, BigInt)]): Boolean = compute(vss).map(check).forall(s => s)
   }
 
   /** 
@@ -135,23 +140,13 @@ object Metrics {
       * @param vs2 second sequence of samples
       * @return value of the absolute metric
       */
-    def compute(vs1: Iterable[BigInt], vs2: Iterable[BigInt]): Double
+    def compute(vs1: Iterable[BigInt], vs2: Iterable[BigInt]): Iterable[Double]
 
     /** 
       * Checks if the value of the metric given two sequences of samples is less than its maximum
       * @return `check(compute(v1, v2))`
       */
     final def check(vs1: Iterable[BigInt], vs2: Iterable[BigInt]): Boolean = check(compute(vs1, vs2))
-
-    /** 
-      * Computes the value of the metric given a sequence of tuples of samples
-      * @param vss sequence of tuples of samples
-      * @return value of the absolute metric
-      */
-    final def compute(vss: Iterable[(BigInt, BigInt)]): Double = {
-      val (vs1, vs2) = vss.unzip
-      compute(vs1, vs2)
-    }
 
     /** 
       * Checks if the value of the metric given a sequence of tuples of samples is less than its maximum
@@ -289,7 +284,7 @@ object Metrics {
     * @param maxVal [Optional] maximum value of the metric
     */
   final case class ER(maxVal: Option[Double] = None) extends HistoryBased(maxVal) with Relative {
-    def compute(vs1: Iterable[BigInt], vs2: Iterable[BigInt]): Double = {
+    def compute(vs1: Iterable[BigInt], vs2: Iterable[BigInt]): Iterable[Double] = {
       val (seq1, seq2) = (vs1.toSeq, vs2.toSeq)
       require(seq1.length == seq2.length, "the sequences must be the same length")
       (seq1.zip(seq2)).map { case (v1, v2) => if (v1 != v2) 1 else 0 }.sum.toDouble / seq1.length
@@ -331,7 +326,7 @@ object Metrics {
     */
   final case class MED(maxVal: Option[Double] = None) extends HistoryBased(maxVal) with Absolute {
     private val ed: ED  = new ED
-    def compute(vs1: Iterable[BigInt], vs2: Iterable[BigInt]): Double = {
+    def compute(vs1: Iterable[BigInt], vs2: Iterable[BigInt]): Iterable[Double] = {
       val (seq1, seq2) = (vs1.toSeq, vs2.toSeq)
       require(seq1.length == seq2.length, "the sequences must be the same length")
       (seq1.zip(seq2)).map { case (v1, v2) => ed.compute(v1, v2) }.sum / seq1.length
@@ -373,7 +368,7 @@ object Metrics {
     */
   final case class VED(maxVal: Option[Double] = None) extends HistoryBased(maxVal) with Absolute {
     private val ed: ED = new ED
-    def compute(vs1: Iterable[BigInt], vs2: Iterable[BigInt]): Double = {
+    def compute(vs1: Iterable[BigInt], vs2: Iterable[BigInt]): Iterable[Double] = {
       val (seq1, seq2) = (vs1.toSeq, vs2.toSeq)
       require(seq1.length == seq2.length, "the sequences must be the same length")
       val eds = seq1.zip(seq2).map { case (v1, v2) => ed.compute(v1, v2) }
@@ -417,7 +412,7 @@ object Metrics {
     */
   final case class SDED(maxVal: Option[Double] = None) extends HistoryBased(maxVal) with Absolute {
     private val ved: VED = new VED
-    def compute(vs1: Iterable[BigInt], vs2: Iterable[BigInt]): Double = scala.math.sqrt(ved.compute(vs1, vs2))
+    def compute(vs1: Iterable[BigInt], vs2: Iterable[BigInt]): Iterable[Double] = scala.math.sqrt(ved.compute(vs1, vs2))
   }
   case object SDED {
     /** 
@@ -455,7 +450,7 @@ object Metrics {
     */
   final case class MSE(maxVal: Option[Double] = None) extends HistoryBased(maxVal) with Absolute {
     private val se: SE = new SE
-    def compute(vs1: Iterable[BigInt], vs2: Iterable[BigInt]): Double = {
+    def compute(vs1: Iterable[BigInt], vs2: Iterable[BigInt]): Iterable[Double] = {
       val (seq1, seq2) = (vs1.toSeq, vs2.toSeq)
       require(seq1.length == seq2.length, "the sequences must be the same length")
       (seq1.zip(seq2)).map { case (v1, v2) => se.compute(v1, v2) }.sum / seq1.length
@@ -497,7 +492,7 @@ object Metrics {
     */
   final case class RMSE(maxVal: Option[Double] = None) extends HistoryBased(maxVal) with Absolute {
     private val mse: MSE = new MSE
-    def compute(vs1: Iterable[BigInt], vs2: Iterable[BigInt]): Double = scala.math.sqrt(mse.compute(vs1, vs2))
+    def compute(vs1: Iterable[BigInt], vs2: Iterable[BigInt]): Iterable[Double] = scala.math.sqrt(mse.compute(vs1, vs2))
   }
   case object RMSE {
     /** 
@@ -535,7 +530,7 @@ object Metrics {
     */
   final case class MRED(maxVal: Option[Double] = None) extends HistoryBased(maxVal) with Relative {
     private val red: RED = new RED
-    def compute(vs1: Iterable[BigInt], vs2: Iterable[BigInt]): Double = {
+    def compute(vs1: Iterable[BigInt], vs2: Iterable[BigInt]): Iterable[Double] = {
       val (seq1, seq2) = (vs1.toSeq, vs2.toSeq)
       require(seq1.length == seq2.length, "the sequences must be the same length")
 	  	(seq1.zip(seq2)).map { case (v1, v2) => red.compute(v1, v2) }.sum / seq1.length
