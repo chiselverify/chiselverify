@@ -24,15 +24,16 @@ Run tests with
 ```
 make
 ```
-This README contains a brief overview of the library and its functionalities. For a more in-depth tutorial, please check-out the [ChiselVerify Wiki](https://github.com/chiselverify/chiselverify/wiki). Ohter general documentation, such as technical reports and conference papers, can be found in the [documentation repository](https://github.com/chiselverify/documentation).
+This README contains a brief overview of the library and its functionalities. For a more in-depth tutorial, please check-out the [ChiselVerify Wiki](https://github.com/chiselverify/chiselverify/wiki). Other general documentation, such as technical reports, journal, and conference papers related to the chiselverify project can be found in the [documentation repository](https://github.com/chiselverify/documentation).
 
 **********************************
 
 # Verification Library for Chisel
-The library can be divided into 3 main parts:
+The library can be divided into 4 main parts:
 1. __Functional Coverage__: Enabling Functional Coverage features like Cover Points, Cross Coverage, Timed Coverage and Conditional Coverage.
 2. __Constrained Random Verification__: Allowing for constraints and random variables to be defined and used directly in Scala.
 3. __Bus Functional Models__: Enabling Transactional modeling for standardized Buses like _AXI4_.
+4. __Approximate Design Verification__: Provides comparative port samplers, as well as several error metrics that simplify the verification of approximate deisgns.  
 
 ## Functional Coverage in Chisel
 The idea is to implement functional coverage features directly in Chisel. The structure of the system can be seen in the diagram below.
