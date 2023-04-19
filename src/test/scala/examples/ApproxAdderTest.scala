@@ -2,6 +2,7 @@ package examples
 
 import chisel3._
 import chiseltest._
+import chiseltest.internal.NoThreadingAnnotation
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -86,7 +87,7 @@ class ApproxAdderTest extends AnyFlatSpec with ChiselScalatestTester with Matche
     io.sE    := exactAdder.io.s
     io.coutE := exactAdder.io.cout
   }
-  
+
   // Generate some random inputs to the adder and sample its registered outputs
   def simpleTest(dut: DUT, er: ErrorReporter): Unit = {
     val width = dut.io.sA.getWidth        // port width
@@ -103,10 +104,11 @@ class ApproxAdderTest extends AnyFlatSpec with ChiselScalatestTester with Matche
     }
   }
 
-  // BASELINE: Run tests for each specified width of the approximate adder's lower part
-  it should "test designs with different approxWidths" in {
+  // Run tests for each specified width of the approximate adder's lower part 
+  // without any constraints
+  it should "test designs with different approxWidths without constraints" in {
     ApproxWidths.zip(ExpectedResults).foreach { case (approxWidth, mtrcsSatisfied) =>
-      test(new DUT(Width, approxWidth)) { dut =>
+      test(new DUT(Width, approxWidth)).withAnnotations(Seq(NoThreadingAnnotation)) { dut =>
         // Create a new ErrorReporter with no constraints
         val er = new ErrorReporter()
         simpleTest(dut, er)
@@ -116,14 +118,15 @@ class ApproxAdderTest extends AnyFlatSpec with ChiselScalatestTester with Matche
     }
   }
 
-  // BENCHMARK: Run tests for each specified width of the approximate adder's lower part
-  ignore should "verify designs with different approxWidths" in {
+  // Run tests for each specified width of the approximate adder's lower part 
+  // with two simple constraints
+  it should "verify designs with different approxWidths with constraints" in {
     ApproxWidths.zip(ExpectedResults).foreach { case (approxWidth, mtrcsSatisfied) =>
-      test(new DUT(Width, approxWidth)) { dut =>
+      test(new DUT(Width, approxWidth)).withAnnotations(Seq(NoThreadingAnnotation)) { dut =>
         // Create a new ErrorReporter with two constraints
         val er = new ErrorReporter(
-          optconstrain(dut.io.sA, dut.io.sE, RED(.1), MRED(.025)),
-          optconstrain(dut.io.coutA, dut.io.coutE, ER(.01))
+          constrain(dut.io.sA, dut.io.sE, ED(1 << (approxWidth + 1)), RED(.1), MRED(.025)),
+          constrain(dut.io.coutA, dut.io.coutE, ER(.01))
         )
         simpleTest(dut, er)
         println(er.report())
