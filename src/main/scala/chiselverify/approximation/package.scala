@@ -112,8 +112,6 @@ package object approximation {
 
     /** 
       * Collapses the internal sample storage and cache if either has exceeded `maxCacheSize` elements
-      * 
-      * @todo Fix the index returned for maximum values here!
       */
     private[chiselverify] def collapse(): Unit = {
       // If the sample storage has more than `maxCacheSize` elements, collapse and clear it
@@ -205,7 +203,6 @@ package object approximation {
                 }
                 sum / resWeight
               } else {
-                /** @todo Update the math here! */
                 if (!wasCollapsed) {
                   mtrcResults.map(res => scala.math.pow(res, 1.0 / resWeight)).product
                 } else {
@@ -232,8 +229,6 @@ package object approximation {
       * this method does nothing.
       * 
       * @note Assumes there exist samples to compute metrics based on, if `metrics` is non-empty.
-      * 
-      * @todo Fix the index returned for maximum values here!
       */
     private[chiselverify] def compute(): Unit = {
       for (mtrc <- metrics if !_computed && metrics.nonEmpty) {
