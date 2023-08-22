@@ -2,7 +2,7 @@ package chiselverify.approximation
 
 import chiselverify.approximation.Metrics.{HistoryBased, Instantaneous, Metric}
 
-object Reporting {
+private[chiselverify] object Reporting {
 
   /** 
     * Class that can generate a part of a report
@@ -57,7 +57,7 @@ object Reporting {
   /** 
     * Contains the error report for a `Tracker`
     */
-  private[chiselverify] case class TrackerReport(approxPort: String, metrics: Iterable[Metric], results: Map[Metric, Seq[Double]])
+  private[chiselverify] case class TrackerReport(approxPort: String, metrics: Iterable[Metric], results: Map[Metric, Any])
     extends Report {
     // Create an identifier for this tracker report
     val id = s"T($approxPort)"
@@ -68,21 +68,22 @@ object Reporting {
       case _ =>
         val bs = new StringBuilder(s"Tracker on port $approxPort has results:\n")
         metrics.foreach { mtrc =>
-          val mtrcResults = results(mtrc)
-          bs ++= "- "
-          mtrc match {
-            // For instantaneous metrics, report the mean and maximum found error
-            case _: Instantaneous =>
-              val (mean, max) = (mtrcResults.sum / mtrcResults.length, mtrcResults.max)
-              bs ++= f"Instantaneous ${mtrc} metric has mean $mean%.3f and maximum $max%.3f"
+        val mtrcResults = results(mtrc)
+        bs ++= "- "
+        mtrc match {
+          // For instantaneous metrics, report the mean and maximum found error
+          case _: Instantaneous =>
+            val (_, mtrcMax, mtrcMean) = mtrcResults.asInstanceOf[(Int, Double, Double)]
+            bs ++= f"Instantaneous $mtrc metric has mean $mtrcMean and maximum $mtrcMax"
 
             // For history-based metrics, report the found error
-            case _: HistoryBased =>
-              bs ++= f"History-based ${mtrc} metric has value ${mtrcResults.head}%.3f"
-          }
-          bs ++= "!\n"
+          case _: HistoryBased =>
+            val mtrcVal = mtrcResults.asInstanceOf[Double]
+            bs ++= f"History-based $mtrc metric has value $mtrcVal"
         }
-        bs.mkString
+        bs ++= "!\n"
+      }
+      bs.mkString
     }
 
     def +(that: Report): Report = that match {
@@ -96,49 +97,46 @@ object Reporting {
   /** 
     * Contains the error report for a `Constraint`
     */
-  private[chiselverify] case class ConstraintReport(approxPort: String, metrics: Iterable[Metric], results: Map[Metric, Seq[Double]])
+  private[chiselverify] case class ConstraintReport(approxPort: String, metrics: Iterable[Metric], results: Map[Metric, Any])
     extends Report {
     // Create an identifier for this constraint report
     val id = s"C($approxPort)"
 
-    def report(): String = metrics match {
-      case Nil =>
-        s"Constraint on port $approxPort has no metrics!\n"
-      case _ =>
-        val bs = new StringBuilder(s"Constraint on port $approxPort has results:\n")
-        metrics.foreach { mtrc =>
-          val mtrcResults   = results(mtrc)
-          val mtrcSatisfied = mtrcResults.map(mtrc.check(_)).forall(s => s)
-          bs ++= "- "
-          mtrc match {
-            // For instantaneous metrics:
-            // - if satisfied, report this with the maximum found error
-            // - if not, report this with the first violating error
-            case _: Instantaneous =>
-              bs ++= s"Instantaneous ${mtrc} metric "
-              if (mtrcSatisfied) {
-                bs ++= f"is satisfied with maximum error ${mtrcResults.max}%.3f"
-              } else {
-                val (violatingErr, violatingInd) = mtrcResults
-                  .zipWithIndex
-                  .collectFirst { case (err, ind) if !mtrc.check(err) => (err, ind) }.get
-                bs ++= f"is violated by error $violatingErr%.3f (sample #$violatingInd)"
-              }
-            
-            // For history-based metrics:
-            // - if satisfied, report this with ...
-            // - if not, report this with ...
-            case _: HistoryBased =>
-              bs ++= s"History-based ${mtrc} metric "
-              if (mtrcSatisfied) {
-                bs ++= f"is satisfied with error ${mtrcResults.head}%.3f"
-              } else {
-                bs ++= f"is violated by error ${mtrcResults.head}%.3f"
-              }
-          }
-          bs ++= "!\n"
+    def report(): String = if (metrics.isEmpty) {
+      s"Constraint on port $approxPort has no metrics!\n"
+    } else {
+      val bs = new StringBuilder(s"Constraint on port $approxPort has results:\n")
+      metrics.foreach { mtrc =>
+        val mtrcResults = results(mtrc)
+        bs ++= "- "
+        mtrc match {
+          // For instantaneous metrics:
+          // - if satisfied, report this with the maximum found error
+          // - if not, report this with the first violating error
+          case _: Instantaneous =>
+            val (maxIndex, mtrcMax, _) = mtrcResults.asInstanceOf[(Int, Double, Double)]
+            bs ++= s"Instantaneous $mtrc metric "
+            if (mtrc.check(mtrcMax)) {
+              bs ++= f"is satisfied with maximum error $mtrcMax"
+            } else {
+              bs ++= f"is violated by maximum error $mtrcMax (sample #$maxIndex)"
+            }
+
+          // For history-based metrics:
+          // - if satisfied, report this with ...
+          // - if not, report this with ...
+          case _: HistoryBased =>
+            val mtrcVal = mtrcResults.asInstanceOf[Double]
+            bs ++= s"History-based $mtrc metric "
+            if (mtrc.check(mtrcVal)) {
+              bs ++= f"is satisfied with error $mtrcVal"
+            } else {
+              bs ++= f"is violated by error $mtrcVal"
+            }
         }
-        bs.mkString
+        bs ++= "!\n"
+      }
+      bs.mkString
     }
 
     def +(that: Report): Report = that match {
