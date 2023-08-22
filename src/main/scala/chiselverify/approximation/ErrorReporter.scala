@@ -1,5 +1,7 @@
 package chiselverify.approximation
 
+import chisel3.Bits
+
 /** 
   * Handles everything related to tracking and verification of error metrics
   * 
@@ -10,7 +12,7 @@ package chiselverify.approximation
   * `Tracker`s, the error reporter tracks the marked ports and supports verifying their 
   * constraints.
   * 
-  * @param watchers any number of `PortWatcher`s, either `Tracker`s or `Constraint`s, to 
+  * @param watchers any number of `Watcher`s, either `Tracker`s or `Constraint`s, to 
   *                 track and verify
   * 
   * @example {{{
@@ -27,7 +29,7 @@ package chiselverify.approximation
   * )
   * }}}
   */
-class ErrorReporter(watchers: PortWatcher*) {
+class ErrorReporter(watchers: Watcher*) {
   /** 
     * Creates a readable error metric report
     * @return report in string form
@@ -55,9 +57,25 @@ class ErrorReporter(watchers: PortWatcher*) {
   }
 
   /** 
-    * Samples all given watchers
+    * Samples all given watchers with given expected values
+    * @param expected a map of (port, value) pairs
+    * 
+    * @note Requires that there exists an entry in the map for all non-port based watchers, 
+    *       the corresponding approximate DUT ports being the keys.
     */
-  def sample(): Unit = watchers.foreach(_.sample())
+  def sample(expected: Map[Bits, BigInt] = Map.empty): Unit = watchers.foreach {
+    case ptrckr: PortTracker =>
+      // Port-based trackers can have optional reference values
+      if (expected.contains(ptrckr.approxPort)) ptrckr.sample(expected(ptrckr.approxPort)) else ptrckr.sample()
+    case pcnstr: PortConstraint =>
+      // Port-based trackers can have optional reference values
+      if (expected.contains(pcnstr.approxPort)) pcnstr.sample(expected(pcnstr.approxPort)) else pcnstr.sample()
+    case rbsd =>
+      // Reference-based watchers must have reference values
+      rbsd.sample(expected.getOrElse(rbsd.approxPort,
+        throw new AssertionError(s"watcher on port ${portName(rbsd.approxPort)} needs a reference value but none was provided")
+      ))
+  }
 
   /** 
     * Verifies any given constraints and asserts their satisfaction, printing results of 

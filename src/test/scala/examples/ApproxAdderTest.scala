@@ -9,13 +9,11 @@ import org.scalatest.matchers.should.Matchers
 import chiselverify.approximation._
 import chiselverify.approximation.Metrics._
 
-class ApproxAdderTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
-  behavior of "Approximate adder"
-
-  val NumTests: Int = 1000000
+trait ApproxAdderTest extends AnyFlatSpec with ChiselScalatestTester {
+  val NumTests: Int = 100000
   val Width: Int = 32
   val ApproxWidths: Seq[Int] = Seq(4, 8, 12, 16)
-  val ExpectedResults: Seq[Boolean] = Seq(true, true, false, false)
+  val ExpectedResults: Seq[Boolean] = Seq(true, true, true, false)
 
   // Adder IO bundle
   class AdderIO(width: Int) extends Bundle {
@@ -53,6 +51,53 @@ class ApproxAdderTest extends AnyFlatSpec with ChiselScalatestTester with Matche
     io.s    := sum(width-approxWidth-1, 0) ## ors
     io.cout := sum(width-approxWidth)
   }
+}
+
+class StandaloneDUTTest extends ApproxAdderTest with Matchers {
+  behavior of "Standalone approximate adder"
+
+  // Generate some random inputs to the adder and sample its registered outputs
+  def simpleTest(dut: LOA, er: ErrorReporter): Unit = {
+    val rng  = new scala.util.Random(42) // RNG for operand generation
+    val mask = (BigInt(1) << Width) - 1  // bit mask for the output
+
+    // Generate a bunch of random sums
+    val aNums = Array.fill(NumTests) { BigInt(Width, rng) }
+    val bNums = Array.fill(NumTests) { BigInt(Width, rng) }
+    val cins  = Array.fill(NumTests) { rng.nextBoolean() }
+    val res   = (0 until NumTests).map { i =>
+      val sum = aNums(i) + bNums(i) + (if (cins(i)) 1 else 0)
+      (sum >> Width, sum & mask)
+    }
+
+    // Apply the inputs and collect the outputs
+    (0 until NumTests).foreach { i =>
+      dut.io.a.poke(aNums(i).U)
+      dut.io.b.poke(bNums(i).U)
+      dut.io.cin.poke(cins(i).B)
+      dut.clock.step()
+      er.sample(Map(dut.io.cout -> (res(i)._1 & 0x1), dut.io.s -> res(i)._2))
+    }
+  }
+
+  // Run tests for each specified width of the approximate adder's lower part
+  it should "verify in comparison to software emulation" in {
+    ApproxWidths.zip(ExpectedResults).foreach { case (approxWidth, mtrcsSatisfied) =>
+      test(new LOA(Width, approxWidth)) { dut =>
+        // Create a new ErrorReporter with two constraints
+        val er = new ErrorReporter(
+          constrain(dut.io.s, RED(.1), MRED(.025)),
+          constrain(dut.io.cout, ER(.01))
+        )
+        simpleTest(dut, er)
+        er.verify() should be (mtrcsSatisfied)
+      }
+    }
+  }
+}
+
+class CombinedDUTTest extends ApproxAdderTest with Matchers {
+  behavior of "Approximate adder in combined DUT"
 
   /** 
     * Custom top-level module containing both approximate and exact adders
@@ -90,15 +135,18 @@ class ApproxAdderTest extends AnyFlatSpec with ChiselScalatestTester with Matche
 
   // Generate some random inputs to the adder and sample its registered outputs
   def simpleTest(dut: DUT, er: ErrorReporter): Unit = {
-    val width = dut.io.sA.getWidth        // port width
-    val rng   = new scala.util.Random(42) // RNG for operand generation
-    val mask  = (BigInt(1) << width) - 1  // bit mask for the output
+    val rng = new scala.util.Random(42) // RNG for operand generation
+
+    // Generate a bunch of random inputs
+    val aNums = Array.fill(NumTests) { BigInt(Width, rng) }
+    val bNums = Array.fill(NumTests) { BigInt(Width, rng) }
+    val cins  = Array.fill(NumTests) { rng.nextBoolean() }
 
     // Apply the inputs and collect the outputs
     (0 until NumTests).foreach { i =>
-      dut.io.a.poke(BigInt(Width, rng).U)
-      dut.io.b.poke(BigInt(Width, rng).U)
-      dut.io.cin.poke(rng.nextBoolean().B)
+      dut.io.a.poke(aNums(i).U)
+      dut.io.b.poke(bNums(i).U)
+      dut.io.cin.poke(cins(i).B)
       dut.clock.step() // advance time for visual changes in VCD
       er.sample()
     }

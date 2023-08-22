@@ -11,12 +11,12 @@ object Metrics {
   private[chiselverify] trait MetricResult
 
   /** 
-    * Represents an absolute MetricResult
+    * Represents an absolute `MetricResult`
     */
   trait Absolute extends MetricResult
 
   /** 
-    * Represents a relative MetricResult
+    * Represents a relative `MetricResult`
     */
   trait Relative extends MetricResult
 
@@ -116,7 +116,7 @@ object Metrics {
   }
 
   /** 
-    * Represents a history-based Metric
+    * Represents a history-based `Metric`
     */
   abstract class HistoryBased(maxVal: Option[Double]) extends Metric {
     this: MetricResult =>

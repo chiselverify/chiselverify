@@ -7,14 +7,26 @@ import org.scalatest.matchers.should.Matchers
 
 import chiselverify.approximation._
 import chiselverify.approximation.Metrics._
-import verifyTests.ToyDUT.ApproximateExactToyDUT
+import verifyTests.ToyDUT.{ApproximateBasicToyDUT, ApproximateExactToyDUT}
 
 class ApproximateVerificationTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   val Size: Int = 32
 
   // Extract the name of a port
   def portName(port: Data): String = port.pathName.split('.').last
-  
+
+  // Generate some random inputs to the basic DUT and sample its registered outputs
+  def simpleRefTest(dut: ApproximateBasicToyDUT, er: ErrorReporter): Unit = {
+    val rng = new scala.util.Random(42)
+    val (as, bs) = (Seq.fill(1000){ BigInt(Size, rng) }, Seq.fill(1000){ BigInt(Size, rng) })
+    as.zip(bs).foreach { case (a, b) =>
+      dut.io.a.poke(a.U)
+      dut.io.b.poke(b.U)
+      dut.clock.step()
+      er.sample(Map(dut.io.outAA -> a, dut.io.outBB -> b, dut.io.outAABB -> (a + b)))
+    }
+  }
+
   // Generate some random inputs to the DUT and sample its registered outputs
   def simpleTest(dut: ApproximateExactToyDUT, ers: ErrorReporter*): Unit = {
     val rng = new scala.util.Random(42)
@@ -79,25 +91,68 @@ class ApproximateVerificationTest extends AnyFlatSpec with ChiselScalatestTester
   }
 
   it should "generate without metrics" in {
+    test(new ApproximateBasicToyDUT(Size)) { dut =>
+      val er = new ErrorReporter(
+        track(dut.io.outAA)
+      )
+      er.report().split('\n') should contain (s"Tracker on port ${portName(dut.io.outAA)} has no metrics!")
+    }
     test(new ApproximateExactToyDUT(Size)) { dut =>
       val er = new ErrorReporter(
         track(dut.io.outAA, dut.io.outA)
       )
-      er.report().split('\n') should contain (s"Tracker on ports ${portName(dut.io.outAA)} and ${portName(dut.io.outA)} has no metrics!")
+      er.report().split('\n') should contain (s"Tracker on port ${portName(dut.io.outAA)} has no metrics!")
     }
   }
 
+  it should "generate but fail to sample on missing reference value" in {
+    the [AssertionError] thrownBy(
+      test(new ApproximateBasicToyDUT(Size)) { dut =>
+        val er = new ErrorReporter(
+          track(dut.io.outAA)
+        )
+        dut.io.a.poke(14.U)
+        dut.io.b.poke(28.U)
+        dut.clock.step()
+        er.sample()
+      }
+    ) should have message (s"watcher on port outAA needs a reference value but none was provided")
+  }
+
   it should "generate and sample without metrics" in {
+    test(new ApproximateBasicToyDUT(Size)) { dut =>
+      val er = new ErrorReporter(
+        track(dut.io.outAA)
+      )
+      simpleRefTest(dut, er)
+      er.report().split('\n') should contain (s"Tracker on port ${portName(dut.io.outAA)} has no metrics!")
+    }
     test(new ApproximateExactToyDUT(Size)) { dut =>
       val er = new ErrorReporter(
         track(dut.io.outAA, dut.io.outA, maxCacheSize=Int.MaxValue)
       )
       simpleTest(dut, er)
-      er.report().split('\n') should contain (s"Tracker on ports ${portName(dut.io.outAA)} and ${portName(dut.io.outA)} has no metrics!")
+      er.report().split('\n') should contain (s"Tracker on port ${portName(dut.io.outAA)} has no metrics!")
     }
   }
 
   it should "generate and sample with metrics" in {
+    test(new ApproximateBasicToyDUT(Size)) { dut =>
+      val er = new ErrorReporter(
+        track(dut.io.outAA),
+        track(dut.io.outBB, ER(), ED())
+      )
+      simpleRefTest(dut, er)
+      er.report().split('\n') should (
+        contain (s"Tracker on port ${portName(dut.io.outAA)} has no metrics!")
+        and
+        contain (s"Tracker on port ${portName(dut.io.outBB)} has results:")
+        and
+        contain (s"- History-based ER(None) metric has value 0.0!")
+        and
+        contain (s"- Instantaneous ED(None) metric has mean 0.0 and maximum 0.0!")
+      )
+    }
     test(new ApproximateExactToyDUT(Size)) { dut =>
       val er = new ErrorReporter(
         track(dut.io.outAA, dut.io.outA, maxCacheSize=Int.MaxValue),
@@ -105,9 +160,9 @@ class ApproximateVerificationTest extends AnyFlatSpec with ChiselScalatestTester
       )
       simpleTest(dut, er)
       er.report().split('\n') should (
-        contain (s"Tracker on ports ${portName(dut.io.outAA)} and ${portName(dut.io.outA)} has no metrics!")
+        contain (s"Tracker on port ${portName(dut.io.outAA)} has no metrics!")
         and
-        contain (s"Tracker on ports ${portName(dut.io.outBB)} and ${portName(dut.io.outB)} has results:")
+        contain (s"Tracker on port ${portName(dut.io.outBB)} has results:")
         and
         contain (s"- History-based ER(None) metric has value 0.0!")
         and
@@ -119,20 +174,38 @@ class ApproximateVerificationTest extends AnyFlatSpec with ChiselScalatestTester
   behavior of "ErrorReporter with Constraints"
 
   it should "generate without metrics" in {
+    test(new ApproximateBasicToyDUT(Size)) { dut =>
+      val er = new ErrorReporter(
+        track(dut.io.outAA),
+        constrain(dut.io.outBB)
+      )
+      er.report().split('\n') should (
+        contain (s"Tracker on port ${portName(dut.io.outAA)} has no metrics!")
+        and
+        contain (s"Constraint on port ${portName(dut.io.outBB)} has no metrics!")
+      )
+    }
     test(new ApproximateExactToyDUT(Size)) { dut =>
       val er = new ErrorReporter(
         track(dut.io.outAA, dut.io.outA, maxCacheSize=Int.MaxValue),
         constrain(dut.io.outBB, dut.io.outB, maxCacheSize=Int.MaxValue)
       )
       er.report().split('\n') should (
-        contain (s"Tracker on ports ${portName(dut.io.outAA)} and ${portName(dut.io.outA)} has no metrics!")
+        contain (s"Tracker on port ${portName(dut.io.outAA)} has no metrics!")
         and
-        contain (s"Constraint on ports ${portName(dut.io.outBB)} and ${portName(dut.io.outB)} has no metrics!")
+        contain (s"Constraint on port ${portName(dut.io.outBB)} has no metrics!")
       )
     }
   }
 
   it should "verify without metrics" in {
+    test(new ApproximateBasicToyDUT(Size)) { dut =>
+      val er = new ErrorReporter(
+        track(dut.io.outAA),
+        constrain(dut.io.outBB)
+      )
+      er.verify() should be (true)
+    }
     test(new ApproximateExactToyDUT(Size)) { dut =>
       val er = new ErrorReporter(
         track(dut.io.outAA, dut.io.outA, maxCacheSize=Int.MaxValue),
@@ -144,6 +217,14 @@ class ApproximateVerificationTest extends AnyFlatSpec with ChiselScalatestTester
 
   it should "fail to generate with unconstrained metric" in {
     the [IllegalArgumentException] thrownBy(
+      test(new ApproximateBasicToyDUT(Size)) { dut =>
+        val er = new ErrorReporter(
+          track(dut.io.outAA),
+          constrain(dut.io.outBB, ED())
+        )
+      }
+    ) should have message (s"requirement failed: cannot create ED(None) constraint without maximum value")
+    the [IllegalArgumentException] thrownBy(
       test(new ApproximateExactToyDUT(Size)) { dut =>
         val er = new ErrorReporter(
           track(dut.io.outAA, dut.io.outA, maxCacheSize=Int.MaxValue),
@@ -154,6 +235,16 @@ class ApproximateVerificationTest extends AnyFlatSpec with ChiselScalatestTester
   }
 
   it should "fail to verify without samples" in {
+    the [AssertionError] thrownBy(
+      test(new ApproximateBasicToyDUT(Size)) { dut =>
+        val er = new ErrorReporter(
+          track(dut.io.outAA),
+          constrain(dut.io.outBB, ED(0)),
+          constrain(dut.io.outAABB, MRED(.1))
+        )
+        er.verify()
+      }
+    ) should have message ("assumption failed: cannot compute metrics without samples")
     the [AssertionError] thrownBy(
       test(new ApproximateExactToyDUT(Size)) { dut =>
         val er = new ErrorReporter(
@@ -167,6 +258,18 @@ class ApproximateVerificationTest extends AnyFlatSpec with ChiselScalatestTester
   }
 
   it should "verify with samples" in {
+    test(new ApproximateBasicToyDUT(Size)) { dut =>
+      val er = new ErrorReporter(
+        track(dut.io.outAA),
+        constrain(dut.io.outBB, dut.io.outBB, ED(0)), // redundant but also always exact
+        constrain(dut.io.outAABB, MRED(.1))
+      )
+      simpleRefTest(dut, er)
+      er.verify() should be (false)
+      er.report().split('\n').map { ln =>
+        ln.startsWith("- History-based MRED(Some(0.1)) metric is violated by")
+      }.reduce(_ || _) should be (true)
+    }
     test(new ApproximateExactToyDUT(Size)) { dut =>
       val er = new ErrorReporter(
         track(dut.io.outAA, dut.io.outA, maxCacheSize=Int.MaxValue),
@@ -273,8 +376,6 @@ class ApproximateVerificationTest extends AnyFlatSpec with ChiselScalatestTester
       ers.foreach(_.sample())
       nonCachedEr.verify() should be (false)
       cachedEr.verify()    should be (false)
-      println(nonCachedEr.report())
-      println(cachedEr.report())
       val ncRes = extract(abMtrc, nonCachedEr.report())
       val cRes  = extract(abMtrc, cachedEr.report())
       ncRes shouldBe defined
@@ -294,8 +395,6 @@ class ApproximateVerificationTest extends AnyFlatSpec with ChiselScalatestTester
       ers.foreach(_.sample())
       nonCachedEr.verify() should be (false)
       cachedEr.verify()    should be (false)
-      println(nonCachedEr.report())
-      println(cachedEr.report())
       val fNcRes = extract(abMtrc, nonCachedEr.report())
       val fCRes  = extract(abMtrc, cachedEr.report())
       fNcRes shouldBe defined
