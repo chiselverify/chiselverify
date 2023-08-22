@@ -30,8 +30,6 @@ object Metrics {
     *     given two sequences of samples
     *   * `compute(vss: Iterable[(BigInt, BigInt)])` to calculate the metric given a 
     *     sequence of tuples of samples
-    * 
-    * @todo make type-generic (unsure whether the current code will fail for signed operands)
     */
   private[chiselverify] sealed trait Metric {
     def maxVal: Option[Double]

@@ -112,7 +112,6 @@ class ApproxAdderTest extends AnyFlatSpec with ChiselScalatestTester with Matche
         // Create a new ErrorReporter with no constraints
         val er = new ErrorReporter()
         simpleTest(dut, er)
-        println(er.report())
         er.verify() should be (true)
       }
     }
@@ -129,7 +128,6 @@ class ApproxAdderTest extends AnyFlatSpec with ChiselScalatestTester with Matche
           constrain(dut.io.coutA, dut.io.coutE, ER(.01))
         )
         simpleTest(dut, er)
-        println(er.report())
         er.verify() should be (mtrcsSatisfied)
       }
     }
