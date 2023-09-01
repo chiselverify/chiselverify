@@ -382,43 +382,26 @@ class ApproximateVerificationTest extends AnyFlatSpec with ChiselScalatestTester
       cRes  shouldBe defined
       cRes.get should equal (ncRes.get)
 
-      // Now do the same but after a round of cache collapsing
-      dut.io.a.poke(0.U)
-      dut.io.b.poke(0.U)
-      (0 until (cacheSize * (cacheSize - 1))).foreach { _ =>
+      // Now do the same but after some rounds of cache collapsing
+      for (i <- 1 until 11) {
+        dut.io.a.poke(0.U)
+        dut.io.b.poke(0.U)
+        (0 until (cacheSize * (cacheSize + 1))).foreach { _ =>
+          dut.clock.step()
+          ers.foreach(_.sample())
+        }
+        dut.io.a.poke((BigInt(1) << i).U)
+        dut.io.b.poke((BigInt(1) << i).U)
         dut.clock.step()
         ers.foreach(_.sample())
+        nonCachedEr.verify() should be (false)
+        cachedEr.verify()    should be (false)
+        val fNcRes = extract(abMtrc, nonCachedEr.report())
+        val fCRes  = extract(abMtrc, cachedEr.report())
+        fNcRes shouldBe defined
+        fCRes  shouldBe defined
+        fCRes.get should equal (fNcRes.get)
       }
-      dut.io.a.poke(2.U)
-      dut.io.b.poke(2.U)
-      dut.clock.step()
-      ers.foreach(_.sample())
-      nonCachedEr.verify() should be (false)
-      cachedEr.verify()    should be (false)
-      val fNcRes = extract(abMtrc, nonCachedEr.report())
-      val fCRes  = extract(abMtrc, cachedEr.report())
-      fNcRes shouldBe defined
-      fCRes  shouldBe defined
-      fCRes.get should equal (fNcRes.get)
-
-      // And again after another round of cache collapsing and sample collapsing
-      dut.io.a.poke(0.U)
-      dut.io.b.poke(0.U)
-      (0 until (cacheSize * (cacheSize + 1))).foreach { _ =>
-        dut.clock.step()
-        ers.foreach(_.sample())
-      }
-      dut.io.a.poke(4.U)
-      dut.io.b.poke(4.U)
-      dut.clock.step()
-      ers.foreach(_.sample())
-      nonCachedEr.verify() should be (false)
-      cachedEr.verify()    should be (false)
-      val cFNcRes = extract(abMtrc, nonCachedEr.report())
-      val cFCRes  = extract(abMtrc, cachedEr.report())
-      cFNcRes shouldBe defined
-      cFCRes  shouldBe defined
-      cFCRes.get should equal (cFNcRes.get)
     }
   }
 }

@@ -123,7 +123,9 @@ package object approximation {
     def sample(expected: BigInt): Unit = {
       metrics match {
         case Nil =>
-        case _ => _samples += ((approxPort.peek().litValue, expected))
+        case _ =>
+          _samples += ((approxPort.peek().litValue, expected))
+          collapse()
       }
 
       // Mark the watcher as non-computed
@@ -139,7 +141,16 @@ package object approximation {
         metrics.foreach { _ match {
           case mtrc: Instantaneous =>
             val mtrcResults = mtrc.compute(_samples)
-            val (mtrcMax, maxIndex) = mtrcResults.zipWithIndex.maxBy(_._1)
+            val (mtrcMax, locIndex) = mtrcResults.zipWithIndex.maxBy(_._1)
+
+            // Compute the maximum error's global sample index
+            val maxIndex = {
+              val globOffset = if (_cacheCollapseCount == 0) {
+                if (_instCache.contains(mtrc)) _instCache(mtrc).size * maxCacheSize else 0
+              } else
+                (_cacheCollapseCount * maxCacheSize + _instCache(mtrc).size - _cacheCollapseCount) * maxCacheSize
+              globOffset + locIndex
+            }
 
             // If the metric mixes in `Absolute`, we compute arithmetic means; if it mixes in 
             // `Relative`, we compute geometric means instead
@@ -280,7 +291,17 @@ package object approximation {
             } else {
               val mtrcResults = mtrc.compute(_samples)
               val resWeight = mtrcResults.size
-              val (mtrcMax, maxIndex) = mtrcResults.zipWithIndex.maxBy(_._1)
+              val (mtrcMax, locIndex) = mtrcResults.zipWithIndex.maxBy(_._1)
+
+              // Compute the maximum error's global sample index
+              val maxIndex = {
+                val globOffset = if (_cacheCollapseCount == 0) {
+                  if (_instCache.contains(mtrc)) _instCache(mtrc).size * maxCacheSize else 0
+                } else
+                  (_cacheCollapseCount * maxCacheSize + _instCache(mtrc).size - _cacheCollapseCount) * maxCacheSize
+                globOffset + locIndex
+              }
+
               val mtrcMean = if (absolute) {
                 mtrcResults.sum / resWeight
               } else {
@@ -321,7 +342,7 @@ package object approximation {
             // Combine results and store the final value
             val (mMaxIndex, mMtrcMax, mMtrcMean) = {
               val (mtrcMax, maxIndex) = if (sMtrcMax > cMtrcMax) {
-                (sMtrcMax, sMaxIndex + cWeight)
+                (sMtrcMax, sMaxIndex)
               } else {
                 (cMtrcMax, cMaxIndex)
               }
