@@ -8,33 +8,17 @@ object Metrics {
     * - Absolute metrics that return non-normalized results
     * - Relative metrics that return normalized results
     */
-  private[chiselverify] trait MetricResult {
-    /** 
-      * Checks if the metric is absolute
-      * @return true if the metric is absolute
-      */
-    def isAbsolute: Boolean
-
-    /** 
-      * Checks if the metric is relative
-      * @return true if the metric is relative
-      */
-    final def isRelative: Boolean = !isAbsolute
-  }
+  private[chiselverify] trait MetricResult
 
   /** 
     * Represents an absolute `MetricResult`
     */
-  trait Absolute extends MetricResult {
-    final def isAbsolute: Boolean = true
-  }
+  trait Absolute extends MetricResult
 
   /** 
     * Represents a relative `MetricResult`
     */
-  trait Relative extends MetricResult {
-    final def isAbsolute: Boolean = false
-  }
+  trait Relative extends MetricResult
 
   /** 
     * Represents a generic error metric of which there are two types:
@@ -46,8 +30,6 @@ object Metrics {
     *     given two sequences of samples
     *   * `compute(vss: Iterable[(BigInt, BigInt)])` to calculate the metric given a 
     *     sequence of tuples of samples
-    * 
-    * @todo make type-generic (unsure whether the current code will fail for signed operands)
     */
   private[chiselverify] sealed trait Metric {
     def maxVal: Option[Double]
@@ -67,13 +49,21 @@ object Metrics {
   }
 
   /** 
-    * Represents an instantaneous `Metric`
+    * Returns true iff the metric mixes in `Absolute`
+    */
+  private[chiselverify] def isAbsolute(mtrc: Metric): Boolean = mtrc match {
+    case _: Metric with Absolute => true
+    case _ => false
+  }
+
+  /** 
+    * Represents an instantaneous Metric
     * 
     * @note Inheriting classes must mixin either 
     */
   abstract class Instantaneous(maxVal: Option[Double]) extends Metric {
     this: MetricResult =>
-    
+
     /** 
       * Computes the value of the metric given two samples
       * @param v1 first sample
@@ -95,8 +85,7 @@ object Metrics {
       * @return values of the metric
       */
     final def compute(vs1: Iterable[BigInt], vs2: Iterable[BigInt]): Iterable[Double] = {
-      val (seq1, seq2) = (vs1.toSeq, vs2.toSeq)
-      require(seq1.length == seq2.length, "the sequences must be the same length")
+      require(vs1.size == vs2.size, "the sequences must be the same length")
       vs1.zip(vs2).map { case (v1, v2) => compute(v1, v2) }
     }
 
@@ -104,7 +93,10 @@ object Metrics {
       * Checks if the values of the metric given two sequences of samples are less than its maximum
       * @return `check(compute(v1, v2))` for each `(v1, v2)` in `vs1.zip(vs2)`
       */
-    final def check(vs1: Iterable[BigInt], vs2: Iterable[BigInt]): Boolean = compute(vs1, vs2).map(check(_)).forall(s => s)
+    final def check(vs1: Iterable[BigInt], vs2: Iterable[BigInt]): Boolean = {
+      require(vs1.size == vs2.size, "the sequences must be the same length")
+      vs1.zip(vs2).foldLeft(true) { case (acc, (v1, v2)) => acc && check(v1, v2) }
+    }
 
     /** 
       * Computes the values of the metric given a sequence of tuples of samples
@@ -120,7 +112,7 @@ object Metrics {
       * Checks if the values of the metric given a sequence of tuples of samples are less than its maximum
       * @return `check(compute(v1, v2))` for each `(v1, v2)` in `vss`
       */
-    final def check(vss: Iterable[(BigInt, BigInt)]): Boolean = compute(vss).map(check(_)).forall(s => s)
+    final def check(vss: Iterable[(BigInt, BigInt)]): Boolean = compute(vss).foldLeft(true) { case (acc, err) => acc && check(err) }
   }
 
   /** 
@@ -128,7 +120,7 @@ object Metrics {
     */
   abstract class HistoryBased(maxVal: Option[Double]) extends Metric {
     this: MetricResult =>
-    
+
     /** 
       * Computes the value of the metric given two sequences of samples
       * @param vs1 first sequence of samples
@@ -290,9 +282,8 @@ object Metrics {
     */
   final case class ER(maxVal: Option[Double] = None) extends HistoryBased(maxVal) with Relative {
     def compute(vs1: Iterable[BigInt], vs2: Iterable[BigInt]): Double = {
-      val (seq1, seq2) = (vs1.toSeq, vs2.toSeq)
-      require(seq1.length == seq2.length, "the sequences must be the same length")
-      (seq1.zip(seq2)).map { case (v1, v2) => if (v1 != v2) 1 else 0 }.sum.toDouble / seq1.length
+      require(vs1.size == vs2.size, "the sequences must be the same length")
+      vs1.zip(vs2).foldLeft(0.0) { case (acc, (v1, v2)) => acc + (if (v1 != v2) 1.0 else 0.0) } / vs1.size
     }
   }
   case object ER {
@@ -332,9 +323,8 @@ object Metrics {
   final case class MED(maxVal: Option[Double] = None) extends HistoryBased(maxVal) with Absolute {
     private val ed: ED  = new ED
     def compute(vs1: Iterable[BigInt], vs2: Iterable[BigInt]): Double = {
-      val (seq1, seq2) = (vs1.toSeq, vs2.toSeq)
-      require(seq1.length == seq2.length, "the sequences must be the same length")
-      (seq1.zip(seq2)).map { case (v1, v2) => ed.compute(v1, v2) }.sum / seq1.length
+      require(vs1.size == vs2.size, "the sequences must be the same length")
+      vs1.zip(vs2).foldLeft(0.0) { case (acc, (v1, v2)) => acc + ed.compute(v1, v2) } / vs1.size
     }
   }
   case object MED {
@@ -374,11 +364,10 @@ object Metrics {
   final case class VED(maxVal: Option[Double] = None) extends HistoryBased(maxVal) with Absolute {
     private val ed: ED = new ED
     def compute(vs1: Iterable[BigInt], vs2: Iterable[BigInt]): Double = {
-      val (seq1, seq2) = (vs1.toSeq, vs2.toSeq)
-      require(seq1.length == seq2.length, "the sequences must be the same length")
-      val eds = seq1.zip(seq2).map { case (v1, v2) => ed.compute(v1, v2) }
-      val med = eds.sum / eds.length
-      eds.map(err => (err - med) * (err - med)).sum / eds.length
+      require(vs1.size == vs2.size, "the sequences must be the same length")
+      val eds = vs1.zip(vs2).map { case (v1, v2) => ed.compute(v1, v2) }
+      val med = eds.sum / eds.size
+      eds.foldLeft(0.0) { case (acc, ed) => acc + ((ed - med) * (ed - med)) } / eds.size
     }
   }
   case object VED {
@@ -456,9 +445,8 @@ object Metrics {
   final case class MSE(maxVal: Option[Double] = None) extends HistoryBased(maxVal) with Absolute {
     private val se: SE = new SE
     def compute(vs1: Iterable[BigInt], vs2: Iterable[BigInt]): Double = {
-      val (seq1, seq2) = (vs1.toSeq, vs2.toSeq)
-      require(seq1.length == seq2.length, "the sequences must be the same length")
-      (seq1.zip(seq2)).map { case (v1, v2) => se.compute(v1, v2) }.sum / seq1.length
+      require(vs1.size == vs2.size, "the sequences must be the same length")
+      vs1.zip(vs2).foldLeft(0.0) { case (acc, (v1, v2)) => acc + se.compute(v1, v2) } / vs1.size
     }
   }
   case object MSE {
@@ -536,9 +524,8 @@ object Metrics {
   final case class MRED(maxVal: Option[Double] = None) extends HistoryBased(maxVal) with Relative {
     private val red: RED = new RED
     def compute(vs1: Iterable[BigInt], vs2: Iterable[BigInt]): Double = {
-      val (seq1, seq2) = (vs1.toSeq, vs2.toSeq)
-      require(seq1.length == seq2.length, "the sequences must be the same length")
-	  	(seq1.zip(seq2)).map { case (v1, v2) => red.compute(v1, v2) }.sum / seq1.length
+      require(vs1.size == vs2.size, "the sequences must be the same length")
+      vs1.zip(vs2).foldLeft(0.0) { case (acc, (v1, v2)) => acc + red.compute(v1, v2) } / vs1.size
     }
   }
   case object MRED {

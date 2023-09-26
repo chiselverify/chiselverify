@@ -2,6 +2,7 @@ package examples
 
 import chisel3._
 import chiseltest._
+import chiseltest.internal.NoThreadingAnnotation
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -151,13 +152,27 @@ class CombinedDUTTest extends ApproxAdderTest with Matchers {
     }
   }
 
-  // Run tests for each specified width of the approximate adder's lower part
-  it should "verify designs with different approxWidths" in {
+  // Run tests for each specified width of the approximate adder's lower part 
+  // without any constraints
+  it should "test designs with different approxWidths without constraints" in {
     ApproxWidths.zip(ExpectedResults).foreach { case (approxWidth, mtrcsSatisfied) =>
-      test(new DUT(Width, approxWidth)) { dut =>
+      test(new DUT(Width, approxWidth)).withAnnotations(Seq(NoThreadingAnnotation)) { dut =>
+        // Create a new ErrorReporter with no constraints
+        val er = new ErrorReporter()
+        simpleTest(dut, er)
+        er.verify() should be (true)
+      }
+    }
+  }
+
+  // Run tests for each specified width of the approximate adder's lower part 
+  // with two simple constraints
+  it should "verify designs with different approxWidths with constraints" in {
+    ApproxWidths.zip(ExpectedResults).foreach { case (approxWidth, mtrcsSatisfied) =>
+      test(new DUT(Width, approxWidth)).withAnnotations(Seq(NoThreadingAnnotation)) { dut =>
         // Create a new ErrorReporter with two constraints
         val er = new ErrorReporter(
-          constrain(dut.io.sA, dut.io.sE, RED(.1), MRED(.025)),
+          constrain(dut.io.sA, dut.io.sE, ED(1 << (approxWidth + 1)), RED(.1), MRED(.025)),
           constrain(dut.io.coutA, dut.io.coutE, ER(.01))
         )
         simpleTest(dut, er)

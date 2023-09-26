@@ -24,6 +24,7 @@ Run tests with
 ```
 make
 ```
+
 This README contains a brief overview of the library and its functionalities. For a more in-depth tutorial, please check-out the [ChiselVerify Wiki](https://github.com/chiselverify/chiselverify/wiki). Other general documentation, such as technical reports, journal, and conference papers related to the chiselverify project can be found in the [documentation repository](https://github.com/chiselverify/documentation).
   
 **********************************
@@ -270,7 +271,7 @@ The `approximation` package within this library serves to simplify the process o
 #### Metric
 Error metrics contained within the library follow a hierarchy of two different characteristics that describe the values they return and which kind of inputs they take. Specifically, `Instantaneous` metrics may be computed on a single sample from two ports, whereas `HistoryBased` metrics require sequences of samples. `Absolute` metrics return non-normalized results, while `Relative` metrics return normalized or somehow relativized results. Inheriting (case) classes must extend one of `Instantaneous` or `HistoryBased` and mixin either `Absolute` or `Relative`.
 
-#### Port Watcher
+#### Watcher
 These elements implement distributed sampling and storage for keeping track of a pair of an approximate port and its related exact port (or an exact reference value) and any number of metrics to track for them. While the main class is abstract and not meant to be used, these elements come in two types:
 - `Tracker`s that can simply sample port values and report on given metrics but lack verification features, thus ignoring any maximum values for the metrics provided.
 - `Constraint`s that extend upon the functionality of the `Tracker` by also allowing for verification, requiring that all provided metrics have maximum values.
@@ -299,6 +300,7 @@ We will explore a handful of use cases to explore verification.
   see also https://www.hackerearth.com/practice/notes/heaps-and-priority-queues/
 * Network-on-chip (in Chisel), see https://github.com/schoeberl/soc-comm
 * Decimation filter from WSA (VHDL code plus testbench given)
+* Approximate adder (Chisel code plus testbench given)
 
 *******************************
 
