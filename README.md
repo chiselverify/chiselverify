@@ -1,15 +1,15 @@
 # ChiselVerify: A Hardware Verification Library for Chisel
 
-In this repository, we proprose ChiselVerify, which is the beginning of a verification library within Scala for digital hardware described in [Chisel](https://github.com/chipsalliance/chisel3), but also supporting legacy components in VHDL, Verilog, or SystemVerilog. The library runs off of [ChiselTest](https://github.com/ucb-bar/chisel-testers2) for all of the DUT interfacing. A technical report describing the library in detail is available online: [Open-Source Verification with Chisel and Scala](https://arxiv.org/abs/2102.13460).
+In this repository, we proprose ChiselVerify, which is the beginning of a verification library within Scala for digital hardware described in [Chisel](https://github.com/chipsalliance/chisel3), but also supporting legacy components in VHDL, Verilog, or SystemVerilog. The library runs off of [ChiselTest](https://github.com/ucb-bar/chisel-testers2) for all of the DUT interfacing. An early technical report describing the initial version of the library in detail is available online: [Open-Source Verification with Chisel and Scala](https://arxiv.org/abs/2102.13460). For the most up-to-date writing on topic, please refer to [Verification of Chisel Hardware Designs with ChiselVerify](https://www.sciencedirect.com/science/article/pii/S0141933122002666).  
 
 When you use this library in a research project, please cite it as:
 ```
-@article{dobis2022verification,
+@article{dobis2023verification,
   title={{Verification of Chisel Hardware Designs with ChiselVerify}},
   author={Dobis, Andrew and Laeufer, Kevin and Damsgaard, Hans Jakob and Petersen, Tjark and Rasmussen, Kasper Juul Hesse and Tolotto, Enrico and Andersen, Simon Thye and Lin, Richard and Schoeberl, Martin},
   journal={Microprocessors and Microsystems},
   pages={104737},
-  year={2022},
+  year={2023},
   publisher={Elsevier}}
 ```
 
@@ -24,15 +24,19 @@ Run tests with
 ```
 make
 ```
-This README contains a brief overview of the library and its functionalities. For a more in-depth tutorial, please check-out the [ChiselVerify Wiki](https://github.com/chiselverify/chiselverify/wiki). Ohter general documentation, such as technical reports and conference papers, can be found in the [documentation repository](https://github.com/chiselverify/documentation).
 
+This README contains a brief overview of the library and its functionalities. For a more in-depth tutorial, please check-out the [ChiselVerify Wiki](https://github.com/chiselverify/chiselverify/wiki). Other general documentation, such as technical reports, journal, and conference papers related to the chiselverify project can be found in the [documentation repository](https://github.com/chiselverify/documentation).
+  
 **********************************
 
 # Verification Library for Chisel
-The library can be divided into 3 main parts:
+The library can be divided into 4 main parts:
 1. __Functional Coverage__: Enabling Functional Coverage features like Cover Points, Cross Coverage, Timed Coverage and Conditional Coverage.
 2. __Constrained Random Verification__: Allowing for constraints and random variables to be defined and used directly in Scala.
 3. __Bus Functional Models__: Enabling Transactional modeling for standardized Buses like _AXI4_.
+4. __Approximate Design Verification__: Provides comparative port samplers, as well as several error metrics that simplify the verification of approximate deisgns.    
+  
+> __THE API PRESENTED IN THIS README MIGHT BE OUT-DATED, AS IT IS ONLY UPDATED OCCASIONALLY. THE MAIN SOURCE OF INFORMATION THAT SHOULD BE USED TO LEARN HOW TO USE THE LIBRARY IS [THE WIKI](https://github.com/chiselverify/chiselverify/wiki).__
 
 ## Functional Coverage in Chisel
 The idea is to implement functional coverage features directly in Chisel. The structure of the system can be seen in the diagram below.

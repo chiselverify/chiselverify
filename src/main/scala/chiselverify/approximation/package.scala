@@ -31,7 +31,6 @@ package object approximation {
   private[chiselverify] final val MaxCacheSize: Int = 1024
 
   /** 
-    * Represents a generic port watcher of which there are two types:
     * Represents the expected value style of a generic port watcher of which there are 
     * two types:
     * 
