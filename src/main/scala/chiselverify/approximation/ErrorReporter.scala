@@ -1,6 +1,10 @@
 package chiselverify.approximation
 
 import chisel3.Bits
+import scala.util.{Either, Left, Right}
+
+import chiselverify.approximation.Metrics.Metric
+import chiselverify.approximation.Watchers._
 
 /** 
   * Handles everything related to tracking and verification of error metrics
@@ -57,6 +61,24 @@ class ErrorReporter(watchers: Watcher*) {
   }
 
   /** 
+    * Queries the metrics of all given watchers on a given port
+    * @param approxPort port of the approximate DUT to query
+    * @param metric [Optional] metric to query (defaults to None, meaning all metrics)
+    * @return a map of (metric, values) pairs
+    */
+  def query(approxPort: Bits, metric: Option[Metric] = None): Map[Metric, Either[(Int, Double, Double), Double]] = {
+    (metric match {
+      case Some(mtrc) =>
+        watchers.filter(wtchr => wtchr.approxPort == approxPort && wtchr.metrics.contains(mtrc))
+      case _ =>
+        watchers.filter(_.approxPort == approxPort)    
+    }).foldLeft(Map.empty[Metric, Either[(Int, Double, Double), Double]]) { case (acc, wtchr) =>
+      wtchr.compute()
+      acc ++ wtchr.resultMap
+    }
+  }
+
+  /** 
     * Samples all given watchers with given expected values
     * @param expected a map of (port, value) pairs
     * 
@@ -64,18 +86,20 @@ class ErrorReporter(watchers: Watcher*) {
     *       the corresponding approximate DUT ports being the keys.
     */
   def sample(expected: Map[Bits, BigInt] = Map.empty): Unit = watchers.foreach {
-    case ptrckr: PortTracker =>
-      // Port-based trackers can have optional reference values
-      if (expected.contains(ptrckr.approxPort)) ptrckr.sample(expected(ptrckr.approxPort)) else ptrckr.sample()
-    case pcnstr: PortConstraint =>
-      // Port-based trackers can have optional reference values
-      if (expected.contains(pcnstr.approxPort)) pcnstr.sample(expected(pcnstr.approxPort)) else pcnstr.sample()
+    case pwtchr: Watcher with PortBased =>
+      // Port-based watchers can have optional reference values
+      if (expected.contains(pwtchr.approxPort)) pwtchr.sample(expected(pwtchr.approxPort)) else pwtchr.sample()
     case rbsd =>
       // Reference-based watchers must have reference values
       rbsd.sample(expected.getOrElse(rbsd.approxPort,
         throw new AssertionError(s"watcher on port ${portName(rbsd.approxPort)} needs a reference value but none was provided")
       ))
   }
+
+  /** 
+    * Resets the state of all given watchers
+    */
+  def reset(): Unit = watchers.foreach { _.reset() }
 
   /** 
     * Verifies any given constraints and asserts their satisfaction, printing results of 
