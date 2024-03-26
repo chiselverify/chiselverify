@@ -39,7 +39,7 @@ object CompoundMetrics {
     val (min, max) = (Long.MinValue.toDouble, Long.MaxValue.toDouble)
     vctr.map { elem =>
       val prod = implicitly[Fractional[T]].toDouble(elem) * scale
-      assume(min <= prod && prod <= max)
+      assert(min <= prod && prod <= max)
       BigInt(prod.longValue())
     }
   }
@@ -69,7 +69,7 @@ object CompoundMetrics {
       _.map {
         _.map { elem =>
           val prod = implicitly[Fractional[T]].toDouble(elem) * scale
-          assume(min <= prod && prod <= max)
+          assert(min <= prod && prod <= max)
           BigInt(prod.longValue())
         }
       }
@@ -366,7 +366,7 @@ object CompoundMetrics {
       */
     private def windows(vs: Iterable[Iterable[Double]], n: Int):
       Iterable[Iterable[Iterable[Double]]] = {
-      assume(vs.size >= n && vs.forall(_.size >= n))
+      assert(vs.size >= n && vs.forall(_.size >= n))
       // If the image is empty, there is no need to compute anything here
       if (vs.isEmpty) {
         Iterable.empty[Iterable[Iterable[Double]]]
@@ -384,7 +384,7 @@ object CompoundMetrics {
     def compute(vs1: Image, vs2: Image): Double = {
       require(vs1.isValid && vs2.isValid, "the images must be valid")
       require(vs1.isCompatibleWith(vs2), "the images must have identical dimensions")
-      assume(c1 > 0 && c2 > 0, "the constants must be greater than zero")
+      assert(c1 > 0 && c2 > 0, "the constants must be greater than zero")
 
       if (vs1.isEmpty || vs2.isEmpty || vs1.head.isEmpty || vs2.head.isEmpty) {
         // If the image is empty, there is nothing to compute
@@ -392,7 +392,7 @@ object CompoundMetrics {
       } else {
         // Check that the color dimensionality is acceptable
         val cs = vs1.head.head.size
-        assume(Set(1, 3, 4).contains(cs), "the images must have color dimensionality 1, 3, or 4")
+        assert(Set(1, 3, 4).contains(cs), "the images must have color dimensionality 1, 3, or 4")
 
         // Pick a suitable value for `n` (at most 11, otherwise minimum of image's dimensions)
         val n = scala.math.min(11, scala.math.min(vs1.size, vs1.head.size))
