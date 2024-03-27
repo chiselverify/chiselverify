@@ -343,40 +343,20 @@ object CompoundMetrics {
     }
 
     /** 
-      * Compute the cross-correlation of two identically-dimensioned images
-      * 
-      * @param vs1 first image
-      * @param vs2 second image
-      * @return the cross-correlation of `vs1` and `vs2`
-      * 
-      * Assumes the implementation defined at
-      * https://observablehq.com/@lemonnish/cross-correlation-of-2-matrices
-      */
-    private def xcorr(vs1: Iterable[Iterable[Double]],
-                      vs2: Iterable[Iterable[Double]]): Double = mm(vs1, vs2).flatten.sum
-
-    /** 
       * Generates windows of size `n` by `n` of an image
       * 
       * @param vs image to generate windows from
       * @param n side length of the windows
       * @return a list of windows of size `n` by `n` sliced from `vs`
-      * 
-      * @note Assumes the image is at least `n` by `n` pixels
       */
     private def windows(vs: Iterable[Iterable[Double]], n: Int):
       Iterable[Iterable[Iterable[Double]]] = {
-      assert(vs.size >= n && vs.forall(_.size >= n))
-      // If the image is empty, there is no need to compute anything here
-      if (vs.isEmpty) {
-        Iterable.empty[Iterable[Iterable[Double]]]
-      } else {
-        val verts = vs.size - n + 1
-        val horzs = vs.head.size - n + 1
-        (0 until verts).flatMap { rOffset =>
-          (0 until horzs).map { cOffset =>
-            vs.view.slice(rOffset, rOffset + n).map(_.slice(cOffset, cOffset + n))
-          }
+      require(vs.size >= n && vs.forall(_.size >= n))
+      val verts = vs.size - n + 1
+      val horzs = vs.head.size - n + 1
+      (0 until verts).flatMap { rOffset =>
+        (0 until horzs).map { cOffset =>
+          vs.view.slice(rOffset, rOffset + n).map(_.slice(cOffset, cOffset + n))
         }
       }
     }
@@ -384,7 +364,7 @@ object CompoundMetrics {
     def compute(vs1: Image, vs2: Image): Double = {
       require(vs1.isValid && vs2.isValid, "the images must be valid")
       require(vs1.isCompatibleWith(vs2), "the images must have identical dimensions")
-      assert(c1 > 0 && c2 > 0, "the constants must be greater than zero")
+      require(c1 > 0 && c2 > 0, "the constants must be greater than zero")
 
       if (vs1.isEmpty || vs2.isEmpty || vs1.head.isEmpty || vs2.head.isEmpty) {
         // If the image is empty, there is nothing to compute
