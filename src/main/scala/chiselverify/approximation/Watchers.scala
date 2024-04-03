@@ -56,7 +56,10 @@ private[chiselverify] object Watchers {
     * Cached results are computed in order of n-th roots first, products second in
     * order to avoid potential overflows. This may increase the numerical errors
     * arising from caching ever so slightly, though, the effects appear, at least
-    * empirically, rather small.
+    * empirically, rather small. Moreover as geomeans are not defined for zero-valued
+    * inputs, the caching strategy employs addition of 1.0 to all entries before
+    * computation and subtraction of 1.0 following it. This approach is applied only
+    * in cases of zero-valued metrics.
     * 
     * @param approxPort port of the approximate DUT to track
     * @param metrics metrics to use in this watcher
@@ -136,33 +139,7 @@ private[chiselverify] object Watchers {
     private[chiselverify] def collapse(): Unit = {
       // If the sample storage has more than `maxCacheSize` elements, collapse and clear it
       if (_samples.size >= maxCacheSize) {
-        metrics.foreach { _ match {
-          case mtrc: Instantaneous =>
-            val mtrcResults = mtrc.compute(_samples)
-            val (mtrcMax, locIndex) = mtrcResults.zipWithIndex.maxBy(_._1)
-
-            // Compute the maximum error's global sample index
-            val maxIndex = {
-              val globOffset = if (_cacheCollapseCount == 0) {
-                if (_instCache.contains(mtrc)) _instCache(mtrc).size * maxCacheSize else 0
-              } else
-                (_cacheCollapseCount * maxCacheSize + _instCache(mtrc).size - _cacheCollapseCount) * maxCacheSize
-              globOffset + locIndex
-            }
-
-            // If the metric mixes in `Absolute`, we compute arithmetic means; if it mixes in 
-            // `Relative`, we compute geometric means instead
-            val mtrcMean = if (isAbsolute(mtrc)) {
-              mtrcResults.sum / mtrcResults.size
-            } else {
-              mtrcResults.map(res => scala.math.pow(res, 1.0 / mtrcResults.size)).product
-            }
-            _instCache.getOrElseUpdate(mtrc, new mutable.ArrayBuffer[(Int, Double, Double)]) +=
-              ((maxIndex, mtrcMax, mtrcMean))
-
-          case mtrc: HistoryBased =>
-            _histCache.getOrElseUpdate(mtrc, new mutable.ArrayBuffer[Double]) += mtrc.compute(_samples)
-        }}
+        collapseSamples()
 
         // Clear the sample storage
         _samples.clear()
@@ -170,84 +147,130 @@ private[chiselverify] object Watchers {
 
       // If the caches have more than `maxCacheSize` elements, collapse them and increment the counter
       if (_instCache.exists(_._2.size >= maxCacheSize) || _histCache.exists(_._2.size >= maxCacheSize)) {
-        metrics.foreach { mtrc =>
-          // If the metric mixes in `Absolute`, we compute arithmetic means; if it mixes in 
-          // `Relative`, we compute geometric means instead
-          val absolute = isAbsolute(mtrc)
-
-          // As we occasionally collapse the cache into its first element too, it is
-          // necessary to check whether this has occured before
-          val wasCollapsed = _cacheCollapseCount > 0
-
-          // Now collapse the caches
-          mtrc match {
-            case mtrc: Instantaneous =>
-              val mtrcResults = _instCache(mtrc)
-              val resWeight = {
-                val first = if (wasCollapsed) _cacheCollapseCount * maxCacheSize else 1
-                val rest  = mtrcResults.size - 1
-                first + rest
-              }
-
-              // Find the maximum error and its index in the current list of results
-              val (mtrcMax, maxIndex) = mtrcResults.map { case (maxInd, mtrcMax, _) => (mtrcMax, maxInd) }.maxBy(_._1)
-
-              // Compute the mean error value depending on the type of metric and
-              // whether the cache has been collapsed before
-              val mtrcMean = if (absolute) {
-                val sum = if (!wasCollapsed) {
-                  mtrcResults.map(_._3).sum
-                } else {
-                  mtrcResults.head._3 * _cacheCollapseCount * maxCacheSize + mtrcResults.tail.map(_._3).sum
-                }
-                sum / resWeight
-              } else {
-                if (!wasCollapsed) {
-                  mtrcResults.map(res => scala.math.pow(res._3, 1.0 / resWeight)).product
-                } else {
-                  val firstW = (_cacheCollapseCount * maxCacheSize).toDouble / resWeight
-                  val restW  = 1.0 / resWeight
-                  scala.math.pow(mtrcResults.head._3, firstW) * mtrcResults.tail.map(res => scala.math.pow(res._3, restW)).product
-                }
-              }
-
-              // Store the result in the first position of the cache
-              _instCache(mtrc) = mutable.ArrayBuffer((maxIndex, mtrcMax, mtrcMean))
-
-            case mtrc: HistoryBased =>
-              val mtrcResults = _histCache(mtrc)
-              val resWeight = {
-                val first = if (wasCollapsed) _cacheCollapseCount * maxCacheSize else 1
-                val rest  = mtrcResults.size - 1
-                first + rest
-              }
-
-              // Compute the mean error value depending on the type of metric and
-              // whether the cache has been collapsed before
-              val mtrcMean = if (absolute) {
-                val sum = if (!wasCollapsed) {
-                  mtrcResults.sum
-                } else {
-                  mtrcResults.head * _cacheCollapseCount * maxCacheSize + mtrcResults.tail.sum
-                }
-                sum / resWeight
-              } else {
-                if (!wasCollapsed) {
-                  mtrcResults.map(res => scala.math.pow(res, 1.0 / resWeight)).product
-                } else {
-                  val firstW = (_cacheCollapseCount * maxCacheSize).toDouble / resWeight
-                  val restW  = 1.0 / resWeight
-                  scala.math.pow(mtrcResults.head, firstW) * mtrcResults.tail.map(res => scala.math.pow(res, restW)).product
-                }
-              }
-
-              // Store the result in the first position of the cache
-              _histCache(mtrc) = mutable.ArrayBuffer(mtrcMean)
-          }
-        }
+        collapseCache()
 
         // Keep track of how many times the cache has been collapsed
         _cacheCollapseCount += 1
+      }
+    }
+
+    /** 
+      * Collapses the internal sample storage
+      */
+    private[chiselverify] def collapseSamples(): Unit = {
+      // Instantaneous metrics first
+      metrics.collect { case mtrc: Instantaneous =>
+        val mtrcResults = mtrc.compute(_samples)
+        val (mtrcMax, locIndex) = mtrcResults.zipWithIndex.maxBy(_._1)
+
+        // Compute the maximum error's global sample index
+        val maxIndex = {
+          val globOffset = if (_cacheCollapseCount == 0) {
+            if (_instCache.contains(mtrc)) _instCache(mtrc).size * maxCacheSize else 0
+          } else
+            (_cacheCollapseCount * maxCacheSize + _instCache(mtrc).size - _cacheCollapseCount) * maxCacheSize
+          globOffset + locIndex
+        }
+
+        // If the metric mixes in `Absolute`, we compute arithmetic means; if it mixes in 
+        // `Relative`, we compute geometric means instead
+        val mtrcMean = if (isAbsolute(mtrc)) {
+          mtrcResults.sum / mtrcResults.size
+        } else {
+          val add = if (mtrcResults.exists(_ == 0.0)) 1.0 else 0.0
+          mtrcResults.map(res => scala.math.pow(res + add, 1.0 / mtrcResults.size)).product - add
+        }
+        _instCache.getOrElseUpdate(mtrc, new mutable.ArrayBuffer[(Int, Double, Double)]) +=
+          ((maxIndex, mtrcMax, mtrcMean))
+      }
+
+      // HistoryBased metrics second
+      metrics.collect { case mtrc: HistoryBased =>
+        _histCache.getOrElseUpdate(mtrc, new mutable.ArrayBuffer[Double]) += mtrc.compute(_samples)
+      }
+    }
+
+    /** 
+      * Collapses the internal cache
+      */
+    private[chiselverify] def collapseCache(): Unit = {
+      // As we occasionally collapse the cache into its first element too, it is
+      // necessary to check whether this has occured before
+      val wasCollapsed = _cacheCollapseCount > 0
+
+      // Instantaneous metrics first
+      metrics.collect { case mtrc: Instantaneous =>
+        val absolute = isAbsolute(mtrc)
+
+        // Collapse the cached results
+        val mtrcResults = _instCache(mtrc)
+        val resWeight = {
+          val first = if (wasCollapsed) _cacheCollapseCount * maxCacheSize else 1
+          val rest  = mtrcResults.size - 1
+          first + rest
+        }
+
+        // Find the maximum error and its index in the current list of results
+        val (mtrcMax, maxIndex) = mtrcResults.map { case (maxInd, mtrcMax, _) => (mtrcMax, maxInd) }.maxBy(_._1)
+
+        // Compute the mean error value depending on the type of metric and
+        // whether the cache has been collapsed before
+        val mtrcMean = if (absolute) {
+          val sum = if (!wasCollapsed) {
+            mtrcResults.map(_._3).sum
+          } else {
+            mtrcResults.head._3 * _cacheCollapseCount * maxCacheSize + mtrcResults.tail.map(_._3).sum
+          }
+          sum / resWeight
+        } else {
+          val add = if (mtrcResults.exists(_._3 == 0.0)) 1.0 else 0.0
+          if (!wasCollapsed) {
+            mtrcResults.map(res => scala.math.pow(res._3 + add, 1.0 / resWeight)).product - add
+          } else {
+            val firstW = (_cacheCollapseCount * maxCacheSize).toDouble / resWeight
+            val restW  = 1.0 / resWeight
+            (scala.math.pow(mtrcResults.head._3 + add, firstW) * mtrcResults.tail.map(res => scala.math.pow(res._3 + add, restW)).product) - add
+          }
+        }
+
+        // Store the result in the first position of the cache
+        _instCache(mtrc) = mutable.ArrayBuffer((maxIndex, mtrcMax, mtrcMean))
+      }
+
+      // HistoryBased metrics second
+      metrics.collect { case mtrc: HistoryBased =>
+        val absolute = isAbsolute(mtrc)
+
+        // Collapse the cached results
+        val mtrcResults = _histCache(mtrc)
+        val resWeight = {
+          val first = if (wasCollapsed) _cacheCollapseCount * maxCacheSize else 1
+          val rest  = mtrcResults.size - 1
+          first + rest
+        }
+
+        // Compute the mean error value depending on the type of metric and
+        // whether the cache has been collapsed before
+        val mtrcMean = if (absolute) {
+          val sum = if (!wasCollapsed) {
+            mtrcResults.sum
+          } else {
+            mtrcResults.head * _cacheCollapseCount * maxCacheSize + mtrcResults.tail.sum
+          }
+          sum / resWeight
+        } else {
+          val add = if (mtrcResults.exists(_ == 0.0)) 1.0 else 0.0
+          if (!wasCollapsed) {
+            mtrcResults.map(res => scala.math.pow(res + add, 1.0 / resWeight)).product - add
+          } else {
+            val firstW = (_cacheCollapseCount * maxCacheSize).toDouble / resWeight
+            val restW  = 1.0 / resWeight
+            (scala.math.pow(mtrcResults.head + add, firstW) * mtrcResults.tail.map(res => scala.math.pow(res + add, restW)).product) - add
+          }
+        }
+
+        // Store the result in the first position of the cache
+        _histCache(mtrc) = mutable.ArrayBuffer(mtrcMean)
       }
     }
 
@@ -256,137 +279,139 @@ private[chiselverify] object Watchers {
       * 
       * If the watcher has already been computed or if it includes no metrics,
       * this method does nothing.
-      * 
-      * @note Assumes there exist samples to compute metrics based on, if `metrics` is non-empty.
       */
     private[chiselverify] def compute(): Unit = {
-      for (mtrc <- metrics if !_computed && metrics.nonEmpty) {
-        assume(_samples.nonEmpty || _instCache.nonEmpty || _histCache.nonEmpty,
-          "cannot compute metrics without samples")
+      require(metrics.isEmpty || (_samples.nonEmpty || _instCache.nonEmpty || _histCache.nonEmpty),
+        "cannot compute metrics without samples")
 
-        // If the metric mixes in `Absolute`, we compute arithmetic means; if it mixes in 
-        // `Relative`, we compute geometric means instead
+      // As we occasionally collapse the cache into its first element too, it is
+      // necessary to check whether this has occured before
+      val wasCollapsed = _cacheCollapseCount > 0
+
+      // Instantaneous metrics first
+      metrics.collect { case mtrc: Instantaneous if !_computed =>
         val absolute = isAbsolute(mtrc)
 
-        // As we occasionally collapse the cache into its first element too, it is
-        // necessary to check whether this has occured before
-        val wasCollapsed = _cacheCollapseCount > 0
+        // Compute results from samples
+        val (sMaxIndex, sMtrcMax, sMtrcMean, sWeight) = if (_samples.isEmpty) {
+          (-1, Double.NegativeInfinity, 0.0, 0)
+        } else {
+          val mtrcResults = mtrc.compute(_samples)
+          val resWeight = mtrcResults.size
+          val (mtrcMax, locIndex) = mtrcResults.zipWithIndex.maxBy(_._1)
 
-        // Compute the metric. For either type of metrics, we first compute
-        // based on samples (if any) and then based on cached results (if any).
-        // Afterwards, we combine the results appropriately
-        mtrc match {
-          case mtrc: Instantaneous =>
-            // Compute results from samples
-            val (sMaxIndex, sMtrcMax, sMtrcMean, sWeight) = if (_samples.isEmpty) {
-              (-1, Double.NegativeInfinity, 0.0, 0)
-            } else {
-              val mtrcResults = mtrc.compute(_samples)
-              val resWeight = mtrcResults.size
-              val (mtrcMax, locIndex) = mtrcResults.zipWithIndex.maxBy(_._1)
+          // Compute the maximum error's global sample index
+          val maxIndex = {
+            val globOffset = if (_cacheCollapseCount == 0) {
+              if (_instCache.contains(mtrc)) _instCache(mtrc).size * maxCacheSize else 0
+            } else
+              (_cacheCollapseCount * maxCacheSize + _instCache(mtrc).size - _cacheCollapseCount) * maxCacheSize
+            globOffset + locIndex
+          }
 
-              // Compute the maximum error's global sample index
-              val maxIndex = {
-                val globOffset = if (_cacheCollapseCount == 0) {
-                  if (_instCache.contains(mtrc)) _instCache(mtrc).size * maxCacheSize else 0
-                } else
-                  (_cacheCollapseCount * maxCacheSize + _instCache(mtrc).size - _cacheCollapseCount) * maxCacheSize
-                globOffset + locIndex
-              }
-
-              val mtrcMean = if (absolute) {
-                mtrcResults.sum / resWeight
-              } else {
-                mtrcResults.map(res => scala.math.pow(res, 1.0 / resWeight)).product
-              }
-              (maxIndex, mtrcMax, mtrcMean, resWeight)
-            }
-
-            // Compute results from cache
-            val (cMaxIndex, cMtrcMax, cMtrcMean, cWeight) = if (!_instCache.contains(mtrc)) {
-              (-1, Double.NegativeInfinity, 0.0, 0)
-            } else {
-              val mtrcResults = _instCache(mtrc)
-              val resWeight = {
-                val first = if (wasCollapsed) _cacheCollapseCount * maxCacheSize else 1
-                val rest  = mtrcResults.size - 1
-                first + rest
-              }
-              val (mtrcMax, maxIndex) = mtrcResults.map { case (maxInd, mtrcMax, _) => (mtrcMax, maxInd) }.maxBy(_._1)
-              val mtrcMean = if (!wasCollapsed) {
-                if (absolute) {
-                  mtrcResults.map(_._3).sum / resWeight
-                } else {
-                  mtrcResults.map(res => scala.math.pow(res._3, 1.0 / resWeight)).product
-                }
-              } else {
-                if (absolute) {
-                  (mtrcResults.head._3 * _cacheCollapseCount * maxCacheSize + mtrcResults.tail.map(_._3).sum) / resWeight
-                } else {
-                  val firstW = (_cacheCollapseCount * maxCacheSize).toDouble / resWeight
-                  val restW  = 1.0 / resWeight
-                  scala.math.pow(mtrcResults.head._3, firstW) * mtrcResults.tail.map(res => scala.math.pow(res._3, restW)).product
-                }
-              }
-              (maxIndex, mtrcMax, mtrcMean, resWeight * maxCacheSize)
-            }
-
-            // Combine results and store the final value
-            val (mMaxIndex, mMtrcMax, mMtrcMean) = {
-              val (mtrcMax, maxIndex) = if (sMtrcMax > cMtrcMax) {
-                (sMtrcMax, sMaxIndex)
-              } else {
-                (cMtrcMax, cMaxIndex)
-              }
-              val mtrcMean = if (absolute) {
-                (sMtrcMean * sWeight + cMtrcMean * cWeight) / (sWeight + cWeight)
-              } else {
-                scala.math.pow(sMtrcMean, sWeight.toDouble / (sWeight + cWeight)) * scala.math.pow(cMtrcMean, cWeight.toDouble / (sWeight + cWeight))
-              }
-              (maxIndex, mtrcMax, mtrcMean)
-            }
-            _instResults(mtrc) = ((mMaxIndex, mMtrcMax, mMtrcMean))
-
-          case mtrc: HistoryBased =>
-            // Compute results from samples
-            val (sValue, sWeight) = if (_samples.isEmpty) (0.0, 0) else (mtrc.compute(_samples), _samples.size)
-
-            // Compute results from cache
-            val (cValue, cWeight) = if (!_histCache.contains(mtrc)) {
-              (0.0, 0)
-            } else {
-              val mtrcResults = _histCache(mtrc)
-              val resWeight = {
-                val first = if (wasCollapsed) _cacheCollapseCount * maxCacheSize else 1
-                val rest  = mtrcResults.size - 1
-                first + rest
-              }
-              val mtrcMean = if (!wasCollapsed) {
-                if (absolute) {
-                  mtrcResults.sum / resWeight
-                } else {
-                  mtrcResults.map(res => scala.math.pow(res, 1.0 / resWeight)).product
-                }
-              } else {
-                if (absolute) {
-                  (mtrcResults.head * _cacheCollapseCount * maxCacheSize + mtrcResults.tail.sum) / resWeight
-                } else {
-                  val firstW = (_cacheCollapseCount * maxCacheSize).toDouble / resWeight
-                  val restW  = 1.0 / resWeight
-                  scala.math.pow(mtrcResults.head, firstW) * mtrcResults.tail.map(res => scala.math.pow(res, restW)).product
-                }
-              }
-              (mtrcMean, resWeight * maxCacheSize)
-            }
-
-            // Combine results and store the final value
-            val mValue = if (absolute) {
-              (sValue * sWeight + cValue * cWeight) / (sWeight + cWeight)
-            } else {
-              scala.math.pow(sValue, sWeight.toDouble / (sWeight + cWeight)) * scala.math.pow(cValue, cWeight.toDouble / (sWeight + cWeight))
-            }
-            _histResults(mtrc) = mValue
+          val mtrcMean = if (absolute) {
+            mtrcResults.sum / resWeight
+          } else {
+            val add = if (mtrcResults.exists(_ == 0.0)) 1.0 else 0.0
+            mtrcResults.map(res => scala.math.pow(res + 1.0, 1.0 / resWeight)).product - 1.0
+          }
+          (maxIndex, mtrcMax, mtrcMean, resWeight)
         }
+
+        // Compute results from cache
+        val (cMaxIndex, cMtrcMax, cMtrcMean, cWeight) = if (!_instCache.contains(mtrc)) {
+          (-1, Double.NegativeInfinity, 0.0, 0)
+        } else {
+          val mtrcResults = _instCache(mtrc)
+          val resWeight = {
+            val first = if (wasCollapsed) _cacheCollapseCount * maxCacheSize else 1
+            val rest  = mtrcResults.size - 1
+            first + rest
+          }
+          val (mtrcMax, maxIndex) = mtrcResults.map { case (maxInd, mtrcMax, _) => (mtrcMax, maxInd) }.maxBy(_._1)
+          val mtrcMean = if (!wasCollapsed) {
+            if (absolute) {
+              mtrcResults.map(_._3).sum / resWeight
+            } else {
+              val add = if (mtrcResults.exists(_._3 == 0.0)) 1.0 else 0.0
+              mtrcResults.map(res => scala.math.pow(res._3 + add, 1.0 / resWeight)).product - add
+            }
+          } else {
+            if (absolute) {
+              (mtrcResults.head._3 * _cacheCollapseCount * maxCacheSize + mtrcResults.tail.map(_._3).sum) / resWeight
+            } else {
+              val add = if (mtrcResults.exists(_._3 == 0.0)) 1.0 else 0.0
+              val firstW = (_cacheCollapseCount * maxCacheSize).toDouble / resWeight
+              val restW  = 1.0 / resWeight
+              (scala.math.pow(mtrcResults.head._3 + add, firstW) * mtrcResults.tail.map(res => scala.math.pow(res._3 + add, restW)).product) - add
+            }
+          }
+          (maxIndex, mtrcMax, mtrcMean, resWeight * maxCacheSize)
+        }
+
+        // Combine results and store the final value
+        val (mMaxIndex, mMtrcMax, mMtrcMean) = {
+          val (mtrcMax, maxIndex) = if (sMtrcMax > cMtrcMax) {
+            (sMtrcMax, sMaxIndex)
+          } else {
+            (cMtrcMax, cMaxIndex)
+          }
+          val mtrcMean = if (absolute) {
+            (sMtrcMean * sWeight + cMtrcMean * cWeight) / (sWeight + cWeight)
+          } else {
+            val add = if (sMtrcMean == 0.0 || cMtrcMean == 0.0) 1.0 else 0.0
+            (scala.math.pow(sMtrcMean + add, sWeight.toDouble / (sWeight + cWeight)) * scala.math.pow(cMtrcMean + add, cWeight.toDouble / (sWeight + cWeight))) - add
+          }
+          (maxIndex, mtrcMax, mtrcMean)
+        }
+        _instResults(mtrc) = ((mMaxIndex, mMtrcMax, mMtrcMean))
+      }
+
+      // HistoryBased metrics second
+      metrics.collect { case mtrc: HistoryBased if !_computed =>
+        val absolute = isAbsolute(mtrc)
+
+        // Compute results from samples
+        val (sValue, sWeight) = if (_samples.isEmpty) (0.0, 0) else (mtrc.compute(_samples), _samples.size)
+
+        // Compute results from cache
+        val (cValue, cWeight) = if (!_histCache.contains(mtrc)) {
+          (0.0, 0)
+        } else {
+          val mtrcResults = _histCache(mtrc)
+          val resWeight = {
+            val first = if (wasCollapsed) _cacheCollapseCount * maxCacheSize else 1
+            val rest  = mtrcResults.size - 1
+            first + rest
+          }
+          val mtrcMean = if (!wasCollapsed) {
+            if (absolute) {
+              mtrcResults.sum / resWeight
+            } else {
+              val add = if (mtrcResults.exists(_ == 0.0)) 1.0 else 0.0
+              mtrcResults.map(res => scala.math.pow(res + add, 1.0 / resWeight)).product - add
+            }
+          } else {
+            if (absolute) {
+              (mtrcResults.head * _cacheCollapseCount * maxCacheSize + mtrcResults.tail.sum) / resWeight
+            } else {
+              val add = if (mtrcResults.exists(_ == 0.0)) 1.0 else 0.0
+              val firstW = (_cacheCollapseCount * maxCacheSize).toDouble / resWeight
+              val restW  = 1.0 / resWeight
+              (scala.math.pow(mtrcResults.head + add, firstW) * mtrcResults.tail.map(res => scala.math.pow(res + add, restW)).product) - add
+            }
+          }
+          (mtrcMean, resWeight * maxCacheSize)
+        }
+
+        // Combine results and store the final value
+        val mValue = if (absolute) {
+          (sValue * sWeight + cValue * cWeight) / (sWeight + cWeight)
+        } else {
+          val add = if (sValue == 0.0 || cValue == 0.0) 1.0 else 0.0
+          (scala.math.pow(sValue + add, sWeight.toDouble / (sWeight + cWeight)) * scala.math.pow(cValue + add, cWeight.toDouble / (sWeight + cWeight))) - add
+        }
+        _histResults(mtrc) = mValue
       }
 
       // Mark the watcher as computed
