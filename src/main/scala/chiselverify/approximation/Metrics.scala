@@ -555,4 +555,85 @@ object Metrics {
       */
     def apply(vss: Iterable[(BigInt, BigInt)]): Double = (new MRED).compute(vss)
   }
+
+  /** 
+    * Relative error distance variance metric
+    * $$vred(vs1, vs2) = sum[i=0..len(vs1)-1]((red(vs1[i], vs2[i]) - mred(vs1, vs2)) ** 2) / len(vs1)$$
+    * 
+    * @param maxVal [Optional] maximum value of the metric
+    */
+  final case class VRED(maxVal: Option[Double] = None) extends HistoryBased(maxVal) with Relative {
+    private val red: RED = new RED
+    def compute(vs1: Iterable[BigInt], vs2: Iterable[BigInt]): Double = {
+      require(vs1.size == vs2.size, "the sequences must be the same length")
+      val reds = vs1.zip(vs2).map { case (v1, v2) => red.compute(v1, v2) }
+      val mred = reds.sum / reds.size
+      reds.foldLeft(0.0) { case (acc, red) => acc + ((red - mred) * (red - mred)) } / reds.size
+    }
+  }
+  case object VRED {
+    /** 
+      * Creates a new unconstrained relative error distance variance metric
+      */
+    def apply(): VRED = new VRED
+
+    /** 
+      * Creates a new constrained relative error distance variance metric
+      * @param maxVal maximum value of the metric
+      */
+    def apply(maxVal: Double): VRED = new VRED(Some(maxVal))
+
+    /** 
+      * Creates a new relative error distance variance metric and computes its value on the two given sequences of samples
+      * @param vs1 first sequence of samples
+      * @param vs2 second sequence of samples
+      * @return value of the metric
+      */
+    def apply(vs1: Iterable[BigInt], vs2: Iterable[BigInt]): Double = (new VRED).compute(vs1, vs2)
+
+    /** 
+      * Creates a new relative error distance variance metric and computes its value on the given sequence of tuples of samples
+      * @param vss sequence of tuples of samples
+      * @return value of the metric
+      */
+    def apply(vss: Iterable[(BigInt, BigInt)]): Double = (new VRED).compute(vss)
+  }
+
+  /** 
+    * Relative error distance standard deviation metric
+    * $$sdred(vs1, vs2) = sqrt(vred(vs1, vs2))$$
+    * 
+    * @param maxVal [Optional] maximum value of the metric
+    */
+  final case class SDRED(maxVal: Option[Double] = None) extends HistoryBased(maxVal) with Relative {
+    private val vred: VRED = new VRED
+    def compute(vs1: Iterable[BigInt], vs2: Iterable[BigInt]): Double = scala.math.sqrt(vred.compute(vs1, vs2))
+  }
+  case object SDRED {
+    /** 
+      * Creates a new unconstrained relative error distance standard deviation metric
+      */
+    def apply(): SDRED = new SDRED
+
+    /** 
+      * Creates a new constrained relative error distance standard deviation metric
+      * @param maxVal maximum value of the metric
+      */
+    def apply(maxVal: Double): SDRED = new SDRED(Some(maxVal))
+
+    /** 
+      * Creates a new relative error distance standard deviation metric and computes its value on the two given sequences of samples
+      * @param vs1 first sequence of samples
+      * @param vs2 second sequence of samples
+      * @return value of the metric
+      */
+    def apply(vs1: Iterable[BigInt], vs2: Iterable[BigInt]): Double = (new SDRED).compute(vs1, vs2)
+
+    /** 
+      * Creates a new relative error distance standard deviation metric and computes its value on the given sequence of tuples of samples
+      * @param vss sequence of tuples of samples
+      * @return value of the metric
+      */
+    def apply(vss: Iterable[(BigInt, BigInt)]): Double = (new SDRED).compute(vss)
+  }
 }

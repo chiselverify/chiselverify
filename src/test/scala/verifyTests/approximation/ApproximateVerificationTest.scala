@@ -235,7 +235,7 @@ class ApproximateVerificationTest extends AnyFlatSpec with ChiselScalatestTester
   }
 
   it should "fail to verify without samples" in {
-    the [AssertionError] thrownBy(
+    the [IllegalArgumentException] thrownBy(
       test(new ApproximateBasicToyDUT(Size)) { dut =>
         val er = new ErrorReporter(
           track(dut.io.outAA),
@@ -244,8 +244,8 @@ class ApproximateVerificationTest extends AnyFlatSpec with ChiselScalatestTester
         )
         er.verify()
       }
-    ) should have message ("assumption failed: cannot compute metrics without samples")
-    the [AssertionError] thrownBy(
+    ) should have message ("requirement failed: cannot compute metrics without samples")
+    the [IllegalArgumentException] thrownBy(
       test(new ApproximateExactToyDUT(Size)) { dut =>
         val er = new ErrorReporter(
           track(dut.io.outAA, dut.io.outA, maxCacheSize=Int.MaxValue),
@@ -254,7 +254,7 @@ class ApproximateVerificationTest extends AnyFlatSpec with ChiselScalatestTester
         )
         er.verify()
       }
-    ) should have message ("assumption failed: cannot compute metrics without samples")
+    ) should have message ("requirement failed: cannot compute metrics without samples")
   }
 
   it should "verify with samples" in {

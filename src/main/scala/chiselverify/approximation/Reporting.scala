@@ -1,5 +1,7 @@
 package chiselverify.approximation
 
+import scala.util.{Either, Left, Right}
+
 import chiselverify.approximation.Metrics.{HistoryBased, Instantaneous, Metric}
 
 private[chiselverify] object Reporting {
@@ -57,7 +59,8 @@ private[chiselverify] object Reporting {
   /** 
     * Contains the error report for a `Tracker`
     */
-  private[chiselverify] case class TrackerReport(approxPort: String, metrics: Iterable[Metric], results: Map[Metric, Any])
+  private[chiselverify] case class TrackerReport(approxPort: String, metrics: Iterable[Metric],
+                                                 results: Map[Metric, Either[(Int, Double, Double), Double]])
     extends Report {
     // Create an identifier for this tracker report
     val id = s"T($approxPort)"
@@ -68,22 +71,21 @@ private[chiselverify] object Reporting {
       case _ =>
         val bs = new StringBuilder(s"Tracker on port $approxPort has results:\n")
         metrics.foreach { mtrc =>
-        val mtrcResults = results(mtrc)
-        bs ++= "- "
-        mtrc match {
-          // For instantaneous metrics, report the mean and maximum found error
-          case _: Instantaneous =>
-            val (_, mtrcMax, mtrcMean) = mtrcResults.asInstanceOf[(Int, Double, Double)]
-            bs ++= f"Instantaneous $mtrc metric has mean $mtrcMean and maximum $mtrcMax"
+          bs ++= "- "
+          (mtrc, results(mtrc)) match {
+            // For instantaneous metrics, report the mean and maximum found error
+            case (_: Instantaneous, Left((_, mtrcMax, mtrcMean))) =>
+              bs ++= f"Instantaneous $mtrc metric has mean $mtrcMean and maximum $mtrcMax"
 
             // For history-based metrics, report the found error
-          case _: HistoryBased =>
-            val mtrcVal = mtrcResults.asInstanceOf[Double]
-            bs ++= f"History-based $mtrc metric has value $mtrcVal"
+            case (_: HistoryBased, Right(mtrcVal)) =>
+              bs ++= f"History-based $mtrc metric has value $mtrcVal"
+
+            case _ => throw new Exception("mismatched metric and result types")
+          }
+          bs ++= "!\n"
         }
-        bs ++= "!\n"
-      }
-      bs.mkString
+        bs.mkString
     }
 
     def +(that: Report): Report = that match {
@@ -97,7 +99,8 @@ private[chiselverify] object Reporting {
   /** 
     * Contains the error report for a `Constraint`
     */
-  private[chiselverify] case class ConstraintReport(approxPort: String, metrics: Iterable[Metric], results: Map[Metric, Any])
+  private[chiselverify] case class ConstraintReport(approxPort: String, metrics: Iterable[Metric],
+                                                    results: Map[Metric, Either[(Int, Double, Double), Double]])
     extends Report {
     // Create an identifier for this constraint report
     val id = s"C($approxPort)"
@@ -107,14 +110,12 @@ private[chiselverify] object Reporting {
     } else {
       val bs = new StringBuilder(s"Constraint on port $approxPort has results:\n")
       metrics.foreach { mtrc =>
-        val mtrcResults = results(mtrc)
         bs ++= "- "
-        mtrc match {
+        (mtrc, results(mtrc)) match {
           // For instantaneous metrics:
           // - if satisfied, report this with the maximum found error
           // - if not, report this with the first violating error
-          case _: Instantaneous =>
-            val (maxIndex, mtrcMax, _) = mtrcResults.asInstanceOf[(Int, Double, Double)]
+          case (_: Instantaneous, Left((maxIndex, mtrcMax, _))) =>
             bs ++= s"Instantaneous $mtrc metric "
             if (mtrc.check(mtrcMax)) {
               bs ++= f"is satisfied with maximum error $mtrcMax"
@@ -125,14 +126,15 @@ private[chiselverify] object Reporting {
           // For history-based metrics:
           // - if satisfied, report this with ...
           // - if not, report this with ...
-          case _: HistoryBased =>
-            val mtrcVal = mtrcResults.asInstanceOf[Double]
+          case (_: HistoryBased, Right(mtrcVal)) =>
             bs ++= s"History-based $mtrc metric "
             if (mtrc.check(mtrcVal)) {
               bs ++= f"is satisfied with error $mtrcVal"
             } else {
               bs ++= f"is violated by error $mtrcVal"
             }
+
+          case _ => throw new Exception("mismatched metric and result types")
         }
         bs ++= "!\n"
       }
