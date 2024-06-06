@@ -19,7 +19,7 @@ libraryDependencies += "org.jliszka" %% "probability-monad" % "1.0.4"
 name := "chiselverify"
 
 // library version
-version := "0.3.0"
+version := "0.4.0"
 
 // groupId, SCM, license information
 organization := "io.github.chiselverify"

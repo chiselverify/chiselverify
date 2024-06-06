@@ -17,7 +17,7 @@ ChiselVerify is published on Maven. To use it, add following line to your
 ```build.sbt```:
 
 ```
-libraryDependencies += "io.github.chiselverify" % "chiselverify" % "0.3.0"
+libraryDependencies += "io.github.chiselverify" % "chiselverify" % "0.4.0"
 ```
 
 Run tests with
