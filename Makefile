@@ -9,3 +9,7 @@ jni:
 # Create makefile with "sbt nativeInit"
 # Compile shared object file with "sbt nativeCompile"
 	sbt "project native; javah; nativeInit cmake chisel-uvm; nativeCompile"
+
+publish:
+	sbt publishSigned
+	sbt sonatypeRelease
